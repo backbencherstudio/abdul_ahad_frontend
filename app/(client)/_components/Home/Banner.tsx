@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Bell } from 'lucide-react'
 import Image from 'next/image'
-import LogoStart from '../Logo/LogoStart'
-import GroupStart from '../Logo/GroupStart'
+import LogoStart from '../Icon/LogoStart'
+import GroupStart from '../Icon/GroupStart'
 import { useCountUp } from 'react-countup'
 
 export default function HomeBanner() {
@@ -46,10 +46,10 @@ export default function HomeBanner() {
     return (
         <div
             style={{ backgroundImage: `url(${bgImg.src})` }}
-            className='w-full h-[calc(100vh-80px)] md:h-[calc(100vh-88px)] bg-cover bg-center bg-no-repeat  flex items-center justify-center mt-[60px] md:mt-0 '
+            className='w-full min-h-[calc(100vh-80px)] md:h-[calc(100vh-88px)] bg-cover bg-center bg-no-repeat flex items-center justify-center mt-[65px] md:mt-0 py-8 md:py-0'
         >
-            <div className='container px-5 2xl:px-0 '>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center'>
+            <div className='container px-5 2xl:px-0'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center'>
                     {/* Left Content */}
                     <div className='text-white space-y-6'>
                         <div className='space-y-4'>
@@ -73,7 +73,7 @@ export default function HomeBanner() {
                         </div>
 
                         {/* User Reviews Section */}
-                        <div className='flex flex-col  gap-4 lg:mt-20'>
+                        <div className='flex flex-col gap-4 mt-8 lg:mt-20'>
                             {/* User Avatars */}
                             <div className='flex items-center'>
                                 <div className='flex -space-x-5'>
@@ -84,7 +84,7 @@ export default function HomeBanner() {
                                                 alt={user.name}
                                                 width={100}
                                                 height={100}
-                                                className='w-14 h-14 rounded-full border-2 border-white object-cover'
+                                                className='w-10 h-10 md:w-14 md:h-14 rounded-full border-2 border-white object-cover'
                                             />
                                         </div>
                                     ))}
@@ -112,8 +112,8 @@ export default function HomeBanner() {
                     </div>
 
                     {/* Right Form */}
-                    <div className='flex justify-center lg:justify-end '>
-                        <div className='w-full max-w-md bg-white shadow-lg rounded-lg'>
+                    <div className='flex justify-center lg:justify-end'>
+                        <div className='w-full max-w-sm md:max-w-md bg-white shadow-lg rounded-lg'>
                             <div className=' bg-[#14A228] text-white rounded-t-lg py-5 px-6'>
                                 <h1 className='text-xl font-bold'>Book Your Vehicle In</h1>
                             </div>
