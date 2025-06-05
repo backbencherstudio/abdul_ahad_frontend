@@ -30,8 +30,8 @@ export default function Footer() {
         { name: 'Contact Us', href: '/contact-us' },
         { name: 'Terms & Conditions for Drivers', href: '/terms-drivers' },
         { name: 'Terms & Conditions for Garages', href: '/terms-garages' },
-        { name: 'Privacy Policy', href: '/privacy' },
-        { name: 'Cookie Policy', href: '/cookies' }
+        { name: 'Privacy Policy', href: '/privacy-policy' },
+        { name: 'Cookie Policy', href: '/cookies-policy' }
     ]
 
     return (

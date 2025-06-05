@@ -77,7 +77,7 @@ export default function TermsDrivers() {
 
             {/* content section */}
             <div className="max-w-4xl mx-auto px-4 py-8">
-                <div className="bg-white  p-6">
+                <div className="  p-6">
                     <div className="mb-6">
                         <p className="text-md mb-4 font-medium">Last Updated: {termsData.lastUpdated}</p>
                         <p className="text-gray-700 mb-6">{termsData.disclaimer}</p>
