@@ -168,7 +168,7 @@ export default function Frequently() {
                                 <AccordionItem
                                     key={item.id}
                                     value={`item-${item.id}`}
-                                    className={` py-2 ${index !== faq.length - 1 ? 'border-b border-gray-200' : ''}`}
+                                    className={` py-1.5 ${index !== faq.length - 1 ? 'border-b border-gray-200' : ''}`}
                                 >
                                     <AccordionTrigger className="text-left cursor-pointer text-base md:text-lg font-medium text-gray-900 hover:no-underline [&>svg:last-child]:hidden [&[data-state=open]>svg:first-child]:rotate-45">
                                         {item.question}
