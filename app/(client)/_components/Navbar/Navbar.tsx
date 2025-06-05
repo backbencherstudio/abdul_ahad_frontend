@@ -31,9 +31,9 @@ export default function Navbar() {
 
     return (
         // backdrop-filter: blur(5px);
-        <div className='bg-[#14A228] w-full py-4 '>
+        <div className='bg-[#14A228] w-full py-4 fixed top-0 left-0 right-0 z-50'>
             <div className='flex items-center justify-between container px-5 2xl:px-0'>
-                <div className='text-start text-white font-bold text-3xl font-arial-rounded'>
+                <div className='text-start text-white font-bold text-2xl md:text-3xl font-arial-rounded'>
                     <h1>simplymot.co.uk</h1>
                 </div>
 
@@ -54,7 +54,7 @@ export default function Navbar() {
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className='text-white hover:bg-white/20 p-2 cursor-pointer'>
-                                <Menu className='size-7' />
+                                <Menu className='size-6 md:size-7' />
                                 <span className="sr-only">Open menu</span>
                             </Button>
                         </SheetTrigger>
