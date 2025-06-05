@@ -60,13 +60,13 @@ const TestimonialCarousel: React.FC<TestimonialCarouselProps> = ({
     const renderStars = (rating: number) => {
         const stars = []
         const fullStars = Math.floor(rating)
-        const hasHalfStar = rating % 1 >= 0.1 
+        const hasHalfStar = rating % 1 >= 0.1
 
         // Full stars
         for (let i = 0; i < fullStars; i++) {
             stars.push(
-                <FaStar 
-                    key={i} 
+                <FaStar
+                    key={i}
                     className="text-yellow-400 w-5 h-5"
                 />
             )
@@ -75,8 +75,8 @@ const TestimonialCarousel: React.FC<TestimonialCarouselProps> = ({
         // Half star
         if (hasHalfStar) {
             stars.push(
-                <FaStarHalf 
-                    key="half" 
+                <FaStarHalf
+                    key="half"
                     className="text-yellow-400 w-5 h-5"
                 />
             )
@@ -86,8 +86,8 @@ const TestimonialCarousel: React.FC<TestimonialCarouselProps> = ({
         const remainingStars = 5 - Math.ceil(rating)
         for (let i = 0; i < remainingStars; i++) {
             stars.push(
-                <FaStar 
-                    key={`empty-${i}`} 
+                <FaStar
+                    key={`empty-${i}`}
                     className="text-gray-300 w-5 h-5"
                 />
             )
