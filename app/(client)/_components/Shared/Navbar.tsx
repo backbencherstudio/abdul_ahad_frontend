@@ -4,6 +4,7 @@ import SmalButtonReuseable from '@/components/reusable/SmalButtonReuseable'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
+import Link from 'next/link'
 import React, { useState } from 'react'
 
 export default function Navbar() {
@@ -34,7 +35,7 @@ export default function Navbar() {
         <div className='bg-[#14A228] w-full py-4 fixed top-0 left-0 right-0 z-50'>
             <div className='flex items-center justify-between container px-5 2xl:px-0'>
                 <div className='text-start text-white font-bold text-2xl md:text-3xl font-arial-rounded'>
-                    <h1>simplymot.co.uk</h1>
+                    <Link href="/">simplymot.co.uk</Link>
                 </div>
 
                 {/* Desktop Navigation */}
