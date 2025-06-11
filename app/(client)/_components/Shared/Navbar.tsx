@@ -56,7 +56,7 @@ export default function Navbar() {
                         <SheetTrigger asChild>
                             <Button variant="ghost" size="icon" className='text-white hover:bg-white/20 p-2 cursor-pointer'>
                                 <Menu className='size-6 md:size-7' />
-                                <span className="sr-only">Open menu</span>
+                                {/* <span className="sr-only">Open menu</span> */}
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className='w-[320px] bg-gradient-to-br from-white to-gray-50 border-r border-gray-200 p-0'>
