@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function SignUpPage() {
+export default function DriverHome() {
     return (
         <div>
-            <h1>Sign Up</h1>
+            <h1>Driver Home</h1>
         </div>
     )
 }

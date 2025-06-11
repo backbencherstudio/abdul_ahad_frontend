@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false)
-
+    const router = useRouter()
     // dynamic years
     const currentYear = new Date().getFullYear()
 
@@ -30,6 +31,12 @@ export default function Navbar() {
         }
     ]
 
+
+    const handleCreateAccount = () => {
+        setIsOpen(false)
+        router.push('/create-account')
+    }
+
     return (
         // backdrop-filter: blur(5px);
         <div className='bg-[#14A228] w-full py-4 fixed top-0 left-0 right-0 z-50'>
@@ -46,6 +53,7 @@ export default function Navbar() {
                     />
                     <SmalButtonReuseable
                         text='Sign up'
+                        onClick={handleCreateAccount}
                         className='bg-white text-black rounded-[8px] px-4 py-2 hover:bg-white/80 transition-all duration-300'
                     />
                 </div>
