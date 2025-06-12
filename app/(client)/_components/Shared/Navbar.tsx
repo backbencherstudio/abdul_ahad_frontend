@@ -31,10 +31,16 @@ export default function Navbar() {
         }
     ]
 
-
+    // handle create account
     const handleCreateAccount = () => {
         setIsOpen(false)
         router.push('/create-account')
+    }
+
+    // handle log in
+    const handleLogIn = () => {
+        setIsOpen(false)
+        router.push('/login')
     }
 
     return (
@@ -46,9 +52,10 @@ export default function Navbar() {
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className='hidden md:flex items-center gap-2'>
+                <div className='hidden md:flex items-center gap-5'>
                     <SmalButtonReuseable
                         text='Log in'
+                        onClick={handleLogIn}
                         className='border border-white text-white rounded-[8px] px-4 py-2 hover:bg-white hover:text-black transition-all duration-300'
                     />
                     <SmalButtonReuseable

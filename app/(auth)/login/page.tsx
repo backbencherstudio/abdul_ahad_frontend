@@ -185,7 +185,7 @@ export default function SignInPage() {
                             </div>
                             {/* forget password */}
                             <div className="flex justify-end ">
-                                <Link href="/forget-password" className="text-[#19CA32] underline  text-sm">
+                                <Link href="/forgot-password" className="text-[#19CA32] underline  text-sm">
                                     Forget Password
                                 </Link>
                             </div>
