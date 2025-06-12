@@ -185,7 +185,7 @@ export default function SignInPage() {
                             </div>
                             {/* forget password */}
                             <div className="flex justify-end ">
-                                <Link href="/forgot-password" className="text-[#19CA32] underline  text-sm">
+                                <Link href="/forgot-password" className="text-[#19CA32] underline  text-sm hover:scale-105 transition-all duration-300">
                                     Forget Password
                                 </Link>
                             </div>
@@ -210,7 +210,7 @@ export default function SignInPage() {
                             <div className="text-center pt-4">
                                 <span className="text-sm text-gray-600">
                                     Don’t have account ?{' '}
-                                    <Link href="/create-account" className="text-[#19CA32] hover:underline font-medium">
+                                    <Link href="/create-account" className="text-[#19CA32] underline font-medium">
                                         Create Account
                                     </Link>
                                 </span>
