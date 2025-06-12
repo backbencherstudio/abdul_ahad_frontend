@@ -13,12 +13,11 @@ import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
 
 interface FormData {
-    name: string
     email: string
-    phoneNumber: string
     password: string
     agreeToTerms: boolean
 }
+
 const data = [
     {
         id: 1,
@@ -42,7 +41,7 @@ const data = [
         title: 'Stay road-legal with zero stress',
     },
 ]
-export default function DriverSignupPage() {
+export default function SignInPage() {
     const [showPassword, setShowPassword] = useState(false)
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
 
@@ -54,7 +53,6 @@ export default function DriverSignupPage() {
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword)
     }
-
     return (
         <div className="min-h-screen flex flex-col lg:flex-row p-4  gap-4">
             <div
@@ -111,26 +109,11 @@ export default function DriverSignupPage() {
                 <div className="w-full max-w-full  lg:max-w-lg xl:max-w-xl">
                     <div className="bg-white rounded-xl border border-[#19CA32]  p-8 sm:p-10 lg:p-12">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 mb-8 sm:mb-10">
-                            Let's create your account.
+                            Let’s get you signed in
                         </h2>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
-                            {/* Name Field */}
-                            <div>
-                                <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Name <span className='text-red-500'>*</span>
-                                </Label>
-                                <Input
-                                    id="name"
-                                    placeholder='Enter your name'
-                                    type="text"
-                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                    {...register('name', { required: 'Name is required' })}
-                                />
-                                {errors.name && (
-                                    <p className="text-red-500 text-sm mt-2">{errors.name.message}</p>
-                                )}
-                            </div>
+
 
                             {/* Email Field */}
                             <div>
@@ -155,22 +138,7 @@ export default function DriverSignupPage() {
                                 )}
                             </div>
 
-                            {/* Phone Number Field */}
-                            <div>
-                                <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Phone Number <span className='text-red-500'>*</span>
-                                </Label>
-                                <Input
-                                    id="phoneNumber"
-                                    type="tel"
-                                    placeholder='Enter your phone number'
-                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                    {...register('phoneNumber', { required: 'Phone number is required' })}
-                                />
-                                {errors.phoneNumber && (
-                                    <p className="text-red-500 text-sm mt-2">{errors.phoneNumber.message}</p>
-                                )}
-                            </div>
+
 
                             {/* Password Field */}
                             <div>
@@ -207,43 +175,27 @@ export default function DriverSignupPage() {
                                     <p className="text-red-500 text-sm mt-2">{errors.password.message}</p>
                                 )}
                             </div>
-
-                            {/* Terms and Privacy Policy Checkbox */}
-                            <div className="flex items-center space-x-2 ">
-                                <Checkbox
-                                    id="terms"
-                                    className="h-4 w-4 cursor-pointer"
-                                    {...register('agreeToTerms', { required: 'You must agree to the terms' })}
-                                />
-                                <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
-                                    I agree to the{' '}
-                                    <Link href="/terms" className="text-[#19CA32] hover:underline font-medium">
-                                        Terms
-                                    </Link>{' '}
-                                    and{' '}
-                                    <Link href="/privacy" className="text-[#19CA32] hover:underline font-medium">
-                                        Privacy Policy
-                                    </Link>
-                                </Label>
+                            {/* forget password */}
+                            <div className="flex justify-end ">
+                                <Link href="/forget-password" className="text-[#19CA32] underline  text-sm">
+                                    Forget Password
+                                </Link>
                             </div>
-                            {errors.agreeToTerms && (
-                                <p className="text-red-500 text-sm mt-2">{errors.agreeToTerms.message}</p>
-                            )}
 
                             {/* Submit Button */}
                             <Button
                                 type="submit"
                                 className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] text-white py-5 rounded-lg font-medium text-base transition-all duration-200  hover:shadow-lg hover:shadow-green-500"
                             >
-                                Continue
+                                Log in Account
                             </Button>
 
                             {/* Login Link */}
                             <div className="text-center pt-4">
                                 <span className="text-sm text-gray-600">
-                                    Already have an account?{' '}
-                                    <Link href="/login" className="text-[#19CA32] hover:underline font-medium">
-                                        Log in
+                                    Don’t have account ?{' '}
+                                    <Link href="/create-account" className="text-[#19CA32] hover:underline font-medium">
+                                        Create Account
                                     </Link>
                                 </span>
                             </div>
