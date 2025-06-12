@@ -4,13 +4,14 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Eye, EyeOff, Check, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Check, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
+import { toast } from 'react-toastify'
 
 interface FormData {
     name: string
@@ -44,11 +45,19 @@ const data = [
 ]
 export default function DriverSignupPage() {
     const [showPassword, setShowPassword] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
 
-    const onSubmit = (data: FormData) => {
-        console.log('Form Data:', data)
-
+    const onSubmit = async (data: FormData) => {
+        setIsLoading(true)
+        try {
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            toast.success('Account created successfully')
+        } catch (error) {
+            console.error('Submission error:', error)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const togglePasswordVisibility = () => {
@@ -233,9 +242,17 @@ export default function DriverSignupPage() {
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] text-white py-5 rounded-lg font-medium text-base transition-all duration-200  hover:shadow-lg hover:shadow-green-500"
+                                disabled={isLoading}
+                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed text-white py-5 rounded-lg font-medium text-base transition-all duration-200 hover:shadow-lg hover:shadow-green-500 disabled:hover:shadow-none"
                             >
-                                Continue
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                        <span>Please wait...</span>
+                                    </div>
+                                ) : (
+                                    'Continue'
+                                )}
                             </Button>
 
                             {/* Login Link */}
