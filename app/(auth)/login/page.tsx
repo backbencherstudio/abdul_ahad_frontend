@@ -4,21 +4,20 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Eye, EyeOff, Check, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Check, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
+import { toast } from 'react-toastify'
 
 interface FormData {
-    name: string
     email: string
-    phoneNumber: string
     password: string
     agreeToTerms: boolean
 }
+
 const data = [
     {
         id: 1,
@@ -42,21 +41,26 @@ const data = [
         title: 'Stay road-legal with zero stress',
     },
 ]
-export default function DriverSignupPage() {
+export default function SignInPage() {
     const [showPassword, setShowPassword] = useState(false)
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
+    const [isLoading, setIsLoading] = useState(false)
 
-    const onSubmit = (data: FormData) => {
-        console.log('Form Data:', data)
-
+    const onSubmit = async (data: FormData) => {
+        setIsLoading(true)
+        try {
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            toast.success('Login successfully')
+        } catch (error) {
+            console.error('Submission error:', error)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword)
     }
-
-
-
     return (
         <div className="min-h-screen flex flex-col lg:flex-row p-4  gap-4">
             <div
@@ -70,9 +74,9 @@ export default function DriverSignupPage() {
                 <div className="relative z-10 p-6 lg:p-12 flex flex-col justify-between h-full">
                     <div>
                         {/* back button */}
-                        <div className='flex justify-start border border-white rounded-full p-2 w-fit'>
-                            <Link href="/create-account" className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center'>
-                                <ArrowLeft className='w-4 h-4  text-white flex-shrink-0' />
+                        <div className='flex justify-start cursor-pointer border border-white  rounded-full p-2 w-fit group'>
+                            <Link href="/create-account" className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center group-hover:scale-150 transition-all duration-300'>
+                                <ArrowLeft className='w-4 h-4 text-white flex-shrink-0' />
                             </Link>
                         </div>
 
@@ -113,26 +117,11 @@ export default function DriverSignupPage() {
                 <div className="w-full max-w-full  lg:max-w-lg xl:max-w-xl">
                     <div className="bg-white rounded-xl border border-[#19CA32]  p-8 sm:p-10 lg:p-12">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 mb-8 sm:mb-10">
-                            Let's create your account.
+                            Let’s get you signed in
                         </h2>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
-                            {/* Name Field */}
-                            <div>
-                                <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Name <span className='text-red-500'>*</span>
-                                </Label>
-                                <Input
-                                    id="name"
-                                    placeholder='Enter your name'
-                                    type="text"
-                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                    {...register('name', { required: 'Name is required' })}
-                                />
-                                {errors.name && (
-                                    <p className="text-red-500 text-sm mt-2">{errors.name.message}</p>
-                                )}
-                            </div>
+
 
                             {/* Email Field */}
                             <div>
@@ -157,22 +146,7 @@ export default function DriverSignupPage() {
                                 )}
                             </div>
 
-                            {/* Phone Number Field */}
-                            <div>
-                                <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Phone Number <span className='text-red-500'>*</span>
-                                </Label>
-                                <Input
-                                    id="phoneNumber"
-                                    type="tel"
-                                    placeholder='Enter your phone number'
-                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                    {...register('phoneNumber', { required: 'Phone number is required' })}
-                                />
-                                {errors.phoneNumber && (
-                                    <p className="text-red-500 text-sm mt-2">{errors.phoneNumber.message}</p>
-                                )}
-                            </div>
+
 
                             {/* Password Field */}
                             <div>
@@ -209,43 +183,35 @@ export default function DriverSignupPage() {
                                     <p className="text-red-500 text-sm mt-2">{errors.password.message}</p>
                                 )}
                             </div>
-
-                            {/* Terms and Privacy Policy Checkbox */}
-                            <div className="flex items-center space-x-2 ">
-                                <Checkbox
-                                    id="terms"
-                                    className="h-4 w-4 cursor-pointer"
-                                    {...register('agreeToTerms', { required: 'You must agree to the terms' })}
-                                />
-                                <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
-                                    I agree to the{' '}
-                                    <Link href="/terms" className="text-[#19CA32] hover:underline font-medium">
-                                        Terms
-                                    </Link>{' '}
-                                    and{' '}
-                                    <Link href="/privacy" className="text-[#19CA32] hover:underline font-medium">
-                                        Privacy Policy
-                                    </Link>
-                                </Label>
+                            {/* forget password */}
+                            <div className="flex justify-end ">
+                                <Link href="/forgot-password" className="text-[#19CA32] underline  text-sm hover:scale-105 transition-all duration-300">
+                                    Forget Password
+                                </Link>
                             </div>
-                            {errors.agreeToTerms && (
-                                <p className="text-red-500 text-sm mt-2">{errors.agreeToTerms.message}</p>
-                            )}
 
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] text-white py-5 rounded-lg font-medium text-base transition-all duration-200  hover:shadow-lg hover:shadow-green-500"
+                                disabled={isLoading}
+                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed text-white py-5 rounded-lg font-medium text-base transition-all duration-200  hover:shadow-lg hover:shadow-green-500"
                             >
-                                Continue
+                                {isLoading ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                        <span>Please wait...</span>
+                                    </div>
+                                ) : (
+                                    'Log in Account'
+                                )}
                             </Button>
 
                             {/* Login Link */}
                             <div className="text-center pt-4">
                                 <span className="text-sm text-gray-600">
-                                    Already have an account?{' '}
-                                    <Link href="/login" className="text-[#19CA32] hover:underline font-medium">
-                                        Log in
+                                    Don’t have account ?{' '}
+                                    <Link href="/create-account" className="text-[#19CA32] underline font-medium">
+                                        Create Account
                                     </Link>
                                 </span>
                             </div>
