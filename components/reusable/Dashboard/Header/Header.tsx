@@ -27,17 +27,17 @@ export default function Header({ onMenuClick, user }: {
 
     const getPageTitle = () => {
         switch (pathname) {
-            case '/book-my-mot':
+            case '/driver/book-my-mot':
                 return 'Book My MOT';
-            case '/my-vehicles':
+            case '/driver/my-vehicles':
                 return 'My Vehicles';
-            case '/mot-reports':
+            case '/driver/mot-reports':
                 return 'MOT Reports';
-            case '/my-bookings':
+            case '/driver/my-bookings':
                 return 'My Bookings';
-            case '/notifications':
+            case '/driver/notifications':
                 return 'Notifications';
-            case '/contact-us':
+            case '/driver/contact-us':
                 return 'Contact Us';
             default:
                 return 'Book My MOT';

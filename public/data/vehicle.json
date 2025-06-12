@@ -1,0 +1,42 @@
+[
+    {
+        "id": 1,
+        "registrationNumber": "LS51DMV",
+        "expiryDate": "2025-01-01",
+        "roadTax": "2025-01-01",
+        "make": "Toyota",
+        "model": "Corolla",
+        "year": 2020,
+        "image": "https://i.ibb.co/Rp0BJdNZ/pngegg-1.png"
+    },
+    {
+        "id": 2,
+        "registrationNumber": "LS51DMV",
+        "expiryDate": "2026-06-30",
+        "roadTax": "2026-06-30",
+        "make": "Honda",
+        "model": "Civic",
+        "year": 2021,
+        "image": "https://i.ibb.co/mrwR5h4W/pngegg-1-1.png"
+    },
+    {
+        "id": 3,
+        "registrationNumber": "B11MTB",
+        "expiryDate": "2024-12-15",
+        "roadTax": "2024-12-15",
+        "make": "Ford",
+        "model": "Focus",
+        "year": 2019,
+        "image": "https://i.ibb.co/PGwBJx13/pngegg-2-1.png"
+    },
+    {
+        "id": 4,
+        "registrationNumber": "JL11MTB",
+        "expiryDate": "2025-09-10",
+        "roadTax": "2025-09-10",
+        "make": "Volkswagen",
+        "model": "Golf",
+        "year": 2022,
+        "image": "https://i.ibb.co/Rp0BJdNZ/pngegg-1.png"
+    }
+]

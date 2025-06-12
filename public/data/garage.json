@@ -1,0 +1,322 @@
+[
+    {
+        "id": 1,
+        "name": "Garage 1",
+        "address": "123 Main St, Anytown, USA",
+        "phone": "123-456-7890",
+        "email": "info@garage1.com",
+        "vstNumber": "1234567890",
+        "postcode": "SW1A1AA",
+        "motFee": "100",
+        "restestFee": "50",
+        "location": "https://maps.app.goo.gl/z3n6S94K7WWG4NAE7",
+        "services": [
+            "MOT",
+            "Repair",
+            "Maintenance"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "09:00",
+                "close": "17:00"
+            },
+            {
+                "day": "Tuesday",
+                "open": "09:00",
+                "close": "17:00"
+            },
+            {
+                "day": "Wednesday",
+                "open": "09:00",
+                "close": "17:00"
+            },
+            {
+                "day": "Thursday",
+                "open": "09:00",
+                "close": "17:00"
+            },
+            {
+                "day": "Friday",
+                "open": "09:00",
+                "close": "17:00"
+            }
+        ],
+        "image": "https://i.ibb.co/fdqmVf20/Rectangle-5211.png"
+    },
+    {
+        "id": 2,
+        "name": "Speedy Fix Garage",
+        "address": "456 Oak Ave, Springfield, USA",
+        "phone": "987-654-3210",
+        "email": "contact@speedyfix.com",
+        "vstNumber": "9876543210",
+        "postcode": "NW106RE",
+        "motFee": "90",
+        "restestFee": "45",
+        "location": "https://maps.app.goo.gl/abc123",
+        "services": [
+            "MOT",
+            "Tire Replacement",
+            "Oil Change"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "08:00",
+                "close": "18:00"
+            },
+            {
+                "day": "Tuesday",
+                "open": "08:00",
+                "close": "18:00"
+            },
+            {
+                "day": "Saturday",
+                "open": "10:00",
+                "close": "16:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1493238792000-8113da705763?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 3,
+        "name": "AutoCare Centre",
+        "address": "789 Maple St, London, UK",
+        "phone": "020-7946-0958",
+        "email": "support@autocare.uk",
+        "vstNumber": "3214569870",
+        "postcode": "E28DY",
+        "motFee": "85",
+        "restestFee": "40",
+        "location": "https://maps.app.goo.gl/xyz321",
+        "services": [
+            "MOT",
+            "Brake Check",
+            "Engine Diagnostics"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "09:00",
+                "close": "17:30"
+            },
+            {
+                "day": "Friday",
+                "open": "09:00",
+                "close": "17:30"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 4,
+        "name": "Premier Garage",
+        "address": "100 Tech Road, Leeds, UK",
+        "phone": "0113-400-2234",
+        "email": "hello@premiergarage.co.uk",
+        "vstNumber": "8523697410",
+        "postcode": "LS12AB",
+        "motFee": "110",
+        "restestFee": "55",
+        "location": "https://maps.app.goo.gl/test1",
+        "services": [
+            "MOT",
+            "AC Repair",
+            "Electricals"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "07:30",
+                "close": "16:00"
+            },
+            {
+                "day": "Wednesday",
+                "open": "07:30",
+                "close": "16:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 5,
+        "name": "City Wheels Garage",
+        "address": "200 Broadway St, NYC, USA",
+        "phone": "212-555-7890",
+        "email": "info@citywheels.com",
+        "vstNumber": "9638527410",
+        "postcode": "10007",
+        "motFee": "120",
+        "restestFee": "60",
+        "location": "https://maps.app.goo.gl/test2",
+        "services": [
+            "MOT",
+            "Alignment",
+            "Suspension"
+        ],
+        "openingHours": [
+            {
+                "day": "Tuesday",
+                "open": "08:00",
+                "close": "17:00"
+            },
+            {
+                "day": "Thursday",
+                "open": "08:00",
+                "close": "17:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 6,
+        "name": "Urban Garage",
+        "address": "55 Hill Rd, Manchester, UK",
+        "phone": "0161-999-2233",
+        "email": "service@urbangarage.com",
+        "vstNumber": "1122334455",
+        "postcode": "M13BE",
+        "motFee": "105",
+        "restestFee": "52",
+        "location": "https://maps.app.goo.gl/test3",
+        "services": [
+            "MOT",
+            "Battery Change",
+            "Coolant Flush"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "09:00",
+                "close": "18:00"
+            },
+            {
+                "day": "Saturday",
+                "open": "09:00",
+                "close": "14:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 7,
+        "name": "Green Motors",
+        "address": "22 Eco St, Brighton, UK",
+        "phone": "01273-123456",
+        "email": "team@greenmotors.uk",
+        "vstNumber": "6677889900",
+        "postcode": "BN14AA",
+        "motFee": "95",
+        "restestFee": "47",
+        "location": "https://maps.app.goo.gl/test4",
+        "services": [
+            "MOT",
+            "EV Servicing",
+            "Hybrid Maintenance"
+        ],
+        "openingHours": [
+            {
+                "day": "Wednesday",
+                "open": "10:00",
+                "close": "16:00"
+            },
+            {
+                "day": "Friday",
+                "open": "10:00",
+                "close": "16:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 8,
+        "name": "Smart Auto",
+        "address": "88 Smart Way, San Jose, USA",
+        "phone": "408-789-1234",
+        "email": "smart@autoservice.com",
+        "vstNumber": "4455667788",
+        "postcode": "CA95113",
+        "motFee": "130",
+        "restestFee": "65",
+        "location": "https://maps.app.goo.gl/test5",
+        "services": [
+            "MOT",
+            "Transmission",
+            "Detailing"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "08:30",
+                "close": "17:00"
+            },
+            {
+                "day": "Thursday",
+                "open": "08:30",
+                "close": "17:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1558584673-c834fb1cc0ee?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 9,
+        "name": "Rapid Motors",
+        "address": "99 Speed Ln, Birmingham, UK",
+        "phone": "0121-456-7890",
+        "email": "admin@rapidmotors.co.uk",
+        "vstNumber": "3344556677",
+        "postcode": "B12JP",
+        "motFee": "100",
+        "restestFee": "50",
+        "location": "https://maps.app.goo.gl/test6",
+        "services": [
+            "MOT",
+            "Exhaust Systems",
+            "Fuel Injection"
+        ],
+        "openingHours": [
+            {
+                "day": "Tuesday",
+                "open": "09:00",
+                "close": "17:30"
+            },
+            {
+                "day": "Friday",
+                "open": "09:00",
+                "close": "17:30"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=150&h=150&fit=crop&crop=center"
+    },
+    {
+        "id": 10,
+        "name": "AutoPoint Garage",
+        "address": "5 Mechanic Rd, Cardiff, UK",
+        "phone": "029-2045-6789",
+        "email": "autopoint@cardiff.com",
+        "vstNumber": "7788990011",
+        "postcode": "CF101AA",
+        "motFee": "115",
+        "restestFee": "58",
+        "location": "https://maps.app.goo.gl/test7",
+        "services": [
+            "MOT",
+            "Full Servicing",
+            "Clutch Repair"
+        ],
+        "openingHours": [
+            {
+                "day": "Monday",
+                "open": "09:00",
+                "close": "18:00"
+            },
+            {
+                "day": "Wednesday",
+                "open": "09:00",
+                "close": "18:00"
+            }
+        ],
+        "image": "https://images.unsplash.com/photo-1563620495-e0d7d20eaa72?w=150&h=150&fit=crop&crop=center"
+    }
+]
