@@ -1,9 +1,9 @@
 import React from 'react'
 
-export default function DriverHome() {
+export default function BookMyMot() {
     return (
         <div>
-            <h1>Driver Home</h1>
+            <h1>Book My MOT</h1>
         </div>
     )
 }
