@@ -37,6 +37,7 @@ export default function Sidebar({ onClose, user }: SidebarProps) {
         // Driver
         { icon: HiSearch, label: 'Book My MOT', href: '/driver/book-my-mot', role: 'driver' },
         { icon: HiTruck, label: 'My Vehicles', href: '/driver/my-vehicles', role: 'driver' },
+        // dynamic route
         { icon: HiDocumentText, label: 'MOT Reports', href: '/driver/mot-reports', role: 'driver' },
         { icon: HiCalendar, label: 'My Bookings', href: '/driver/my-bookings', role: 'driver' },
         { icon: HiBell, label: 'Notifications', href: '/driver/notifications', role: 'driver' },
@@ -67,7 +68,10 @@ export default function Sidebar({ onClose, user }: SidebarProps) {
             <nav className="mt-4 flex-1 px-3">
                 <ul className="space-y-3 ">
                     {menuItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        // Handle dynamic routes - check if pathname starts with the href
+                        const isActive = item.href === '/driver/mot-reports' 
+                            ? pathname.startsWith('/driver/mot-reports')
+                            : pathname === item.href;
                         return (
                             <li key={item.href}>
                                 <Link href={item.href}>

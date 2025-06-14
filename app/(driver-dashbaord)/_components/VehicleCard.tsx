@@ -1,8 +1,10 @@
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 
+// Types
 interface Vehicle {
     id: number
     registrationNumber: string
@@ -18,10 +20,23 @@ interface VehicleCardProps {
     foundVehicles: Vehicle[]
 }
 
+// Utility function
+const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    })
+}
+
 export default function VehicleCard({ foundVehicles }: VehicleCardProps) {
+    const router = useRouter()
+    
+    // State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
 
+    // Event handlers
     const handleVehicleClick = (vehicle: Vehicle) => {
         setSelectedVehicle(vehicle)
         setIsModalOpen(true)
@@ -32,8 +47,15 @@ export default function VehicleCard({ foundVehicles }: VehicleCardProps) {
         setSelectedVehicle(null)
     }
 
+    const handleMotReports = () => {
+        if (selectedVehicle) {
+            router.push(`/driver/mot-reports/${selectedVehicle.registrationNumber}`)
+        }
+    }
+
     return (
         <>
+            {/* Vehicle Cards */}
             <div className="bg-white rounded-md shadow-sm p-4 sm:p-6">
                 {foundVehicles.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -94,11 +116,7 @@ export default function VehicleCard({ foundVehicles }: VehicleCardProps) {
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-700 font-medium">MOT</span>
                                 <span className="text-sm text-gray-600">
-                                    Expired {new Date(selectedVehicle.expiryDate).toLocaleDateString('en-GB', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    })}
+                                    Expired {formatDate(selectedVehicle.expiryDate)}
                                 </span>
                             </div>
 
@@ -106,11 +124,7 @@ export default function VehicleCard({ foundVehicles }: VehicleCardProps) {
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-700 font-medium">Road Tax</span>
                                 <span className="text-sm text-gray-600">
-                                    Expired {new Date(selectedVehicle.roadTax).toLocaleDateString('en-GB', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                    }) || 'N/A'}
+                                    Expired {formatDate(selectedVehicle.roadTax)}
                                 </span>
                             </div>
 
@@ -123,7 +137,10 @@ export default function VehicleCard({ foundVehicles }: VehicleCardProps) {
                             </div>
 
                             {/* MOT Reports Button */}
-                            <Button className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 mt-6 rounded-lg">
+                            <Button 
+                                onClick={handleMotReports}
+                                className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 mt-6 rounded-lg"
+                            >
                                 MOT Reports
                             </Button>
                         </div>

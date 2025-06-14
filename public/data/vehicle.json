@@ -6,18 +6,61 @@
         "roadTax": "2025-01-01",
         "make": "Toyota",
         "model": "Corolla",
-        "year": 2020,
-        "image": "https://i.ibb.co/Rp0BJdNZ/pngegg-1.png"
+        "image": "https://i.ibb.co/Rp0BJdNZ/pngegg-1.png",
+        "motReport": [
+            {
+                "id": 1,
+                "color": "Silver",
+                "fuelType": "Petrol",
+                "registrationDate": "2025-01-01",
+                "motTestNumber": "1234567890",
+                "motPassDate": "2023-05-20",
+                "motExpiryDate": "2026-05-20",
+                "motStatus": "Pass"
+            },
+            {
+                "id": 2,
+                "color": "Silver",
+                "fuelType": "Petrol",
+                "registrationDate": "2025-01-01",
+                "motTestNumber": "1234567890",
+                "motPassDate": "2020-05-20",
+                "motExpiryDate": "2022-05-20",
+                "motStatus": "Fail"
+            }
+        ]
     },
     {
         "id": 2,
-        "registrationNumber": "LS51DMV",
+        "registrationNumber": "LE51DMV",
         "expiryDate": "2026-06-30",
         "roadTax": "2026-06-30",
         "make": "Honda",
         "model": "Civic",
         "year": 2021,
-        "image": "https://i.ibb.co/mrwR5h4W/pngegg-1-1.png"
+        "image": "https://i.ibb.co/mrwR5h4W/pngegg-1-1.png",
+        "motReport": [
+            {
+                "id": 2,
+                "color": "Blue",
+                "fuelType": "Diesel",
+                "registrationDate": "2021-06-30",
+                "motTestNumber": "0987654321",
+                "motPassDate": "2018-06-05",
+                "motExpiryDate": "2022-06-05",
+                "motStatus": "Fail"
+            },
+            {
+                "id": 3,
+                "color": "Blue",
+                "fuelType": "Diesel",
+                "registrationDate": "2021-06-30",
+                "motTestNumber": "0987654321",
+                "motPassDate": "2023-06-05",
+                "motExpiryDate": "2025-06-05",
+                "motStatus": "Pass"
+            }
+        ]
     },
     {
         "id": 3,
@@ -27,7 +70,19 @@
         "make": "Ford",
         "model": "Focus",
         "year": 2019,
-        "image": "https://i.ibb.co/PGwBJx13/pngegg-2-1.png"
+        "image": "https://i.ibb.co/PGwBJx13/pngegg-2-1.png",
+        "motReport": [
+            {
+                "id": 3,
+                "color": "Green",
+                "fuelType": "Petrol",
+                "registrationDate": "2019-12-15",
+                "motTestNumber": "1122334455",
+                "motPassDate": "2020-04-10",
+                "motExpiryDate": "2024-04-10",
+                "motStatus": "Fail"
+            }
+        ]
     },
     {
         "id": 4,
@@ -37,6 +92,18 @@
         "make": "Volkswagen",
         "model": "Golf",
         "year": 2022,
-        "image": "https://i.ibb.co/Rp0BJdNZ/pngegg-1.png"
+        "image": "https://i.ibb.co/Rp0BJdNZ/pngegg-1.png",
+        "motReport": [
+            {
+                "id": 4,
+                "color": "Red",
+                "fuelType": "Petrol",
+                "registrationDate": "2022-09-10",
+                "motTestNumber": "2233445566",
+                "motPassDate": "2025-06-01",
+                "motExpiryDate": "2026-06-01",
+                "motStatus": "Pass"
+            }
+        ]
     }
 ]
