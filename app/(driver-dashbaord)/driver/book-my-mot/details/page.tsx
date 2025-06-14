@@ -99,7 +99,7 @@ export default function Details() {
     }
 
     return (
-        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full mx-auto">
             {/* Main Content Layout */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                 {/* Left Column - Garage Details */}

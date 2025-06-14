@@ -138,7 +138,7 @@ export default function MyVehicles() {
     }
 
     return (
-        <div className="p-6">
+        <div className="w-full mx-auto">
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">My Vehicles</h1>
