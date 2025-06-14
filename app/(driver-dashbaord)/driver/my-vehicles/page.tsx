@@ -40,6 +40,8 @@ export default function MyVehicles() {
     ])
 
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+    const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
     const [isLoading, setIsLoading] = useState(false)
 
     const { register, handleSubmit, formState: { errors }, reset } = useForm<AddVehicleForm>()
@@ -101,7 +103,18 @@ export default function MyVehicles() {
         reset()
     }
 
-    const removeVehicle = (vehicleId: number) => {
+    const handleVehicleClick = (vehicle: Vehicle) => {
+        setSelectedVehicle(vehicle)
+        setIsDetailsModalOpen(true)
+    }
+
+    const handleCloseDetailsModal = () => {
+        setIsDetailsModalOpen(false)
+        setSelectedVehicle(null)
+    }
+
+    const removeVehicle = (vehicleId: number, event: React.MouseEvent) => {
+        event.stopPropagation() // Prevent opening details modal when clicking remove button
         setVehicles(prev => prev.filter(v => v.id !== vehicleId))
         toast.success('Vehicle removed successfully!')
     }
@@ -115,14 +128,16 @@ export default function MyVehicles() {
             </div>
 
             {/* Vehicles Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {/* Existing Vehicles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 bg-[#F8FAFB] p-4 rounded-[16px]">
                 {vehicles.map((vehicle) => (
-                    <div key={vehicle.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 relative group hover:shadow-md transition-shadow">
-                        {/* Remove Button */}
+                    <div 
+                        key={vehicle.id} 
+                        className="cursor-pointer rounded-lg shadow-sm border border-gray-200 relative group hover:shadow-md transition-shadow"
+                        onClick={() => handleVehicleClick(vehicle)}
+                    >
                         <button
-                            onClick={() => removeVehicle(vehicle.id)}
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                            onClick={(e) => removeVehicle(vehicle.id, e)}
+                            className="absolute top-2 cursor-pointer right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white rounded-full p-1 z-10"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -132,9 +147,9 @@ export default function MyVehicles() {
                             <Image
                                 src={vehicle.image}
                                 alt={`${vehicle.make} ${vehicle.model}`}
-                                width={120}
-                                height={80}
-                                className="object-contain"
+                                width={100}
+                                height={100}
+                                className="object-contain w-[100px] h-[100px]"
                             />
                         </div>
 
@@ -144,14 +159,12 @@ export default function MyVehicles() {
                                 {vehicle.registrationNumber}
                             </div>
                         </div>
-
-                       
                     </div>
                 ))}
 
                 {/* Add Vehicle Card */}
                 <div
-                    className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#19CA32] hover:bg-green-50 transition-colors min-h-[280px]"
+                    className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[#19CA32] hover:bg-green-50 transition-colors"
                     onClick={() => setIsModalOpen(true)}
                 >
                     <div className="w-12 h-12 bg-[#19CA32] rounded-full flex items-center justify-center mb-4">
@@ -174,12 +187,6 @@ export default function MyVehicles() {
                     {/* Header */}
                     <div className="bg-[#19CA32] text-white p-4 flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Add Another Vehicle</h2>
-                        <button
-                            onClick={handleCloseModal}
-                            className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
                     </div>
 
                     {/* Form Content */}
@@ -219,6 +226,64 @@ export default function MyVehicles() {
                         </div>
                     </form>
                 </div>
+            </CustomReusableModal>
+
+            {/* Vehicle Details Modal */}
+            <CustomReusableModal
+                isOpen={isDetailsModalOpen}
+                onClose={handleCloseDetailsModal}
+                title={selectedVehicle ? `MOT Details for ${selectedVehicle.registrationNumber}` : "Vehicle Details"}
+                showHeader={false}
+                className="max-w-sm"
+            >
+                {selectedVehicle && (
+                    <div className="bg-white rounded-lg overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-[#19CA32] text-white p-4 text-center">
+                            <h2 className="text-lg font-semibold">MOT check</h2>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4 space-y-4">
+                            {/* MOT Status */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700 font-medium">MOT</span>
+                                <span className="text-sm text-gray-600">
+                                    Expired {new Date(selectedVehicle.expiryDate).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })}
+                                </span>
+                            </div>
+
+                            {/* Road Tax Status */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700 font-medium">Road Tax</span>
+                                <span className="text-sm text-gray-600">
+                                    Expired {new Date(selectedVehicle.roadTax).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    }) || 'N/A'}
+                                </span>
+                            </div>
+
+                            {/* Model Variant */}
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-700 font-medium">Model variant</span>
+                                <span className="text-sm text-gray-600">
+                                    {selectedVehicle.make} {selectedVehicle.model}
+                                </span>
+                            </div>
+
+                            {/* MOT Reports Button */}
+                            <Button className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 mt-6 rounded-lg">
+                                MOT Reports
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </CustomReusableModal>
         </div>
     )
