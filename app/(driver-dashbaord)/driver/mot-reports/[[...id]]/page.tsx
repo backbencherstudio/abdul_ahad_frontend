@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Download, Printer, Car, Loader2 } from 'lucide-react'
+import { Download, Car, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import VehiclesCardReusble from '@/components/reusable/Dashboard/Driver/VehiclesCardReusble'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import Link from 'next/link'
-
+import { IoNotifications } from 'react-icons/io5'
+import { TiArrowSortedDown } from "react-icons/ti";
+import Image from 'next/image'
 // Types
 interface MOTReport {
     id: number
@@ -132,7 +134,11 @@ const ReportField = ({ label, value, className = "bg-gray-50 border-gray-300 tex
 )
 
 // Report Card Component
-const ReportCard = ({ report, vehicleData }: { report: MOTReport; vehicleData: Vehicle }) => {
+const ReportCard = ({ report, vehicleData, onDownloadClick }: {
+    report: MOTReport;
+    vehicleData: Vehicle;
+    onDownloadClick: (report: MOTReport, vehicle: Vehicle) => void;
+}) => {
     const styles = getStatusStyles(report.motStatus)
 
     return (
@@ -150,11 +156,12 @@ const ReportCard = ({ report, vehicleData }: { report: MOTReport; vehicleData: V
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" className="flex items-center gap-1 px-3 py-1">
-                            <Printer className="w-3 h-3" />
+                            <IoNotifications className="text-4xl" />
                         </Button>
                         <Button
                             size="sm"
                             className="bg-[#19CA32] hover:bg-[#16b82e] text-white px-3 py-1 flex items-center gap-1"
+                            onClick={() => onDownloadClick(report, vehicleData)}
                         >
                             <Download className="w-3 h-3" />
                             Download Reports
@@ -226,6 +233,12 @@ export default function MotReports() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedVehicleForModal, setSelectedVehicleForModal] = useState<MotReportWithVehicle | null>(null)
+
+    // Download Modal State
+    const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false)
+    const [selectedReportForDownload, setSelectedReportForDownload] = useState<{ report: MOTReport; vehicle: Vehicle } | null>(null)
+    const [v5cNumber, setV5cNumber] = useState('')
+    const [showWhereToFind, setShowWhereToFind] = useState(false)
 
     // Get registration from URL
     const getRegistrationFromURL = useCallback(() => {
@@ -317,6 +330,32 @@ export default function MotReports() {
         setSelectedVehicleForModal(null)
     }
 
+    // Download Modal Handlers
+    const handleDownloadClick = (report: MOTReport, vehicle: Vehicle) => {
+        setSelectedReportForDownload({ report, vehicle })
+        setIsDownloadModalOpen(true)
+        setV5cNumber('')
+        setShowWhereToFind(false)
+    }
+
+    const handleCloseDownloadModal = () => {
+        setIsDownloadModalOpen(false)
+        setSelectedReportForDownload(null)
+        setV5cNumber('')
+        setShowWhereToFind(false)
+    }
+
+    const handleDownloadCertificates = () => {
+        if (v5cNumber.length === 11) {
+            // Here you can implement the actual download logic
+            console.log('Downloading certificates for V5C:', v5cNumber)
+            alert('Download started!')
+            handleCloseDownloadModal()
+        } else {
+            alert('Please enter a valid 11 digit V5C number.')
+        }
+    }
+
     // Get selected vehicle
     const selectedVehicle = vehicles.find(v => v.registrationNumber === selectedVehicleReg)
 
@@ -368,7 +407,7 @@ export default function MotReports() {
                         {!isLoadingDetails && showDetails && selectedVehicle && (
                             <div className="space-y-6">
                                 {filteredReports.map((report) => (
-                                    <ReportCard key={report.id} report={report} vehicleData={selectedVehicle} />
+                                    <ReportCard key={report.id} report={report} vehicleData={selectedVehicle} onDownloadClick={handleDownloadClick} />
                                 ))}
                                 {filteredReports.length === 0 && <NoReportsMessage activeTab={activeTab} />}
                             </div>
@@ -421,6 +460,79 @@ export default function MotReports() {
                         </div>
                     </div>
                 )}
+            </CustomReusableModal>
+
+            {/* Download Modal */}
+            <CustomReusableModal
+                isOpen={isDownloadModalOpen}
+                onClose={handleCloseDownloadModal}
+                title="Download Test Certificates"
+                showHeader={false}
+                className="max-w-md"
+            >
+                <div className="bg-white rounded-lg overflow-hidden">
+                    {/* Green Header */}
+                    <div className="bg-[#19CA32] text-white p-4 text-center relative">
+                        <h2 className="text-lg font-semibold">Download Test Certificates</h2>
+
+                    </div>
+
+                    {/* Form Content */}
+                    <div className="p-6 space-y-4">
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                What is your vehicle log book (V5C) document reference number?
+                            </h3>
+
+                            <div className="space-y-2">
+                                <Label className="text-sm text-gray-700">
+                                    Document reference number <span className="text-gray-500">(This is an 11 digit number)</span>
+                                </Label>
+                                <Input
+                                    value={v5cNumber}
+                                    onChange={(e) => setV5cNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                                    placeholder="Enter 11 digit number"
+                                    className="border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32]"
+                                    maxLength={11}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Where to find section */}
+                        <div className="border-t pt-4">
+                            <button
+                                onClick={() => setShowWhereToFind(!showWhereToFind)}
+                                className="text-gray-700 cursor-pointer font-medium flex items-center gap-1 hover:text-gray-900"
+                            >
+                                Where can I find this number?
+                                <span className={`transform transition-transform  ${showWhereToFind ? 'rotate-180' : ''}`}>
+                                    <TiArrowSortedDown className='text-2xl' />
+                                </span>
+                            </button>
+
+                            {showWhereToFind && (
+                                <div className="mt-4 p-4 rounded-lg">
+                                    <Image
+                                        src="/Image/driver/testCetification.png"
+                                        alt="V5C Document showing reference number location"
+                                        width={1000}
+                                        height={1000}
+                                        className='w-full h-full object-contain'
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Download Button */}
+                        <Button
+                            onClick={handleDownloadCertificates}
+                            className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-base"
+                            disabled={v5cNumber.length !== 11}
+                        >
+                            Download Certificates
+                        </Button>
+                    </div>
+                </div>
             </CustomReusableModal>
         </div>
     )
