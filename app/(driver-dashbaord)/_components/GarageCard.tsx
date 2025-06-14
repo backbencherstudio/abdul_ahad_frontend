@@ -1,6 +1,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 interface Garage {
     id: number
@@ -27,6 +28,11 @@ interface GarageCardProps {
 }
 
 export default function GarageCard({ foundGarages }: GarageCardProps) {
+    const router = useRouter()
+
+    const handleMoreDetails = (garageId: number) => {
+        router.push(`/driver/book-my-mot/details?id=${garageId}`)
+    }
     return (
         <div className="space-y-4">
             {foundGarages.map((garage) => (
@@ -72,7 +78,8 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
 
                             <Button
                                 variant="outline"
-                                className="w-full border-[#19CA32] text-[#19CA32] hover:bg-[#19CA32] hover:text-white py-3 text-sm rounded-lg"
+                                className="w-full cursor-pointer border-[#19CA32] text-[#19CA32] hover:bg-[#19CA32] hover:text-white py-3 text-sm rounded-lg"
+                                onClick={() => handleMoreDetails(garage.id)}
                             >
                                 More Details
                             </Button>
