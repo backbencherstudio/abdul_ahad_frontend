@@ -76,13 +76,13 @@ const LoadingSpinner = ({ message = "Loading..." }: { message?: string }) => (
 
 // No Vehicle Selected State
 const NoVehicleSelected = () => (
-    <div className="flex items-center justify-center min-h-[40vh]">
+    <div className="flex items-center justify-center min-h-[30vh] sm:min-h-[40vh] px-4">
         <div className="text-center max-w-md">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Car className="w-12 h-12 text-gray-400" />
+            <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <Car className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
             </div>
-            <div className="text-xl font-semibold text-gray-900 mb-3">No Vehicle Selected</div>
-            <p className="text-gray-600 mb-6">
+            <div className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">No Vehicle Selected</div>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
                 Click on a vehicle card above and then click "MOT Reports" to view details.
             </p>
         </div>
@@ -97,18 +97,18 @@ const Header = ({ showTabs = false, activeTab, onTabChange, tabs }: {
     onTabChange?: (tab: TabType) => void
     tabs?: readonly TabType[]
 }) => (
-    <div className="flex items-center justify-between mb-6">
-        <div >
-            <h1 className="text-2xl font-bold text-gray-900">MOT Reports</h1>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
+        <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">MOT Reports</h1>
         </div>
 
         {showTabs && tabs && activeTab && onTabChange && (
-            <div className="bg-gray-100 p-1 rounded-full flex items-center gap-1">
+            <div className="bg-gray-100 p-1 rounded-full flex items-center gap-1 w-full sm:w-auto overflow-x-auto">
                 {tabs.map((tab) => (
                     <button
                         key={tab}
                         onClick={() => onTabChange(tab)}
-                        className={`px-4 py-2 text-sm font-medium rounded-full cursor-pointer transition-all duration-200 ${activeTab === tab
+                        className={`px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full cursor-pointer transition-all duration-200 whitespace-nowrap ${activeTab === tab
                             ? 'bg-white text-gray-900 shadow-sm'
                             : 'text-gray-500 hover:text-gray-700'
                             }`}
@@ -144,31 +144,32 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {/* Header */}
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="text-lg font-bold text-gray-900">
+            <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                        <div className="text-base sm:text-lg font-bold text-gray-900">
                             {vehicleData.make.toUpperCase()} {vehicleData.model.toUpperCase()}
                         </div>
-                        <span className={`px-3 py-1 rounded text-sm font-medium ${styles.badge}`}>
+                        <span className={`px-3 py-1 rounded text-sm font-medium ${styles.badge} w-fit`}>
                             {report.motStatus}
                         </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="flex items-center gap-1 px-3 py-1">
-                            <IoNotifications className="text-4xl" />
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <Button variant="outline" size="sm" className="flex items-center gap-1 px-2 sm:px-3 py-1">
+                            <IoNotifications className="text-lg sm:text-xl" />
                         </Button>
                         <Button
                             size="sm"
-                            className="bg-[#19CA32] hover:bg-[#16b82e] text-white px-3 py-1 flex items-center gap-1"
+                            className="bg-[#19CA32] hover:bg-[#16b82e] text-white px-2 sm:px-3 py-1 flex items-center gap-1 text-xs sm:text-sm"
                             onClick={() => onDownloadClick(report, vehicleData)}
                         >
                             <Download className="w-3 h-3" />
-                            Download Reports
+                            <span className="hidden sm:inline">Download Reports</span>
+                            <span className="sm:hidden">Download</span>
                         </Button>
                     </div>
                 </div>
-                <div className="mt-2">
+                <div className="mt-2 sm:mt-3">
                     <div className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-bold inline-block">
                         {vehicleData.registrationNumber}
                     </div>
@@ -176,13 +177,13 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
             </div>
 
             {/* Content */}
-            <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div className="space-y-4">
+            <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                    <div className="space-y-3 sm:space-y-4">
                         <ReportField label="Colour" value={report.color} />
                         <ReportField label="MOT test number" value={report.motTestNumber} />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         <ReportField label="Fuel type" value={report.fuelType} />
                         <ReportField
                             label="MOT Pass Date"
@@ -190,7 +191,7 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
                             className={`border-2 text-gray-900 ${styles.passDate}`}
                         />
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4 sm:col-span-2 xl:col-span-1">
                         <ReportField label="Date registered" value={formatDate(report.registrationDate)} />
                         <ReportField
                             label="MOT expired on"
@@ -206,9 +207,9 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
 
 // No Reports Message
 const NoReportsMessage = ({ activeTab }: { activeTab: TabType }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-        <div className="text-gray-400 text-lg mb-2">No {activeTab.toLowerCase()} reports found</div>
-        <p className="text-gray-600">There are no MOT reports available for the selected filter.</p>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sm:p-8 text-center">
+        <div className="text-gray-400 text-base sm:text-lg mb-2">No {activeTab.toLowerCase()} reports found</div>
+        <p className="text-sm sm:text-base text-gray-600">There are no MOT reports available for the selected filter.</p>
     </div>
 )
 
@@ -367,12 +368,12 @@ export default function MotReports() {
     }) || []
 
     return (
-        <div className="p-6 mx-auto">
+        <div className="w-full mx-auto">
             {/* Error */}
             {error && (
-                <div className="bg-white rounded-md shadow-sm p-6 text-center">
-                    <div className="text-red-500 text-lg mb-2">Error</div>
-                    <p className="text-gray-600 mb-4">{error}</p>
+                <div className="bg-white rounded-md shadow-sm p-4 sm:p-6 text-center">
+                    <div className="text-red-500 text-base sm:text-lg mb-2">Error</div>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">{error}</p>
                     <Button onClick={fetchData} className="bg-[#19CA32] hover:bg-[#16b82e] text-white">
                         Try Again
                     </Button>
@@ -383,7 +384,7 @@ export default function MotReports() {
             {!error && (
                 <>
                     {/* Vehicle Cards - Always visible */}
-                    <div className="mb-6">
+                    <div className="mb-4 sm:mb-6">
                         <VehiclesCardReusble
                             motReports={motReports}
                             onVehicleClick={handleVehicleClick}
@@ -405,7 +406,7 @@ export default function MotReports() {
                         {isLoadingDetails && <LoadingSpinner message="Loading vehicle details..." />}
 
                         {!isLoadingDetails && showDetails && selectedVehicle && (
-                            <div className="space-y-6">
+                            <div className="space-y-4 sm:space-y-6">
                                 {filteredReports.map((report) => (
                                     <ReportCard key={report.id} report={report} vehicleData={selectedVehicle} onDownloadClick={handleDownloadClick} />
                                 ))}
@@ -424,7 +425,7 @@ export default function MotReports() {
                 onClose={handleCloseModal}
                 title={selectedVehicleForModal ? `MOT Details for ${selectedVehicleForModal.vehicleReg}` : "MOT Details"}
                 showHeader={false}
-                className="max-w-sm"
+                className="max-w-sm sm:max-w-md mx-4"
             >
                 {selectedVehicleForModal && (
                     <div className="bg-white rounded-lg overflow-hidden">
@@ -433,27 +434,27 @@ export default function MotReports() {
                         </div>
                         <div className="p-4 space-y-4">
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-700 font-medium">MOT</span>
-                                <span className="text-sm text-gray-600">
+                                <span className="text-gray-700 font-medium text-sm sm:text-base">MOT</span>
+                                <span className="text-xs sm:text-sm text-gray-600">
                                     Expired {formatDate(selectedVehicleForModal.motExpiryDate)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-700 font-medium">Road Tax</span>
-                                <span className="text-sm text-gray-600">
+                                <span className="text-gray-700 font-medium text-sm sm:text-base">Road Tax</span>
+                                <span className="text-xs sm:text-sm text-gray-600">
                                     Expired {formatDate(selectedVehicleForModal.motExpiryDate)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-700 font-medium">Model variant</span>
-                                <span className="text-sm text-gray-600">
+                                <span className="text-gray-700 font-medium text-sm sm:text-base">Model variant</span>
+                                <span className="text-xs sm:text-sm text-gray-600">
                                     {selectedVehicleForModal.vehicleMake} {selectedVehicleForModal.vehicleModel}
                                 </span>
                             </div>
 
                             <Link
                                 href={`/driver/mot-reports/${selectedVehicleForModal.vehicleReg}`}
-                                className={`w-full bg-[${BRAND_COLOR}] hover:bg-[#16b82e] text-white font-medium py-2 mt-6 rounded-lg block text-center`}
+                                className={`w-full bg-[${BRAND_COLOR}] hover:bg-[#16b82e] text-white font-medium py-2 mt-6 rounded-lg block text-center text-sm sm:text-base`}
                             >
                                 MOT Reports
                             </Link>
@@ -468,31 +469,31 @@ export default function MotReports() {
                 onClose={handleCloseDownloadModal}
                 title="Download Test Certificates"
                 showHeader={false}
-                className="max-w-md"
+                className="max-w-md sm:max-w-lg mx-4"
             >
                 <div className="bg-white rounded-lg overflow-hidden">
                     {/* Green Header */}
                     <div className="bg-[#19CA32] text-white p-4 text-center relative">
-                        <h2 className="text-lg font-semibold">Download Test Certificates</h2>
+                        <h2 className="text-base sm:text-lg font-semibold">Download Test Certificates</h2>
 
                     </div>
 
                     {/* Form Content */}
-                    <div className="p-6 space-y-4">
+                    <div className="p-4 sm:p-6 space-y-4">
                         <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                                 What is your vehicle log book (V5C) document reference number?
                             </h3>
 
                             <div className="space-y-2">
-                                <Label className="text-sm text-gray-700">
+                                <Label className="text-xs sm:text-sm text-gray-700">
                                     Document reference number <span className="text-gray-500">(This is an 11 digit number)</span>
                                 </Label>
                                 <Input
                                     value={v5cNumber}
                                     onChange={(e) => setV5cNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
                                     placeholder="Enter 11 digit number"
-                                    className="border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32]"
+                                    className="border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] text-sm sm:text-base"
                                     maxLength={11}
                                 />
                             </div>
@@ -502,11 +503,11 @@ export default function MotReports() {
                         <div className="border-t pt-4">
                             <button
                                 onClick={() => setShowWhereToFind(!showWhereToFind)}
-                                className="text-gray-700 cursor-pointer font-medium flex items-center gap-1 hover:text-gray-900"
+                                className="text-gray-700 cursor-pointer font-medium flex items-center gap-1 hover:text-gray-900 text-sm sm:text-base"
                             >
                                 Where can I find this number?
                                 <span className={`transform transition-transform  ${showWhereToFind ? 'rotate-180' : ''}`}>
-                                    <TiArrowSortedDown className='text-2xl' />
+                                    <TiArrowSortedDown className='text-xl sm:text-2xl' />
                                 </span>
                             </button>
 
@@ -526,7 +527,7 @@ export default function MotReports() {
                         {/* Download Button */}
                         <Button
                             onClick={handleDownloadCertificates}
-                            className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-base"
+                            className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm sm:text-base"
                             disabled={v5cNumber.length !== 11}
                         >
                             Download Certificates
