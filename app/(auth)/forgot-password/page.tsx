@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Check, ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Check, ArrowLeft, Loader2} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -313,9 +313,9 @@ export default function ForgotPassword() {
                                     </div>
                                 )}
 
-                                <Link href="/login" className="text-[#19CA32] underline text-sm flex justify-center font-medium hover:scale-105 transition-all duration-300">
+                                {/* <Link href="/login" className="text-[#19CA32] underline text-sm flex justify-center font-medium hover:scale-105 transition-all duration-300">
                                     Return to login
-                                </Link>
+                                </Link> */}
                             </div>
 
                         </form>

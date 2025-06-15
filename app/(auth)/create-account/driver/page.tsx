@@ -259,7 +259,7 @@ export default function DriverSignupPage() {
                             <div className="text-center pt-4">
                                 <span className="text-sm text-gray-600">
                                     Already have an account?{' '}
-                                    <Link href="/login" className="text-[#19CA32] hover:underline font-medium">
+                                    <Link href="/login/driver" className="text-[#19CA32] hover:underline font-medium">
                                         Log in
                                     </Link>
                                 </span>
