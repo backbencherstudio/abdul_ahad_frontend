@@ -67,9 +67,9 @@ export default function Header({ onMenuClick, user }: {
                     >
                         <HiMenuAlt2 className="h-6 w-6" />
                     </button>
-                    <div className="hidden md:block">
+                    {/* <div className="hidden md:block">
                         <h1 className="text-xl font-semibold text-[#737373]">{getPageTitle()}</h1>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Right Side - Notifications and User Profile */}

@@ -237,6 +237,28 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.9.tgz#50dea3616bc8191fb8e112283b49eaff03e78429"
   integrity sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==
 
+"@fullcalendar/core@^6.1.17":
+  version "6.1.17"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/core/-/core-6.1.17.tgz#faaffa100f020636a9b4c900462bdc6d652b58ef"
+  integrity sha512-0W7lnIrv18ruJ5zeWBeNZXO8qCWlzxDdp9COFEsZnyNjiEhUVnrW/dPbjRKYpL0edGG0/Lhs0ghp1z/5ekt8ZA==
+  dependencies:
+    preact "~10.12.1"
+
+"@fullcalendar/daygrid@^6.1.17":
+  version "6.1.17"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/daygrid/-/daygrid-6.1.17.tgz#3ff9d8d99da872631b661bf9ca5a47ed849421cf"
+  integrity sha512-K7m+pd7oVJ9fW4h7CLDdDGJbc9szJ1xDU1DZ2ag+7oOo1aCNLv44CehzkkknM6r8EYlOOhgaelxQpKAI4glj7A==
+
+"@fullcalendar/interaction@^6.1.17":
+  version "6.1.17"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/interaction/-/interaction-6.1.17.tgz#f0d14cb6f6c3cb7e2b20299dfb39a866232e2976"
+  integrity sha512-AudvQvgmJP2FU89wpSulUUjeWv24SuyCx8FzH2WIPVaYg+vDGGYarI7K6PcM3TH7B/CyaBjm5Rqw9lXgnwt5YA==
+
+"@fullcalendar/react@^6.1.17":
+  version "6.1.17"
+  resolved "https://registry.yarnpkg.com/@fullcalendar/react/-/react-6.1.17.tgz#30bf6e2da0d840bf432bcfd23b67dc3be71f6518"
+  integrity sha512-AA8soHhlfRH5dUeqHnfAtzDiXa2vrgWocJSK/F5qzw/pOxc9MqpuoS/nQBROWtHHg6yQUg3DoGqOOhi7dmylXQ==
+
 "@hookform/resolvers@^5.1.1":
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/@hookform/resolvers/-/resolvers-5.1.1.tgz#91074ba4fb749cc74e6465e75d38256146b0c4ab"
@@ -1644,6 +1666,11 @@ postcss@^8.4.41:
     nanoid "^3.3.11"
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
+
+preact@~10.12.1:
+  version "10.12.1"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-10.12.1.tgz#8f9cb5442f560e532729b7d23d42fd1161354a21"
+  integrity sha512-l8386ixSsBdbreOAkqtrwqHwdvR35ID8c3rKPa8lCWuO86dBi32QWHV4vfsZK1utLLFMvw+Z5Ad4XLkZzchscg==
 
 prop-types@^15.6.0, prop-types@^15.6.2:
   version "15.8.1"
