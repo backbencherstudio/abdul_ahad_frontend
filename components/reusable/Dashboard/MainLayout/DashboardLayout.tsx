@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 import Sidebar from '../Sidebar/Sidebar';
 import Header from '../Header/Header';
@@ -10,17 +11,44 @@ interface LayoutProps {
 
 const DashboardLayout = ({ children }: LayoutProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const pathname = usePathname();
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    const user = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        role: 'Driver',
-        avatar: '/api/placeholder/32/32'
-    }
+    // Dynamic user role detection based on URL
+    const getUserRole = () => {
+        if (pathname.startsWith('/garage')) {
+            return 'garage';
+        } else if (pathname.startsWith('/driver')) {
+            return 'driver';
+        }
+        return 'driver'; // default
+    };
+
+    // Dynamic user data based on role
+    const getUserData = () => {
+        const role = getUserRole();
+        
+        if (role === 'garage') {
+            return {
+                name: 'Garage Owner',
+                email: 'garage@example.com',
+                role: 'garage',
+                avatar: '/api/placeholder/32/32'
+            };
+        } else {
+            return {
+                name: 'Driver User',
+                email: 'driver@example.com', 
+                role: 'driver',
+                avatar: '/api/placeholder/32/32'
+            };
+        }
+    };
+
+    const user = getUserData();
 
     return (
         <div className="flex h-screen">

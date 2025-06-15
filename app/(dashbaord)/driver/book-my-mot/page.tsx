@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'react-toastify'
 
 import imgMot from '@/public/Image/admin/cardMot.png'
-import VehicleCard from '../../_components/VehicleCard'
-import GarageCard from '../../_components/GarageCard'
+import VehicleCard from '../../_components/Driver/VehicleCard'
+import GarageCard from '../../_components/Driver/GarageCard'
+
 
 interface FormData {
     registrationNumber: string

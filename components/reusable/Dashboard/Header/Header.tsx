@@ -27,6 +27,7 @@ export default function Header({ onMenuClick, user }: {
     const router = useRouter();
     const getPageTitle = () => {
         switch (pathname) {
+            // Driver routes
             case '/driver/book-my-mot':
                 return 'Book My MOT';
             case '/driver/my-vehicles':
@@ -39,8 +40,20 @@ export default function Header({ onMenuClick, user }: {
                 return 'Notifications';
             case '/driver/contact-us':
                 return 'Contact Us';
+
+            // Garage routes
+            case '/garage/garage-profile':
+                return 'Garage Profile';
+            case '/garage/pricing':
+                return 'Pricing';
+
             default:
-                return 'Book My MOT';
+                // Dynamic default based on user role
+                if (pathname.startsWith('/garage')) {
+                    return 'Garage Dashboard';
+                } else {
+                    return 'Driver Dashboard';
+                }
         }
     };
 
@@ -55,7 +68,7 @@ export default function Header({ onMenuClick, user }: {
                         <HiMenuAlt2 className="h-6 w-6" />
                     </button>
                     <div className="hidden md:block">
-                        {/* <h1 className="text-xl font-semibold text-[#737373]">{getPageTitle()}</h1> */}
+                        <h1 className="text-xl font-semibold text-[#737373]">{getPageTitle()}</h1>
                     </div>
                 </div>
 
@@ -113,7 +126,7 @@ export default function Header({ onMenuClick, user }: {
                                 </Avatar>
                                 <div className="hidden md:flex flex-col items-start select-none">
                                     <span className="text-sm font-medium text-gray-900 select-none">{user.name}</span>
-                                    <span className="text-xs text-gray-500 select-none">{user.role}</span>
+                                    <span className="text-xs text-gray-500 select-none capitalize">{user.role}</span>
                                 </div>
                                 <ChevronDown className="h-4 w-4 text-gray-500" />
                             </Button>
@@ -121,7 +134,10 @@ export default function Header({ onMenuClick, user }: {
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/driver/profile')}>
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                                const profileRoute = user.role === 'garage' ? '/garage/garage-profile' : '/driver/profile';
+                                router.push(profileRoute);
+                            }}>
                                 <User className="h-4 w-4" />
                                 <span>Profile</span>
                             </DropdownMenuItem>
