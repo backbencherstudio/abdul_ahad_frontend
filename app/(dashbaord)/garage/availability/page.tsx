@@ -392,24 +392,16 @@ export default function Availability() {
 
                     {/* Right Section - Calendar */}
                     <div className="h-fit">
-                        <div className="text-center mb-6">
+                        <div className="text-center">
                             <h2 className="text-xl font-bold text-gray-800 mb-4">Calendar & Availability</h2>
 
-                            {/* Week Date Range Display */}
-                            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                                <p className="text-sm text-gray-600">
-                                    Selected Week: <span className="font-semibold text-gray-800">
-                                        {getCurrentWeekDateRange().start} - {getCurrentWeekDateRange().end}
-                                    </span>
-                                </p>
-                            </div>
 
-                            <div className='bg-white rounded-lg p-5 '>
-                                {/* Month/Year Controls */}
-                                <div className="flex items-center justify-center gap-4 mb-6 ">
+
+                            <div className='bg-white rounded-lg p-5 mt-6'>
+                                <div className="flex items-center justify-center gap-4  mb-10">
                                     <button
                                         onClick={() => setSelectedMonth(prev => prev === 0 ? 11 : prev - 1)}
-                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        className="p-1 cursor-pointer hover:bg-gray-100 border border-gray-200 rounded-md transition-colors"
                                     >
                                         <ChevronLeft className="w-5 h-5" />
                                     </button>
@@ -444,7 +436,7 @@ export default function Availability() {
 
                                     <button
                                         onClick={() => setSelectedMonth(prev => prev === 11 ? 0 : prev + 1)}
-                                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                        className="p-1 border cursor-pointer hover:bg-gray-100 rounded-md transition-colors"
                                     >
                                         <ChevronRight className="w-5 h-5" />
                                     </button>
@@ -550,9 +542,6 @@ export default function Availability() {
                                         })()}
                                     </div>
                                 </div>
-
-
-
                                 {/* Action Buttons */}
                                 <div className="space-y-3">
                                     <button
@@ -620,8 +609,6 @@ export default function Availability() {
                                     </button>
                                 )}
                             </div>
-
-
                         </div>
                     </div>
                 </div>
