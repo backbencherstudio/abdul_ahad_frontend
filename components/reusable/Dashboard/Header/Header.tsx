@@ -12,7 +12,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function Header({ onMenuClick, user }: {
     onMenuClick: () => void, user: {
@@ -24,7 +24,7 @@ export default function Header({ onMenuClick, user }: {
 }) {
     const notificationCount = 3
     const pathname = usePathname();
-
+    const router = useRouter();
     const getPageTitle = () => {
         switch (pathname) {
             case '/driver/book-my-mot':
@@ -121,16 +121,12 @@ export default function Header({ onMenuClick, user }: {
                         <DropdownMenuContent align="end" className="w-56">
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="flex items-center gap-2">
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/driver/profile')}>
                                 <User className="h-4 w-4" />
                                 <span>Profile</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center gap-2">
-                                <Settings className="h-4 w-4" />
-                                <span>Settings</span>
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="flex items-center gap-2 text-red-600">
+                            <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
                                 <LogOut className="h-4 w-4" />
                                 <span>Log out</span>
                             </DropdownMenuItem>

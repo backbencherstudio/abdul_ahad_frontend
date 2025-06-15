@@ -18,7 +18,7 @@ export default function CreateAccountPage() {
             id: 2,
             icon: <GarageIcon />,
             title: 'Garage Sign Up',
-            href: '/login/garage'
+            href: '/create-account/pricing'
         }
     ]
     return (

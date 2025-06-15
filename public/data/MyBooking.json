@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "garageName": "John Doe",
+        "location": "1901 Thornridge Cir. Shiloh, Hawaii 81063",
+        "email": "john.doe@gmail.com",
+        "phone": "07890123456",
+        "bookingDate": "2021-01-01",
+        "totalAmount": 100,
+        "status": "pending"
+    },
+    {
+        "id": 2,
+        "garageName": "SpeedFix Garage",
+        "location": "123 Main St. Los Angeles, CA 90001",
+        "email": "contact@speedfix.com",
+        "phone": "07123456789",
+        "bookingDate": "2021-02-15",
+        "totalAmount": 250,
+        "status": "Rejected"
+    },
+    {
+        "id": 3,
+        "garageName": "AutoCare Plus",
+        "location": "456 Elm St. Dallas, TX 75201",
+        "email": "support@autocareplus.com",
+        "phone": "07987654321",
+        "bookingDate": "2021-03-10",
+        "totalAmount": 180,
+        "status": "Accepted"
+    },
+    {
+        "id": 4,
+        "garageName": "FixIt Garage",
+        "location": "789 Pine St. Miami, FL 33101",
+        "email": "fixit@garage.com",
+        "phone": "07012345678",
+        "bookingDate": "2021-04-05",
+        "totalAmount": 300,
+        "status": "pending"
+    },
+    {
+        "id": 5,
+        "garageName": "Urban Auto Works",
+        "location": "1600 Market St. San Francisco, CA 94103",
+        "email": "info@urbanauto.com",
+        "phone": "07543210987",
+        "bookingDate": "2021-05-20",
+        "totalAmount": 210,
+        "status": "Rejected"
+    },
+    {
+        "id": 6,
+        "garageName": "Elite Car Service",
+        "location": "99 Broadway, New York, NY 10006",
+        "email": "elite@carservice.com",
+        "phone": "07234567890",
+        "bookingDate": "2021-06-18",
+        "totalAmount": 400,
+        "status": "Accepted"
+    },
+    {
+        "id": 7,
+        "garageName": "QuickFix Auto",
+        "location": "25 Sunset Blvd. Las Vegas, NV 89101",
+        "email": "quickfix@auto.com",
+        "phone": "07700112233",
+        "bookingDate": "2021-07-12",
+        "totalAmount": 150,
+        "status": "Rejected"
+    },
+    {
+        "id": 8,
+        "garageName": "Precision Garage",
+        "location": "882 River St. Denver, CO 80202",
+        "email": "precision@garage.com",
+        "phone": "07654321098",
+        "bookingDate": "2021-08-08",
+        "totalAmount": 220,
+        "status": "pending"
+    },
+    {
+        "id": 9,
+        "garageName": "Metro Auto Care",
+        "location": "404 Liberty Ave. Boston, MA 02110",
+        "email": "metro@autocare.com",
+        "phone": "07432109876",
+        "bookingDate": "2021-09-25",
+        "totalAmount": 270,
+        "status": "Accepted"
+    },
+    {
+        "id": 10,
+        "garageName": "Ace Mechanics",
+        "location": "777 King Rd. Seattle, WA 98101",
+        "email": "ace@mechanics.com",
+        "phone": "07880011223",
+        "bookingDate": "2021-10-30",
+        "totalAmount": 350,
+        "status": "Rejected"
+    },
+    {
+        "id": 11,
+        "garageName": "Ace Mechanics",
+        "location": "777 King Rd. Seattle, WA 98101",
+        "email": "ace@mechanics.com",
+        "phone": "07880011223",
+        "bookingDate": "2021-10-30",
+        "totalAmount": 350,
+        "status": "Rejected"
+    },
+    {
+        "id": 12,
+        "garageName": "Ace Mechanics",
+        "location": "777 King Rd. Seattle, WA 98101",
+        "email": "ace@mechanics.com",
+        "phone": "07880011223",
+        "bookingDate": "2021-10-30",
+        "totalAmount": 350,
+        "status": "Rejected"
+    }
+]

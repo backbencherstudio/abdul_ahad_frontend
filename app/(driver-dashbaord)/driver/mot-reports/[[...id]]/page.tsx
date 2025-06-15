@@ -146,7 +146,7 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
             {/* Header */}
             <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <div className="flex  sm:items-center gap-2 sm:gap-4">
                         <div className="text-base sm:text-lg font-bold text-gray-900">
                             {vehicleData.make.toUpperCase()} {vehicleData.model.toUpperCase()}
                         </div>
@@ -160,12 +160,11 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
                         </Button>
                         <Button
                             size="sm"
-                            className="bg-[#19CA32] hover:bg-[#16b82e] text-white px-2 sm:px-3 py-1 flex items-center gap-1 text-xs sm:text-sm"
+                            className="bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white px-2 sm:px-3 py-1 flex items-center gap-1 text-xs sm:text-sm"
                             onClick={() => onDownloadClick(report, vehicleData)}
                         >
                             <Download className="w-3 h-3" />
-                            <span className="hidden sm:inline">Download Reports</span>
-                            <span className="sm:hidden">Download</span>
+                            Download Reports
                         </Button>
                     </div>
                 </div>
@@ -527,7 +526,7 @@ export default function MotReports() {
                         {/* Download Button */}
                         <Button
                             onClick={handleDownloadCertificates}
-                            className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm sm:text-base"
+                            className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm sm:text-base"
                             disabled={v5cNumber.length !== 11}
                         >
                             Download Certificates
