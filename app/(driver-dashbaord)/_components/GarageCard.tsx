@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import BookingModal from './BookingModal'
 
 interface Garage {
     id: number
@@ -29,9 +30,16 @@ interface GarageCardProps {
 
 export default function GarageCard({ foundGarages }: GarageCardProps) {
     const router = useRouter()
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+    const [selectedGarage, setSelectedGarage] = useState<Garage | null>(null)
 
     const handleMoreDetails = (garageId: number) => {
         router.push(`/driver/book-my-mot/details?id=${garageId}`)
+    }
+
+    const handleBookNow = (garage: Garage) => {
+        setSelectedGarage(garage)
+        setIsBookingModalOpen(true)
     }
     return (
         <div className="space-y-4">
@@ -72,7 +80,10 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
                         </div>
 
                         <div className="w-full space-y-2">
-                            <Button className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm rounded-lg">
+                            <Button 
+                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm rounded-lg"
+                                onClick={() => handleBookNow(garage)}
+                            >
                                 Book My MOT
                             </Button>
 
@@ -87,6 +98,13 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
                     </div>
                 </div>
             ))}
+
+            {/* Booking Modal */}
+            <BookingModal
+                isOpen={isBookingModalOpen}
+                onClose={() => setIsBookingModalOpen(false)}
+                garage={selectedGarage}
+            />
         </div>
     )
 }
