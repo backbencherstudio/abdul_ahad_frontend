@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "question": "How Much Does Membership Cost?",
+        "answer": "Membership is just £49 per calendar month- that’s it! No hidden fees, no commission. It's simple, straightforward monthly billing."
+    },
+    {
+        "id": 2,
+        "question": "What Is Included In The Memberhsip?",
+        "answer": "Unlimited opportunity to receive MOT bookings – 24/7. You’re in control: you set your prices, your hours, and your availability. Get seen by customers actively looking to book MOTs. Plus, there’s a big opportunity to upsell and offer extra services!"
+    },
+    {
+        "id": 3,
+        "question": "Who Is Eligible To Sign Up?",
+        "answer": "Our service is open to all active mot vehicle testing stations. At this time, we do not provide membership to freelancers or garages that outsource their mot testing."
+    },
+    {
+        "id": 4,
+        "question": "What Happens After I Sign Up?",
+        "answer": "After you sign up, your garage details will be reviewed for verification. Once approved, your listing will go live within 24 hours."
+    },
+    {
+        "id": 5,
+        "question": "How Do I Cancel My Membership?",
+        "answer": "Need to cancel your membership? No problem! Just head to the ‘Contact Us’ section on your dashboard and let us know. You’ll receive a confirmation email once the cancellation is processed."
+    },
+    {
+        "id": 6,
+        "question": "Are There Any Cancellation Fees?",
+        "answer": "You’re free to cancel anytime with no cancellation fees. Just a heads-up though- we don’t offer refunds for any unused time in your current billing cycle."
+    }
+]
