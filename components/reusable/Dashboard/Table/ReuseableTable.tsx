@@ -8,9 +8,10 @@ interface TableColumn {
 
 interface TableAction {
     label: string
-    onClick: (row: any) => void
+    onClick?: (row: any) => void
     className?: string
     variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning'
+    render?: (row: any) => React.ReactNode
 }
 
 interface ReusableTableProps {
@@ -38,8 +39,6 @@ export default function ReusableTable({
     // Use data directly (no pagination here)
     const tableData = data
 
-
-
     const renderCellContent = (column: TableColumn, row: any) => {
         const value = row[column.key]
 
@@ -61,7 +60,6 @@ export default function ReusableTable({
 
     return (
         <div className={` ${className}`}>
-
             {/* Table */}
             <div className="overflow-x-auto rounded-t-lg border border-gray-300">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -99,23 +97,29 @@ export default function ReusableTable({
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2">
                                             {actions.map((action, actionIndex) => (
-                                                <button
-                                                    key={actionIndex}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        action.onClick(row)
-                                                    }}
-                                                    className={`px-3 py-1 rounded text-xs font-medium ${action.variant === 'danger'
-                                                        ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                        : action.variant === 'success'
-                                                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                            : action.variant === 'warning'
-                                                                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                                        } ${action.className || ''}`}
-                                                >
-                                                    {action.label}
-                                                </button>
+                                                action.render ? (
+                                                    <React.Fragment key={actionIndex}>
+                                                        {action.render(row)}
+                                                    </React.Fragment>
+                                                ) : (
+                                                    <button
+                                                        key={actionIndex}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            action.onClick?.(row)
+                                                        }}
+                                                        className={`px-3 py-1 rounded text-xs font-medium ${action.variant === 'danger'
+                                                            ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                            : action.variant === 'success'
+                                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                                : action.variant === 'warning'
+                                                                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                                            } ${action.className || ''}`}
+                                                    >
+                                                        {action.label}
+                                                    </button>
+                                                )
                                             ))}
                                         </div>
                                     </td>
