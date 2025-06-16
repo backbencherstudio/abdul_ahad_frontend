@@ -13,7 +13,7 @@ export default function NotFound() {
           <h1 className="text-8xl font-bold text-red-500 mb-2">404</h1>
           <h2 className="text-3xl font-semibold text-gray-800 mb-4">Page Not Found</h2>
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
           <p className="text-gray-600 mb-3">
             The requested page could not be found:
@@ -27,20 +27,14 @@ export default function NotFound() {
           <p className="text-gray-600">
             The page you are looking for doesn't exist, has been moved, or the URL is incorrect.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-md transition-colors"
+              className="bg-[#19CA32] hover:bg-[#19CA32] text-white font-medium py-2 px-6 rounded-md transition-colors"
             >
               Go Back Home
             </Link>
-            <button
-              onClick={() => window.history.back()}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-md transition-colors"
-            >
-              Go Back
-            </button>
           </div>
         </div>
 

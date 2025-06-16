@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'react-toastify'
 import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/navigation'
 
 
 interface FormData {
@@ -27,7 +28,7 @@ export default function GarageCreateAccount() {
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
-
+    const router = useRouter()
     const onSubmit = async (data: FormData) => {
         setIsLoading(true)
         try {
@@ -43,6 +44,12 @@ export default function GarageCreateAccount() {
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword)
     }
+
+ 
+    const handleBack = () => {
+        router.back()
+    }
+
     return (
         <div className="min-h-screen flex flex-col lg:flex-row p-4  gap-4">
             <div
@@ -56,11 +63,11 @@ export default function GarageCreateAccount() {
                 <div className="relative z-10 p-6 lg:p-12 flex flex-col h-full">
                     <div className="flex-shrink-0">
                         {/* back button */}
-                        <div className='flex justify-start cursor-pointer border border-white  rounded-full p-2 w-fit group mb-4'>
-                            <Link href="/login" className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center group-hover:scale-150 transition-all duration-300'>
+                        <button onClick={handleBack} className='flex justify-start cursor-pointer border border-white  rounded-full p-2 w-fit group mb-4'>
+                            <div className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center group-hover:scale-150 transition-all duration-300'>
                                 <ArrowLeft className='w-4 h-4 text-white flex-shrink-0' />
-                            </Link>
-                        </div>
+                            </div>
+                        </button>
 
                         <div className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center'>
                             <Link href="/">simplymot.co.uk</Link>

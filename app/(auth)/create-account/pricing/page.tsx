@@ -26,11 +26,11 @@ export default function GaragePricing() {
                 <div className="relative z-10 p-6 lg:p-12 flex flex-col h-full">
                     <div className="flex-shrink-0">
                         {/* back button */}
-                        <div className='flex justify-start cursor-pointer border border-white  rounded-full p-2 w-fit group mb-4'>
-                            <Link href="/login" className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center group-hover:scale-150 transition-all duration-300'>
+                        <Link href="/create-account" className='flex justify-start cursor-pointer border border-white  rounded-full p-2 w-fit group mb-4'>
+                            <div className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center group-hover:scale-150 transition-all duration-300'>
                                 <ArrowLeft className='w-4 h-4 text-white flex-shrink-0' />
-                            </Link>
-                        </div>
+                            </div>
+                        </Link>
 
                         <div className='text-white font-bold text-4xl md:text-5xl xl:text-6xl font-arial-rounded text-center'>
                             <Link href="/">simplymot.co.uk</Link>
@@ -75,7 +75,7 @@ export default function GaragePricing() {
                         </p>
 
                         {/* CTA Button */}
-                        <button onClick={handleGarageSignup} className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg mb-8 transition-colors duration-200">
+                        <button onClick={handleGarageSignup} className="w-full cursor-pointer bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg mb-8 transition-colors duration-200">
                             Become a Member
                         </button>
 
