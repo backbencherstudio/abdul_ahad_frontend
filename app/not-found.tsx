@@ -1,10 +1,14 @@
 'use client'
+import { usePathname, useRouter } from 'next/navigation'
 
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
 
 export default function NotFound() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleBack = () => {
+    router.back()
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -29,18 +33,13 @@ export default function NotFound() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/"
-              className="bg-[#19CA32] hover:bg-[#19CA32] text-white font-medium py-2 px-6 rounded-md transition-colors"
+            <button
+              onClick={handleBack}
+              className="bg-[#19CA32] cursor-pointer hover:bg-[#19CA32] text-white font-medium py-2 px-6 rounded-md transition-colors"
             >
               Go Back Home
-            </Link>
+            </button>
           </div>
-        </div>
-
-        <div className="mt-8 text-sm text-gray-500">
-          <p>Error Code: 404 - Resource Not Found</p>
-          <p>Timestamp: {new Date().toLocaleString()}</p>
         </div>
       </div>
     </div>

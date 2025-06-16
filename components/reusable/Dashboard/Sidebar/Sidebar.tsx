@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { IoClose } from 'react-icons/io5';
 // import logo from '@/public/logo/mainLogo.png';
-import Image from 'next/image';
+
 import {
     HiSearch,
     HiTruck,
@@ -12,17 +12,18 @@ import {
     HiCalendar,
     HiBell,
     HiMail,
-    HiCog,
     HiUser,
     HiCurrencyDollar,
     HiCheckCircle,
     HiClipboardList,
     HiCreditCard,
     HiReceiptTax,
-    HiQuestionMarkCircle
+    HiQuestionMarkCircle,
+    HiHome
 } from 'react-icons/hi';
 import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import { toast } from 'react-toastify';
+import { LayoutGrid, Building2, Truck, Calendar } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -60,10 +61,16 @@ export default function Sidebar({ onClose, user }: SidebarProps) {
         { icon: HiMail, label: 'Contact Us', href: '/garage/contact-us', role: 'garage' },
         { icon: HiQuestionMarkCircle, label: 'FAQ', href: '/garage/faq', role: 'garage' },
 
+        // admin
+        { icon: LayoutGrid, label: 'Dashboard', href: '/admin/dashboard', role: 'admin' },
+        { icon: Building2, label: 'Manage Garages', href: '/admin/manage-garages', role: 'admin' },
+        { icon: Truck, label: 'Manage Drivers', href: '/admin/manage-drivers', role: 'admin' },
+        { icon: Calendar, label: 'Manage Bookings', href: '/admin/manage-bookings', role: 'admin' },
+
     ];
 
     const handleLogout = () => {
-        router.push('/login');
+        router.push('/');
         toast.success('Logout successful');
     };
 
