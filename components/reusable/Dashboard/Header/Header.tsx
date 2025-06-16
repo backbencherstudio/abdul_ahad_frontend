@@ -135,7 +135,7 @@ export default function Header({ onMenuClick, user }: {
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => {
-                                const profileRoute = user.role === 'garage' ? '/garage/garage-profile' : '/driver/profile';
+                                const profileRoute = user.role === 'garage' ? '/garage/profile' : '/driver/profile';
                                 router.push(profileRoute);
                             }}>
                                 <User className="h-4 w-4" />

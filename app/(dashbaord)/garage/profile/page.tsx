@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useRef } from 'react'
 import { useForm } from "react-hook-form"
-import { Eye, EyeOff, Edit2, User, Lock, Upload, ImageDownIcon } from "lucide-react"
+import { Eye, EyeOff, Edit2, User, Lock, ImageDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,8 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 // Types
 interface ProfileFormData {
     name: string
+    vtsNumber: string
+    primaryContact: string
     email: string
     phone: string
+    contactNumber: string
 }
 
 interface PasswordFormData {
@@ -52,7 +55,7 @@ const ProfileImageUpload = ({
             <div className="cursor-pointer" onClick={onImageClick}>
                 <Avatar className="w-24 h-24">
                     <AvatarImage src={profileImage} alt="Profile" />
-                    <AvatarFallback>RD</AvatarFallback>
+                    <AvatarFallback>G</AvatarFallback>
                 </Avatar>
                 <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#14A228] rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors">
                     <ImageDownIcon className="h-4 w-4" />
@@ -170,7 +173,7 @@ const TabButton = ({
 }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 text-sm lg:text-base cursor-pointer p-3 rounded-lg text-left transition-all ${isActive
+        className={`w-full flex  text-sm lg:text-base items-center gap-3 p-3 rounded-lg text-left transition-all cursor-pointer ${isActive
             ? 'bg-green-100 text-green-700'
             : 'text-gray-700 hover:bg-gray-50'
             }`}
@@ -184,7 +187,7 @@ const TabButton = ({
 // Main Component
 export default function Profile() {
     // State
-    const [activeTab, setActiveTab] = useState('profile')
+    const [activeTab, setActiveTab] = useState('AccountSettings')
     const [showOldPassword, setShowOldPassword] = useState(false)
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -195,9 +198,12 @@ export default function Profile() {
     // Forms
     const profileForm = useForm<ProfileFormData>({
         defaultValues: {
-            name: "Robbi Darwis",
+            name: "",
+            vtsNumber: "",
+            primaryContact: "",
             email: "",
             phone: "",
+            contactNumber: "",
         },
     })
 
@@ -291,16 +297,16 @@ export default function Profile() {
         <div className="">
             <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
                 {/* Sidebar */}
-                <div className="w-full lg:w-64">
+                <div className="w-full lg:w-64 ">
                     <Card className="shadow-sm">
                         <CardContent className="p-4">
-                            <div className="space-y-2 flex flex-row lg:flex-col gap-2">
+                            <div className=" flex flex-row lg:flex-col gap-2">
                                 <TabButton
-                                    isActive={activeTab === 'profile'}
-                                    onClick={() => setActiveTab('profile')}
+                                    isActive={activeTab === 'AccountSettings'}
+                                    onClick={() => setActiveTab('AccountSettings')}
                                     icon={User}
                                 >
-                                    My Profile
+                                    Account Settings
                                 </TabButton>
                                 <TabButton
                                     isActive={activeTab === 'password'}
@@ -316,10 +322,10 @@ export default function Profile() {
 
                 {/* Main Content */}
                 <div className="flex-1">
-                    {activeTab === 'profile' && (
+                    {activeTab === 'AccountSettings' && (
                         <Card className="shadow-sm">
                             <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
-                                <CardTitle className="text-2xl">My Profile</CardTitle>
+                                <CardTitle className="text-2xl">Account Settings</CardTitle>
                             </CardHeader>
                             <CardContent className="p-6">
                                 <ProfileImageUpload
@@ -332,14 +338,37 @@ export default function Profile() {
                                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                                     <EditableInput
                                         id="name"
-                                        label="Name"
-                                        placeholder="Enter your name"
+                                        label="Name of Garage"
+                                        placeholder="Name of Garage"
                                         editingField={editingField}
                                         onEditClick={handleEditClick}
                                         onBlur={handleFieldBlur}
                                         register={profileForm.register}
                                         errors={profileForm.formState.errors}
                                         validation={profileValidation.name}
+                                    />
+
+                                    <EditableInput
+                                        id="vtsNumber"
+                                        label="VTS Number"
+                                        placeholder="Enter VTS Number"
+                                        editingField={editingField}
+                                        onEditClick={handleEditClick}
+                                        onBlur={handleFieldBlur}
+                                        register={profileForm.register}
+                                        errors={profileForm.formState.errors}
+                                        validation={{ required: "VTS Number is required" }}
+                                    />
+                                    <EditableInput
+                                        id="primaryContact"
+                                        label="Primary Contact Person"
+                                        placeholder="Enter Primary Contact Person"
+                                        editingField={editingField}
+                                        onEditClick={handleEditClick}
+                                        onBlur={handleFieldBlur}
+                                        register={profileForm.register}
+                                        errors={profileForm.formState.errors}
+                                        validation={{ required: "Primary Contact Person is required" }}
                                     />
 
                                     <EditableInput
@@ -355,17 +384,18 @@ export default function Profile() {
                                         validation={profileValidation.email}
                                     />
 
+
                                     <EditableInput
-                                        id="phone"
-                                        label="Phone Number"
+                                        id="contactNumber"
+                                        label="Contact Number"
                                         type="tel"
-                                        placeholder="Enter your phone number"
+                                        placeholder="Enter contact number"
                                         editingField={editingField}
                                         onEditClick={handleEditClick}
                                         onBlur={handleFieldBlur}
                                         register={profileForm.register}
                                         errors={profileForm.formState.errors}
-                                        validation={profileValidation.phone}
+                                        validation={{ required: "Contact Number is required" }}
                                     />
 
                                     <Button
