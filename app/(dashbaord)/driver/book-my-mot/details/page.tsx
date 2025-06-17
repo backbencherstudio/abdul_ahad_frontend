@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { toast } from 'react-toastify'
-import BookingModal from '../../../_components/BookingModal'
+import BookingModal from '../../../_components/Driver/BookingModal'
 
 // ========================= CONSTANTS =========================
 const BRAND_COLOR = '#19CA32'

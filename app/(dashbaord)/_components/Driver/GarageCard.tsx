@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import BookingModal from './BookingModal'
 
+
 interface Garage {
     id: number
     name: string

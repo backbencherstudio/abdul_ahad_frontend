@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useRef } from 'react'
 import { useForm } from "react-hook-form"
-import { Eye, EyeOff, Edit2, User, Lock, Upload } from "lucide-react"
+import { Eye, EyeOff, Edit2, User, Lock, Upload, ImageDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,11 +36,11 @@ interface EditableInputProps {
 }
 
 // Components
-const ProfileImageUpload = ({ 
-    profileImage, 
-    onImageClick, 
-    onImageChange, 
-    fileInputRef 
+const ProfileImageUpload = ({
+    profileImage,
+    onImageClick,
+    onImageChange,
+    fileInputRef
 }: {
     profileImage: string
     onImageClick: () => void
@@ -55,7 +55,7 @@ const ProfileImageUpload = ({
                     <AvatarFallback>RD</AvatarFallback>
                 </Avatar>
                 <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#14A228] rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors">
-                    <Upload className="h-4 w-4" />
+                    <ImageDownIcon className="h-4 w-4" />
                 </div>
             </div>
             <input
@@ -69,17 +69,17 @@ const ProfileImageUpload = ({
     </div>
 )
 
-const EditableInput = ({ 
-    id, 
-    label, 
-    type = "text", 
-    placeholder, 
-    editingField, 
-    onEditClick, 
-    onBlur, 
-    register, 
-    errors, 
-    validation 
+const EditableInput = ({
+    id,
+    label,
+    type = "text",
+    placeholder,
+    editingField,
+    onEditClick,
+    onBlur,
+    register,
+    errors,
+    validation
 }: EditableInputProps) => (
     <div className="space-y-2">
         <Label htmlFor={id}>{label}</Label>
@@ -109,15 +109,15 @@ const EditableInput = ({
     </div>
 )
 
-const PasswordInput = ({ 
-    id, 
-    label, 
-    placeholder, 
-    showPassword, 
-    onTogglePassword, 
-    register, 
-    errors, 
-    validation 
+const PasswordInput = ({
+    id,
+    label,
+    placeholder,
+    showPassword,
+    onTogglePassword,
+    register,
+    errors,
+    validation
 }: {
     id: string
     label: string
@@ -157,11 +157,11 @@ const PasswordInput = ({
     </div>
 )
 
-const TabButton = ({ 
-    isActive, 
-    onClick, 
-    icon: Icon, 
-    children 
+const TabButton = ({
+    isActive,
+    onClick,
+    icon: Icon,
+    children
 }: {
     isActive: boolean
     onClick: () => void
@@ -170,15 +170,13 @@ const TabButton = ({
 }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${
-            isActive
-                ? 'bg-green-100 text-green-700'
-                : 'text-gray-700 hover:bg-gray-50'
-        }`}
+        className={`w-full flex items-center gap-3 text-sm lg:text-base cursor-pointer p-3 rounded-lg text-left transition-all ${isActive
+            ? 'bg-green-100 text-green-700'
+            : 'text-gray-700 hover:bg-gray-50'
+            }`}
     >
-        <Icon className={`h-5 w-5 ${
-            isActive ? 'text-green-600' : 'text-gray-500'
-        }`} />
+        <Icon className={`h-5 w-5 ${isActive ? 'text-green-600' : 'text-gray-500'
+            }`} />
         {children}
     </button>
 )
@@ -291,12 +289,12 @@ export default function Profile() {
 
     return (
         <div className="">
-            <div className="max-w-6xl mx-auto flex gap-6">
+            <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
                 {/* Sidebar */}
-                <div className="w-64">
+                <div className="w-full lg:w-64">
                     <Card className="shadow-sm">
                         <CardContent className="p-4">
-                            <div className="space-y-2">
+                            <div className="space-y-2 flex flex-row lg:flex-col gap-2">
                                 <TabButton
                                     isActive={activeTab === 'profile'}
                                     onClick={() => setActiveTab('profile')}
@@ -370,8 +368,8 @@ export default function Profile() {
                                         validation={profileValidation.phone}
                                     />
 
-                                    <Button 
-                                        type="submit" 
+                                    <Button
+                                        type="submit"
                                         className="w-full bg-[#14A228] hover:bg-green-600"
                                     >
                                         Save Change
@@ -421,8 +419,8 @@ export default function Profile() {
                                         validation={passwordValidation}
                                     />
 
-                                    <Button 
-                                        type="submit" 
+                                    <Button
+                                        type="submit"
                                         className="w-full bg-[#14A228] hover:bg-green-600"
                                     >
                                         Save Change

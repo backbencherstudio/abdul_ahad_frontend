@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-
+import { usePathname } from 'next/navigation';
 import Sidebar from '../Sidebar/Sidebar';
 import Header from '../Header/Header';
 interface LayoutProps {
@@ -10,17 +10,53 @@ interface LayoutProps {
 
 const DashboardLayout = ({ children }: LayoutProps) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const pathname = usePathname();
 
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    const user = {
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        role: 'Driver',
-        avatar: '/api/placeholder/32/32'
-    }
+    // Dynamic user role detection based on URL
+    const getUserRole = () => {
+        if (pathname.startsWith('/garage')) {
+            return 'garage';
+        } else if (pathname.startsWith('/driver')) {
+            return 'driver';
+        } else if (pathname.startsWith('/admin')) {
+            return 'admin';
+        }
+        return 'driver'; // default
+    };
+
+    // Dynamic user data based on role
+    const getUserData = () => {
+        const role = getUserRole();
+
+        if (role === 'garage') {
+            return {
+                name: 'Garage Owner',
+                email: 'garage@example.com',
+                role: 'garage',
+                avatar: '/api/placeholder/32/32'
+            };
+        } else if (role === 'driver') {
+            return {
+                name: 'Driver User',
+                email: 'driver@example.com',
+                role: 'driver',
+                avatar: '/api/placeholder/32/32'
+            };
+        } else if (role === 'admin') {
+            return {
+                name: 'Admin User',
+                email: 'admin@example.com',
+                role: 'admin',
+                avatar: '/api/placeholder/32/32'
+            };
+        }
+    };
+
+    const user = getUserData();
 
     return (
         <div className="flex h-screen">

@@ -20,7 +20,7 @@ export default function CustomReusableModal({
 }: CustomReusableModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className={`max-w-md mx-auto border border-[#19CA32] p-0 overflow-hidden ${className}`}>
+            <DialogContent className={`max-w-md mx-auto border  p-0 overflow-hidden ${className}`}>
                 <DialogHeader className={showHeader ? "p-4 pb-0" : "sr-only"}>
                     <div className="flex items-center justify-between">
                         <DialogTitle className={showHeader ? "text-lg font-semibold" : "sr-only"}>
