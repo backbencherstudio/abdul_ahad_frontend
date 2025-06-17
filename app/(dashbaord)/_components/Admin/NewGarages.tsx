@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
 import { MoreVertical, Trash2, Loader2 } from 'lucide-react'
 import {
@@ -12,59 +12,33 @@ import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReu
 import { toast } from 'react-toastify'
 import Link from 'next/link'
 
-const data = [
-    {
-        garage_name: 'QuickFix Auto – Londoncfbgdfgdfgdfgdfgdf',
-        name: 'Cody Fisher',
-        subscription: 'paid',
-        listing: 'Active',
-        message: 'send',
-        subscription_date: '2025-01-01',
-        status: 'active',
-        vts: '125896347',
-        email: 'nathan.roberts@example.com',
-        phone: '(308) 555-0121',
-        address: 'sadfsadf',
-    },
-    {
-        garage_name: 'QuickFix Auto – London',
-        name: 'Marvin McKinney',
-        subscription: 'unpaid',
-        listing: 'Active',
-        message: 'send',
-        subscription_date: '2025-01-01',
-        status: 'Deactivated',
-        vts: '125896348',
-        email: 'marvin.mckinney@example.com',
-        phone: '(308) 555-0122',
-        address: 'address 2',
-    },
-    {
-        garage_name: 'QuickFix Auto – Londonsdfsdfsdfsdfsds',
-        name: 'Guy Hawkins',
-        subscription: 'unpaid',
-        listing: 'Deactive',
-        message: 'send',
-        subscription_date: '2025-01-01',
-        status: 'active',
-        vts: '125896349',
-        email: 'guy.hawkins@example.com',
-        phone: '(308) 555-0123',
-        address: 'address 3',
-    }
-]
-
 const BRAND_COLOR = '#19CA32';
 const BRAND_COLOR_HOVER = '#16b82e';
 const DANGER_COLOR = '#F04438';
 
 export default function NewGarages() {
+    const [data, setData] = useState([]);
     const [openMessageModal, setOpenMessageModal] = React.useState(false);
     const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
     const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
     const [message, setMessage] = React.useState('');
     const [isSending, setIsSending] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch('/data/ManageGarageData.json');
+                const jsonData = await response.json();
+                setData(jsonData.slice(0, 3));
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                toast.error('Failed to load garage data');
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const columns = [
         {
