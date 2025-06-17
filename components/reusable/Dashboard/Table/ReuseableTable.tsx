@@ -3,6 +3,7 @@ import React from 'react'
 interface TableColumn {
     key: string
     label: string
+    width?: string
     render?: (value: any, row: any) => React.ReactNode
 }
 
@@ -62,14 +63,15 @@ export default function ReusableTable({
         <div className={` ${className}`}>
             {/* Table */}
             <div className="overflow-x-auto rounded-t-lg border border-gray-300">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-gray-200  w-full">
                     <thead className="bg-gray-50">
                         <tr>
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
                                     scope="col"
-                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    style={{ width: column.width }}
+                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider overflow-hidden"
                                 >
                                     {column.label}
                                 </th>
@@ -85,12 +87,18 @@ export default function ReusableTable({
                         {tableData.map((row, index) => (
                             <tr
                                 key={index}
-                                className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                className={`capitalize ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
                                 onClick={() => onRowClick?.(row)}
                             >
                                 {columns.map((column) => (
-                                    <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {renderCellContent(column, row)}
+                                    <td 
+                                        key={column.key} 
+                                        style={{ width: column.width }}
+                                        className="px-6 py-4 text-sm text-gray-900 overflow-hidden"
+                                    >
+                                        <div className="truncate">
+                                            {renderCellContent(column, row)}
+                                        </div>
                                     </td>
                                 ))}
                                 {actions && actions.length > 0 && (

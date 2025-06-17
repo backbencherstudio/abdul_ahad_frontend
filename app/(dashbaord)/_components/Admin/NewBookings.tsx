@@ -10,27 +10,34 @@ import Link from 'next/link'
 const data = [
     {
         name: 'Cody Fisher',
-        VehicleNumber: '1234567890',
+        registrationNumber: '1234567890',
         email: 'cody.fisher@gmail.com',
         phone: '+1234567890',
-        motDate: '2025-01-01',
-        reminder: 'Sent',
+        garage: 'QuickFix Auto – London',
+        bookingDate: '2025-01-01',
+        totalAmount: '100',
+        status: 'rejected',
+
     },
     {
         name: 'Marvin McKinney',
-        VehicleNumber: '1234567890',
+        registrationNumber: '1234567890',
         email: 'esther.howard@gmail.com',
         phone: '+1234567890',
-        motDate: '2025-01-01',
-        reminder: 'Sent',
+        garage: 'QuickFix Auto – London',
+        bookingDate: '2025-01-01',
+        totalAmount: '100',
+        status: 'Approved',
     },
     {
         name: 'Guy Hawkins',
-        VehicleNumber: '1234567890',
+        registrationNumber: '1234567890',
         email: 'jane.cooper@gmail.com',
         phone: '+1234567890',
-        motDate: '2025-01-01',
-        reminder: 'Sent',
+        garage: 'QuickFix Auto – London',
+        bookingDate: '2025-01-01',
+        totalAmount: '100',
+        status: 'approved',
     }
 ]
 
@@ -38,7 +45,7 @@ const BRAND_COLOR = '#19CA32';
 const BRAND_COLOR_HOVER = '#16b82e';
 const DANGER_COLOR = '#F04438';
 
-export default function NewDrivers() {
+export default function NewBookings() {
     const [openMessageModal, setOpenMessageModal] = React.useState(false);
     const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
     const [selectedDriver, setSelectedDriver] = React.useState<any>(null);
@@ -47,36 +54,35 @@ export default function NewDrivers() {
     const [isDeleting, setIsDeleting] = React.useState(false);
 
     const columns = [
-        { key: 'name', label: 'Drivers Name', width: '15%' },
-        { key: 'email', label: 'Email', width: '20%' },
+        { key: 'name', label: 'Customer Name', width: '14%' },
+        { key: 'registrationNumber', label: 'Registration Number', width: '15%' },
+        { key: 'email', label: 'Email', width: '15%' },
         { key: 'phone', label: 'Contact Number', width: '15%' },
-        { key: 'VehicleNumber', label: 'Vehicle Number', width: '15%' },
-        { key: 'motDate', label: 'MOT Date', width: '15%' },
+        { key: 'garage', label: 'Garage', width: '15%' },
+        { key: 'bookingDate', label: 'Booking Date', width: '10%' },
         {
-            key: 'reminder',
-            label: 'Reminder',
+            key: 'totalAmount',
+            label: 'Total',
+            width: '5%',
+            render: (value: string) => `$${parseFloat(value).toFixed(2)}`
+        },
+        {
+            key: 'status',
+            label: 'Status',
             width: '10%',
-            render: (value: string, row: any) => (
-                <span
-                    className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value.toLowerCase() === 'sent'
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : 'bg-red-100 text-red-800 border border-red-300'
-                        }`}
-                    onClick={() => {
-                        setSelectedDriver(row);
-                        setOpenMessageModal(true);
-                    }}
+            render: (value: string) => (
+                <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value.toLowerCase() === 'approved'
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : 'bg-red-100 text-red-800 border border-red-300'
+                    }`}
                 >
                     {value}
                 </span>
             )
-        },
+        }
     ]
 
-    const handleDelete = (row: any) => {
-        setSelectedDriver(row);
-        setOpenDeleteModal(true);
-    }
+
 
     // Send Message Handler
     const handleSendMessage = () => {
@@ -99,30 +105,21 @@ export default function NewDrivers() {
         }, 1500);
     };
 
-    const actions = [
-        {
-            label: '',
-            render: (row: any) => (
-                <Button variant="ghost" className="h-8 w-8 p-0 flex items-center justify-center bg-red-100 border border-red-300 cursor-pointer text-red-600 hover:bg-red-100" onClick={() => handleDelete(row)}>
-                    <Trash2 className="h-5 w-5" />
-                </Button>
-            )
-        }
-    ]
+
 
     return (
         <>
             <div className='flex justify-between items-center'>
-                <h1 className='text-2xl font-semibold '>New Drivers</h1>
+                <h1 className='text-2xl font-semibold '>New Bookings</h1>
                 <div>
-                    <Link href="/admin/manage-drivers" className='underline hover:text-green-600 cursor-pointer transition-all duration-300'>View All Drivers</Link>
+                    <Link href="/admin/manage-bookings" className='underline hover:text-green-600 cursor-pointer transition-all duration-300'>View All Bookings</Link>
                 </div>
             </div>
 
             <ReusableTable
                 data={data}
                 columns={columns}
-                actions={actions}
+                actions={[]}
                 className="mt-4"
             />
 
