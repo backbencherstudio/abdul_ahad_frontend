@@ -4,7 +4,6 @@ import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
 import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import { toast } from 'react-toastify'
-import Link from 'next/link'
 
 const BRAND_COLOR = '#19CA32';
 const BRAND_COLOR_HOVER = '#16b82e';
@@ -101,12 +100,12 @@ export default function ManageBookings() {
 
     const handleItemsPerPageChange = (newItemsPerPage: number) => {
         setItemsPerPage(newItemsPerPage);
-        setCurrentPage(1); // Reset to first page when items per page changes
+        setCurrentPage(1); 
     };
 
     const handleTabChange = (tabKey: string) => {
         setActiveTab(tabKey);
-        setCurrentPage(1); // Reset to first page when tab changes
+        setCurrentPage(1); 
     };
 
     const columns = [
