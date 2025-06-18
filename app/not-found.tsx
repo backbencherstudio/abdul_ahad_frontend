@@ -37,7 +37,7 @@ export default function NotFound() {
               onClick={handleBack}
               className="bg-[#19CA32] cursor-pointer hover:bg-[#19CA32] text-white font-medium py-2 px-6 rounded-md transition-colors"
             >
-              Go Back Home
+              Go Back
             </button>
           </div>
         </div>
