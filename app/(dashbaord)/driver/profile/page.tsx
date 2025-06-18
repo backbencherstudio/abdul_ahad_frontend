@@ -182,7 +182,7 @@ const TabButton = ({
 )
 
 // Main Component
-export default function Profile() {
+export default function DriverProfile() {
     // State
     const [activeTab, setActiveTab] = useState('profile')
     const [showOldPassword, setShowOldPassword] = useState(false)
