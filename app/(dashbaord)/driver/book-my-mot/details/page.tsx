@@ -1,15 +1,12 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { toast } from 'react-toastify'
 import BookingModal from '../../../_components/Driver/BookingModal'
 
-// ========================= CONSTANTS =========================
-const BRAND_COLOR = '#19CA32'
-const BRAND_COLOR_HOVER = '#16b82e'
+
 
 interface Garage {
     id: number
@@ -31,15 +28,11 @@ interface Garage {
     image: string
 }
 
-
-
-// Utility function to convert 24-hour time to 12-hour AM/PM format
 const formatTime = (time: string): string => {
-    // Handle various time formats from JSON
-    const cleanTime = time.replace(/[^0-9:]/g, '') // Remove non-digit/colon characters
+    const cleanTime = time.replace(/[^0-9:]/g, '') 
     const [hours, minutes] = cleanTime.split(':').map(Number)
 
-    if (isNaN(hours) || isNaN(minutes)) return time // Return original if parsing fails
+    if (isNaN(hours) || isNaN(minutes)) return time 
 
     const period = hours >= 12 ? 'PM' : 'AM'
     const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
@@ -48,7 +41,7 @@ const formatTime = (time: string): string => {
     return `${displayHours}:${displayMinutes} ${period}`
 }
 
-export default function Details() {
+function DetailsContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const garageId = searchParams.get('id')
@@ -88,10 +81,6 @@ export default function Details() {
 
         fetchGarageDetails()
     }, [garageId, router])
-
-    
-
-
 
     if (isLoading) {
         return (
@@ -169,7 +158,6 @@ export default function Details() {
                         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3">Opening Hours</h3>
                         <div className="text-xs sm:text-sm text-gray-500 mb-3">Opening hours may vary due to public holidays.</div>
 
-                        {/* Table format with horizontal scroll on mobile */}
                         <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[400px]">
@@ -207,7 +195,6 @@ export default function Details() {
                     {/* Map Section */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                         <div className="relative">
-                            {/* Dynamic Map based on garage location */}
                             <div className="h-64 sm:h-80 lg:h-96 relative">
                                 <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
                                     <Button
@@ -221,7 +208,6 @@ export default function Details() {
                                     </Button>
                                 </div>
 
-                                {/* Clean Map Embed - No overlay cards */}
                                 <iframe
                                     src={`https://maps.google.com/maps?q=${encodeURIComponent(garage.address + ', ' + garage.postcode)}&output=embed&z=15`}
                                     width="100%"
@@ -233,9 +219,7 @@ export default function Details() {
                                 ></iframe>
                             </div>
 
-                            {/* Action Section */}
                             <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-                                {/* Book Button */}
                                 <Button
                                     onClick={() => setIsBookingModalOpen(true)}
                                     className="w-full  bg-[#19CA32] hover:bg-[#16b82e] text-white font-semibold py-4 sm:py-6 text-base sm:text-lg rounded-lg cursor-pointer transition-all duration-200"
@@ -262,5 +246,17 @@ export default function Details() {
                 garage={garage}
             />
         </div>
+    )
+}
+
+export default function Details() {
+    return (
+        <Suspense fallback={
+            <div className="flex justify-center items-center min-h-96">
+                <div className="text-lg text-gray-600">Loading...</div>
+            </div>
+        }>
+            <DetailsContent />
+        </Suspense>
     )
 }

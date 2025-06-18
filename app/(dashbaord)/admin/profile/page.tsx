@@ -2,7 +2,6 @@
 import React, { useState, useRef } from 'react'
 import { useForm } from "react-hook-form"
 import { Eye, EyeOff, Edit2, User, Lock, Upload, ImageDownIcon } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -182,7 +181,7 @@ const TabButton = ({
 )
 
 // Main Component
-export default function DriverProfile() {
+export default function AdminProfile() {
     // State
     const [activeTab, setActiveTab] = useState('profile')
     const [showOldPassword, setShowOldPassword] = useState(false)

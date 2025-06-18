@@ -185,7 +185,7 @@ const TabButton = ({
 )
 
 // Main Component
-export default function Profile() {
+export default function GarageProfile() {
     // State
     const [activeTab, setActiveTab] = useState('AccountSettings')
     const [showOldPassword, setShowOldPassword] = useState(false)

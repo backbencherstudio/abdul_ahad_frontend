@@ -7,33 +7,6 @@ import { toast } from 'react-toastify'
 import { Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
-const data = [
-    {
-        name: 'Cody Fisher',
-        VehicleNumber: '1234567890',
-        email: 'cody.fisher@gmail.com',
-        phone: '+1234567890',
-        motDate: '2025-01-01',
-        reminder: 'Sent',
-    },
-    {
-        name: 'Marvin McKinney',
-        VehicleNumber: '1234567890',
-        email: 'esther.howard@gmail.com',
-        phone: '+1234567890',
-        motDate: '2025-01-01',
-        reminder: 'Sent',
-    },
-    {
-        name: 'Guy Hawkins',
-        VehicleNumber: '1234567890',
-        email: 'jane.cooper@gmail.com',
-        phone: '+1234567890',
-        motDate: '2025-01-01',
-        reminder: 'Sent',
-    }
-]
-
 const BRAND_COLOR = '#19CA32';
 const BRAND_COLOR_HOVER = '#16b82e';
 const DANGER_COLOR = '#F04438';
@@ -45,6 +18,27 @@ export default function NewDrivers() {
     const [message, setMessage] = React.useState('');
     const [isSending, setIsSending] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
+    const [data, setData] = React.useState<any[]>([]);
+    const [loading, setLoading] = React.useState(true);
+
+    // Fetch data from JSON file
+    React.useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch('/data/ManageDriver.json');
+                const jsonData = await response.json();
+                // Show only first 3 drivers
+                setData(jsonData.slice(0, 3));
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                toast.error('Failed to load drivers data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const columns = [
         { key: 'name', label: 'Drivers Name', width: '15%' },
@@ -58,7 +52,7 @@ export default function NewDrivers() {
             width: '10%',
             render: (value: string, row: any) => (
                 <span
-                    className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value.toLowerCase() === 'sent'
+                    className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value.toLowerCase() === 'send'
                         ? 'bg-green-100 text-green-800 border border-green-300'
                         : 'bg-red-100 text-red-800 border border-red-300'
                         }`}
@@ -119,12 +113,18 @@ export default function NewDrivers() {
                 </div>
             </div>
 
-            <ReusableTable
-                data={data}
-                columns={columns}
-                actions={actions}
-                className="mt-4"
-            />
+            {loading ? (
+                <div className="mt-4 flex items-center justify-center h-32">
+                    <div className="text-gray-500">Loading drivers...</div>
+                </div>
+            ) : (
+                <ReusableTable
+                    data={data}
+                    columns={columns}
+                    actions={actions}
+                    className="mt-4"
+                />
+            )}
 
             {/* Send Message Modal */}
             <CustomReusableModal

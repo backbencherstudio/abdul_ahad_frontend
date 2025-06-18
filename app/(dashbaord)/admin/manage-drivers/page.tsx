@@ -5,7 +5,7 @@ import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePa
 import { Button } from '@/components/ui/button'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import { toast } from 'react-toastify'
-import { Trash2 } from 'lucide-react'
+import { BellRing, Trash2 } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
@@ -218,7 +218,7 @@ export default function ManageDrivers() {
 
     return (
         <>
-            <div className='mb-6 flex justify-between items-center'>
+            <div className='mb-2 flex justify-between items-center flex-col lg:flex-row gap-4'>
                 <h1 className='text-2xl font-semibold'>List of All Drivers</h1>
 
                 {/* Date Filter Bar - always visible */}
@@ -324,14 +324,14 @@ export default function ManageDrivers() {
             </div>
 
             {/* Tabs and Search */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-4">
                 {/* Tabs on the left */}
-                <nav className="flex flex-wrap gap-2 sm:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
+                <nav className="flex flex-wrap w-full lg:w-auto gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
                     {tabs.map((tab) => (
                         <button
                             key={tab.key}
                             onClick={() => handleTabChange(tab.key)}
-                            className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${activeTab === tab.key
+                            className={`px-4 py-1  rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${activeTab === tab.key
                                 ? 'bg-white text-gray-900 shadow-sm'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                 }`}
@@ -342,7 +342,7 @@ export default function ManageDrivers() {
                 </nav>
 
                 {/* Search on the right */}
-                <div className="relative w-full sm:w-auto sm:max-w-md">
+                <div className="relative w-full lg:w-auto lg:max-w-md">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -353,7 +353,7 @@ export default function ManageDrivers() {
                         placeholder="Search drivers..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full sm:w-80 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                        className="block w-full lg:w-80 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                     />
                 </div>
             </div>
@@ -365,7 +365,9 @@ export default function ManageDrivers() {
                         size="sm"
                         onClick={() => toast.success("Reminder sent successfully!")}
                     >
+
                         Send Reminder
+                        <BellRing className='w-4 h-4' />
                     </Button>
                 </div>
             )}
@@ -397,7 +399,7 @@ export default function ManageDrivers() {
                 showHeader={false}
                 className="max-w-sm border-green-600"
             >
-                <div className="bg-white rounded-lg overflow-hidden">
+                <div className=" rounded-lg overflow-hidden">
                     {/* Header */}
                     <div className={`bg-[${BRAND_COLOR}] text-white p-4 flex items-center justify-between`}>
                         <h2 className="text-lg font-semibold">Send Message</h2>
@@ -428,15 +430,15 @@ export default function ManageDrivers() {
             <CustomReusableModal
                 isOpen={openDeleteModal}
                 onClose={() => setOpenDeleteModal(false)}
-                title="Delete Driver Account"
-                showHeader={false}
-                className="max-w-sm border-red-600"
+                className="max-w-sm border-[#EB3D4D]"
+                customHeader={
+                    <div className="bg-[#EB3D4D] text-white p-4 flex items-center justify-between rounded-t-lg">
+                        <h2 className="text-lg font-semibold">Delete Driver Account</h2>
+
+                    </div>
+                }
             >
                 <div className="bg-white rounded-lg overflow-hidden">
-                    {/* Header */}
-                    <div className={`bg-[${DANGER_COLOR}] text-white p-4 flex items-center justify-between`}>
-                        <h2 className="text-lg font-semibold">Delete Driver Account</h2>
-                    </div>
                     {/* Content */}
                     <div className="p-6 space-y-3">
                         <div className="text-sm font-medium text-gray-700">Drivers Name</div>
