@@ -23,6 +23,7 @@ export default function ManageDrivers() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [openMessageModal, setOpenMessageModal] = React.useState(false);
     const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
+    const [openSendReminderModal, setOpenSendReminderModal] = React.useState(false);
     const [selectedDriver, setSelectedDriver] = React.useState<any>(null);
     const [message, setMessage] = React.useState('');
     const [isSending, setIsSending] = React.useState(false);
@@ -166,17 +167,6 @@ export default function ManageDrivers() {
         setOpenDeleteModal(true);
     }
 
-    // Send Message Handler
-    const handleSendMessage = () => {
-        setIsSending(true);
-        setTimeout(() => {
-            setIsSending(false);
-            setOpenMessageModal(false);
-            setMessage('');
-            toast.success('Message sent successfully!');
-        }, 1500);
-    };
-
     // Delete Driver Handler
     const handleDeleteDriver = () => {
         setIsDeleting(true);
@@ -184,6 +174,18 @@ export default function ManageDrivers() {
             setIsDeleting(false);
             setOpenDeleteModal(false);
             toast.success('Driver deleted successfully!');
+        }, 1500);
+    };
+
+    // Send Reminder Handler
+    const handleSendReminder = () => {
+        setIsSending(true);
+        setTimeout(() => {
+            setIsSending(false);
+            setOpenSendReminderModal(false);
+            setMessage('');
+            setSelectedIds([]);
+            toast.success('Reminder sent successfully!');
         }, 1500);
     };
 
@@ -363,7 +365,7 @@ export default function ManageDrivers() {
                     <Button
                         className="bg-[#19CA32] hover:bg-[#16b82e] text-white cursor-pointer font-semibold rounded-md"
                         size="sm"
-                        onClick={() => toast.success("Reminder sent successfully!")}
+                        onClick={() => setOpenSendReminderModal(true)}
                     >
 
                         Send Reminder
@@ -416,7 +418,7 @@ export default function ManageDrivers() {
                         />
                         <button
                             className={`w-full bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
-                            onClick={handleSendMessage}
+                            onClick={handleSendReminder}
                             disabled={isSending}
                         >
                             {isSending ? <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> : null}
@@ -456,6 +458,46 @@ export default function ManageDrivers() {
                         >
                             {isDeleting ? <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> : null}
                             {isDeleting ? 'Deleting...' : 'Delete'}
+                        </button>
+                    </div>
+                </div>
+            </CustomReusableModal>
+
+            {/* Send Reminder Modal */}
+            <CustomReusableModal
+                isOpen={openSendReminderModal}
+                onClose={() => setOpenSendReminderModal(false)}
+                title="Send Reminder"
+                showHeader={false}
+                className="max-w-sm border-green-600"
+            >
+                <div className="rounded-lg overflow-hidden">
+                    {/* Header */}
+                    <div className={`bg-[${BRAND_COLOR}] text-white p-4 flex items-center justify-between`}>
+                        <h2 className="text-lg font-semibold">Send Reminder</h2>
+                    </div>
+                    {/* Content */}
+                    <div className="p-6">
+                        <div className="mb-4">
+                            <p className="text-sm text-gray-600 mb-2">
+                                Send reminder to {selectedIds.length} selected driver{selectedIds.length > 1 ? 's' : ''}
+                            </p>
+                        </div>
+                        <textarea
+                            className="w-full border rounded-md p-2 mb-4"
+                            placeholder="Enter your reminder message..."
+                            rows={4}
+                            value={message}
+                            onChange={e => setMessage(e.target.value)}
+                            disabled={isSending}
+                        />
+                        <button
+                            className={`w-full bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
+                            onClick={handleSendReminder}
+                            disabled={isSending}
+                        >
+                            {isSending ? <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> : null}
+                            {isSending ? 'Sending...' : 'Send Reminder'}
                         </button>
                     </div>
                 </div>

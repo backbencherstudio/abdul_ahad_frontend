@@ -75,7 +75,7 @@ export default function MotFeeAdd() {
                                         })}
                                         type="number"
                                         step="0.01"
-                                        placeholder="54"
+                                        placeholder=""
                                         className="h-11 pl-8 border border-[#19CA32] focus:border-green-500 focus:ring-green-500"
                                     />
                                 </div>
@@ -102,7 +102,7 @@ export default function MotFeeAdd() {
                                         })}
                                         type="number"
                                         step="0.01"
-                                        placeholder="15"
+                                        placeholder=""
                                         className="h-11 pl-8 border border-[#19CA32] focus:border-green-500 focus:ring-green-500"
                                     />
                                 </div>

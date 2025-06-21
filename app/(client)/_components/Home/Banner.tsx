@@ -125,7 +125,7 @@ export default function HomeBanner() {
                                     <Input
                                         id="registration"
                                         type="text"
-                                        placeholder="XXXXXXX"
+                                        placeholder=""
                                         className='h-12 bg-[#14A228]/10 border-[#14A228]/20 focus:border-[#14A228] placeholder:text-[#14A228]/60'
                                     />
                                 </div>
@@ -137,7 +137,7 @@ export default function HomeBanner() {
                                     <Input
                                         id="postcode"
                                         type="text"
-                                        placeholder="XXXXXXX"
+                                        placeholder=""
                                         className='h-12 bg-[#14A228]/10 border-[#14A228]/20 focus:border-[#14A228] placeholder:text-[#14A228]/60'
                                     />
                                 </div>

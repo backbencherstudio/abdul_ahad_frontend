@@ -59,7 +59,7 @@ export default function ContactUs() {
                             <Label htmlFor="name" className="text-gray-700 font-medium">Name</Label>
                             <Input
                                 id="name"
-                                placeholder="XXXXXXXXXX"
+                                placeholder=""
                                 {...register("name", {
                                     required: "Name is required",
                                     minLength: {
@@ -79,7 +79,7 @@ export default function ContactUs() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="XXXXXXXXXX"
+                                placeholder=""
                                 {...register("email", {
                                     required: "Email is required",
                                     pattern: {
@@ -99,7 +99,7 @@ export default function ContactUs() {
                             <Input
                                 id="contactNumber"
                                 type="tel"
-                                placeholder="XXXXXXXXXX"
+                                placeholder=""
                                 {...register("contactNumber", {
                                     required: "Contact number is required",
                                     minLength: {

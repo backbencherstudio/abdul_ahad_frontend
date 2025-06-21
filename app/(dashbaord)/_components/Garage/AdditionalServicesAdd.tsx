@@ -137,7 +137,7 @@ export default function AdditionalServicesAdd() {
                                                     {...register(`services.${index}.serviceName` as const, {
                                                         required: 'Service name is required'
                                                     })}
-                                                    placeholder="Tire change"
+                                                    placeholder=""
                                                     className="h-11 border border-[#19CA32] focus:border-green-500 focus:ring-green-500 pr-10"
                                                 />
 

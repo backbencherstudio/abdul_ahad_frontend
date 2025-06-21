@@ -130,7 +130,7 @@ export default function BookMyMOT() {
                         <Input
                             id="registrationNumber"
                             type="text"
-                            placeholder="XXXXXXX"
+                            placeholder=""
                             className="py-5 text-base border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] rounded-md"
                             {...register('registrationNumber', {
                                 required: 'Registration number is required',
@@ -155,7 +155,7 @@ export default function BookMyMOT() {
                         <Input
                             id="postcode"
                             type="text"
-                            placeholder="XXXXXXX"
+                            placeholder=""
                             className="py-5 text-base border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] rounded-md"
                             {...register('postcode', {
                                 required: 'Postcode is required',
