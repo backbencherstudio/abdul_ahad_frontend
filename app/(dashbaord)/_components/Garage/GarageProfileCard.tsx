@@ -89,12 +89,12 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({ onMoreDetails, onBookMOT,
             >
                 More Details
             </button>
-            <button
+            {/* <button
                 onClick={onBookMOT}
                 className={`${baseClasses} bg-[#19CA32] cursor-pointer text-white hover:bg-[#16b82e]`}
             >
                 Book My MOT
-            </button>
+            </button> */}
         </div>
     );
 };
@@ -112,7 +112,7 @@ export default function GarageProfileCard({
     contact = "xxxxxxxxxxx",
     email = "xxxxxxxxxxx",
     vtsNumber = "xxxxxxxxxxx",
-    price = "XX.XX",
+    price = "00.00",
     onMoreDetails,
     onBookMOT
 }: GarageProfileCardProps) {
@@ -157,8 +157,9 @@ export default function GarageProfileCard({
 
             {/* Desktop Layout */}
             <div className="hidden lg:flex gap-6 p-6 min-h-[200px]">
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 relative cursor-pointer">
                     <GarageImage className="w-40 h-full" iconSize="lg" />
+                    <h1 className='text-center text-gray-500 text-sm absolute bottom-8 font-semibold left-1/2 -translate-x-1/2 -translate-y-1/2'>Preview</h1>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center">
