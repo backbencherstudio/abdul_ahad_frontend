@@ -12,7 +12,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function Header({ onMenuClick, user }: {
     onMenuClick: () => void, user: {
@@ -25,6 +26,13 @@ export default function Header({ onMenuClick, user }: {
     const notificationCount = 3
     const pathname = usePathname();
     const router = useRouter();
+    const { logout } = useAuth();
+
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
+    };
+
     const getPageTitle = () => {
         switch (pathname) {
             // Driver routes
@@ -144,7 +152,7 @@ export default function Header({ onMenuClick, user }: {
                                 <span>Profile</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
+                            <DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer" onClick={handleLogout}>
                                 <LogOut className="h-4 w-4" />
                                 <span>Log out</span>
                             </DropdownMenuItem>

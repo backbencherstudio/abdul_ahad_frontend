@@ -92,7 +92,7 @@ export default function Sidebar({ onClose, user }: SidebarProps) {
             {/* Navigation Menu - Takes up available space */}
             <div className="flex-1 overflow-y-auto">
                 <nav className="mt-4 px-3">
-                    <ul className="space-y-3">
+                    <ul className="space-y-5">
                         {menuItems
                             .filter(item => item.role === user.role)
                             .map((item) => {

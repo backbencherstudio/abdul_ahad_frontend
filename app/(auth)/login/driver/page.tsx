@@ -12,6 +12,7 @@ import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 interface FormData {
     email: string
@@ -42,18 +43,31 @@ const data = [
         title: 'Stay road-legal with zero stress',
     },
 ]
-export default function SignInPage() {
+export default function DriverSignInPage() {
     const [showPassword, setShowPassword] = useState(false)
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const { login } = useAuth()
+
     const onSubmit = async (data: FormData) => {
         setIsLoading(true)
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            toast.success('Login successfully')
-        } catch (error) {
-            console.error('Submission error:', error)
+            const result = await login(data.email, data.password)
+            if (result.success) {
+                toast.success(result.message)
+
+                // Check if user is a driver
+                if (result.userType === 'DRIVER') {
+                    router.push('/driver/book-my-mot')
+                } else {
+                    toast.error('User not found or not a driver')
+                }
+            } else {
+                toast.error(result.message)
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Login failed')
         } finally {
             setIsLoading(false)
         }
