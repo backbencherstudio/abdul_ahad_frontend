@@ -17,7 +17,16 @@ export const RouteProtection: React.FC<RouteProtectionProps> = ({ children }) =>
   useEffect(() => {
     if (!isLoading) {
       if (!isAuthenticated) {
-        router.push('/login')
+        // Redirect to appropriate login page based on the route
+        if (pathname.startsWith('/driver')) {
+          router.push('/login/driver')
+        } else if (pathname.startsWith('/garage')) {
+          router.push('/login/garage')
+        } else if (pathname.startsWith('/admin')) {
+          router.push('/admin-login')
+        } else {
+          router.push('/login')
+        }
         return
       }
 

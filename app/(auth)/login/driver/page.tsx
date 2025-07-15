@@ -48,21 +48,15 @@ export default function DriverSignInPage() {
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
-    const { login } = useAuth()
+    const { loginWithType } = useAuth()
 
     const onSubmit = async (data: FormData) => {
         setIsLoading(true)
         try {
-            const result = await login(data.email, data.password)
+            const result = await loginWithType(data.email, data.password, 'DRIVER')
             if (result.success) {
                 toast.success(result.message)
-
-                // Check if user is a driver
-                if (result.userType === 'DRIVER') {
-                    router.push('/driver/book-my-mot')
-                } else {
-                    toast.error('User not found or not a driver')
-                }
+                router.push('/driver/book-my-mot')
             } else {
                 toast.error(result.message)
             }

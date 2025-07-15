@@ -5,6 +5,7 @@ import axiosClient from "@/helper/axisoClients";
 interface LoginData {
     email: string;
     password: string;
+    type: 'DRIVER' | 'GARAGE' | 'ADMIN';
 }
 
 interface LoginResponse {
@@ -34,7 +35,7 @@ interface AuthMeResponse {
 }
 
 
-// driver/garage/admin login api
+// driver/garage/admin login api with type
 export const loginApi = async (data: LoginData): Promise<LoginResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/login', data);

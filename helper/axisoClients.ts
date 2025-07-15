@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const axiosClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_ENDPOINT, 
-  withCredentials: false, // Disable cookies to avoid CORS issues
+  withCredentials: false, 
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,16 +29,16 @@ axiosClient.interceptors.response.use(
   (error) => {
     // Handle CORS errors
     if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
-      console.error('CORS Error: Make sure your backend server is running and configured properly');
+      // console.error('CORS Error: Make sure your backend server is running and configured properly');
       return Promise.reject(new Error('Network error. Please check your connection and try again.'));
     }
     
     // Handle 401 Unauthorized - but don't redirect for login API calls
     if (error.response?.status === 401) {
-      // Don't redirect if this is a login API call
-      const isLoginApiCall = error.config?.url?.includes('/api/auth/login');
+      // Don't redirect if this is a login API call or auth/me call
+      const isAuthApiCall = error.config?.url?.includes('/api/auth/login') || error.config?.url?.includes('/api/auth/me');
       
-      if (!isLoginApiCall) {
+      if (!isAuthApiCall) {
         // Token expired or invalid for other API calls
         localStorage.removeItem('token');
         

@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 interface FormData {
     email: string
@@ -26,13 +27,20 @@ export default function AdminLogin() {
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const { loginWithType } = useAuth()
+
     const onSubmit = async (data: FormData) => {
         setIsLoading(true)
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            toast.success('Login successfully')
-        } catch (error) {
-            console.error('Submission error:', error)
+            const result = await loginWithType(data.email, data.password, 'ADMIN')
+            if (result.success) {
+                toast.success(result.message)
+                router.push('/admin/dashboard')
+            } else {
+                toast.error(result.message)
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Login failed')
         } finally {
             setIsLoading(false)
         }

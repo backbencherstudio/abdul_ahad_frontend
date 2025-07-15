@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { loginApi, AuthMeApi } from '@/apis/auth/loginApis'
 
+// Types
 interface User {
   id: string
   email: string
@@ -10,17 +11,25 @@ interface User {
   type: 'DRIVER' | 'GARAGE' | 'ADMIN'
 }
 
+interface LoginResult {
+  success: boolean
+  message: string
+  userType?: string
+}
+
 interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string; userType?: string }>
+  loginWithType: (email: string, password: string, expectedType: 'DRIVER' | 'GARAGE' | 'ADMIN') => Promise<LoginResult>
   logout: () => void
   checkAuth: () => Promise<void>
 }
 
+// Context
 export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Hook
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (context === undefined) {
@@ -29,39 +38,84 @@ export const useAuth = () => {
   return context
 }
 
+// Provider Props
 interface AuthProviderProps {
   children: ReactNode
 }
 
+// Helper Functions
+const validateApiEndpoint = (): boolean => {
+  return !!process.env.NEXT_PUBLIC_API_ENDPOINT
+}
+
+const createUserFromResponse = (userDetails: any): User => {
+  return {
+    id: userDetails.data.id,
+    email: userDetails.data.email,
+    name: userDetails.data.name,
+    type: userDetails.data.type
+  }
+}
+
+const createFallbackUser = (email: string, type: string): User => {
+  return {
+    id: 'temp-id',
+    email: email,
+    name: 'User',
+    type: type as 'DRIVER' | 'GARAGE' | 'ADMIN'
+  }
+}
+
+// Main Provider Component
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const isAuthenticated = !!user
 
-  const login = async (email: string, password: string) => {
+  // Login with type validation
+  const loginWithType = async (email: string, password: string, expectedType: 'DRIVER' | 'GARAGE' | 'ADMIN'): Promise<LoginResult> => {
     try {
       setIsLoading(true)
-      const response = await loginApi({ email, password })
+
+      // Validate API endpoint
+      if (!validateApiEndpoint()) {
+        return { 
+          success: false, 
+          message: 'API endpoint not configured. Please check your environment variables.'
+        }
+      }
       
-      // Store token in localStorage only
-      localStorage.setItem('token', response.authorization.token)
-      
-      // Fetch user details from /api/auth/me
-      const userDetails = await AuthMeApi()
-      
-      // Set user state using the complete user data
-      setUser({
-        id: userDetails.data.id,
-        email: userDetails.data.email,
-        name: userDetails.data.name,
-        type: userDetails.data.type
+      // Perform login with type
+      const loginResponse = await loginApi({ 
+        email, 
+        password, 
+        type: expectedType 
       })
+      
+      // If login successful, set token and user state
+      localStorage.setItem('token', loginResponse.authorization.token)
+      
+      // Get user details for complete user data
+      let userDetails = null
+      try {
+        userDetails = await AuthMeApi()
+      } catch (authMeError) {
+        // If AuthMeApi fails, create fallback user
+        console.warn('AuthMeApi failed, using fallback user data')
+      }
+      
+      // Set user state
+      if (userDetails) {
+        setUser(createUserFromResponse(userDetails))
+      } else {
+        setUser(createFallbackUser(email, expectedType))
+      }
       
       return { 
         success: true, 
         message: 'Login successful',
-        userType: userDetails.data.type
+        userType: expectedType
       }
     } catch (error: any) {
       return { 
@@ -73,12 +127,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const logout = () => {
+  // Logout
+  const logout = (): void => {
     localStorage.removeItem('token')
     setUser(null)
   }
 
-  const checkAuth = async () => {
+  // Check authentication status
+  const checkAuth = async (): Promise<void> => {
     try {
       const token = localStorage.getItem('token')
       
@@ -87,17 +143,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return
       }
 
-      // Fetch user details from /api/auth/me
       const userDetails = await AuthMeApi()
-      
-      setUser({
-        id: userDetails.data.id,
-        email: userDetails.data.email,
-        name: userDetails.data.name,
-        type: userDetails.data.type
-      })
+      setUser(createUserFromResponse(userDetails))
     } catch (error) {
-      // Token is invalid or expired
       localStorage.removeItem('token')
       setUser(null)
     } finally {
@@ -105,15 +153,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  // Initialize auth check on mount
   useEffect(() => {
     checkAuth()
   }, [])
 
+  // Context value
   const value: AuthContextType = {
     user,
     isLoading,
     isAuthenticated,
-    login,
+    loginWithType,
     logout,
     checkAuth
   }
