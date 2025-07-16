@@ -2,12 +2,13 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useForm } from "react-hook-form"
 import { Edit2, ImageDownIcon, Loader2 } from "lucide-react"
+import { LuImagePlus } from "react-icons/lu";
 import { toast } from "react-toastify"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useProfile } from "@/hooks/useProfile"
 import { useUpdateProfile } from "@/hooks/useUpdateProfile";
 import Image from 'next/image'
@@ -81,7 +82,7 @@ const EditableInput = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing ? 'text-blue-600' : 'text-gray-500'}`}
+                    className={`absolute cursor-pointer right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing ? 'text-blue-600' : 'text-gray-500'}`}
                     onClick={() => onEditClick(id)}
                 >
                     <Edit2 className="h-4 w-4" />
@@ -99,12 +100,14 @@ const ProfileImageUpload = ({
     profileImage,
     onImageClick,
     onImageChange,
-    fileInputRef
+    fileInputRef,
+    onImageError
 }: {
     profileImage: string
     onImageClick: () => void
     onImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void
     fileInputRef: React.RefObject<HTMLInputElement>
+    onImageError: () => void
 }) => (
     <div className="flex items-center space-x-4 mb-6">
         <div className="relative">
@@ -114,17 +117,28 @@ const ProfileImageUpload = ({
                         <Image
                             src={profileImage}
                             alt="Profile"
-                            width={96}
-                            height={96}
+                            width={500}
+                            height={500}
+                            onError={onImageError}
+                            className="w-full h-full object-cover"
                         />
                     ) : (
-                        <AvatarFallback className="bg-gray-200">
+                        <AvatarFallback className="bg-gray-200 border-2 border-gray-300">
                             <ImageDownIcon className="h-8 w-8 text-gray-400" />
                         </AvatarFallback>
                     )
                 }
             </Avatar>
-
+            {/* Upload icon overlay */}
+            <button
+                type="button"
+                onClick={onImageClick}
+                className="absolute -bottom-1 right-1 cursor-pointer hover:bg-green-600 transition-all duration-300 bg-green-500 rounded-full p-1 border-2 border-white shadow"
+                style={{ zIndex: 10 }}
+                tabIndex={-1}
+            >
+                <LuImagePlus className="h-5 w-5 text-white" />
+            </button>
             <input
                 ref={fileInputRef}
                 type="file"
@@ -309,6 +323,7 @@ export default function MyProfile() {
                     onImageClick={handleImageClick}
                     onImageChange={handleImageChange}
                     fileInputRef={fileInputRef}
+                    onImageError={() => setProfileImage("")}
                 />
 
                 {updateError && (
@@ -356,7 +371,7 @@ export default function MyProfile() {
                     <Button
                         type="submit"
                         disabled={!hasChanges || isUpdating}
-                        className={`w-full transition-all ${hasChanges && !isUpdating
+                        className={`w-full cursor-pointer transition-all ${hasChanges && !isUpdating
                             ? 'bg-[#14A228] hover:bg-green-600'
                             : 'bg-gray-300 cursor-not-allowed'
                             }`}
