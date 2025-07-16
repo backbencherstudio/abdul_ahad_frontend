@@ -9,6 +9,7 @@ interface User {
   email: string
   name: string
   type: 'DRIVER' | 'GARAGE' | 'ADMIN'
+  avatar_url?: string
 }
 
 interface LoginResult {
@@ -53,7 +54,8 @@ const createUserFromResponse = (userDetails: any): User => {
     id: userDetails.data.id,
     email: userDetails.data.email,
     name: userDetails.data.name,
-    type: userDetails.data.type
+    type: userDetails.data.type,
+    avatar_url: userDetails.data.avatar_url
   }
 }
 
@@ -62,7 +64,8 @@ const createFallbackUser = (email: string, type: string): User => {
     id: 'temp-id',
     email: email,
     name: 'User',
-    type: type as 'DRIVER' | 'GARAGE' | 'ADMIN'
+    type: type as 'DRIVER' | 'GARAGE' | 'ADMIN',
+    avatar_url: undefined
   }
 }
 

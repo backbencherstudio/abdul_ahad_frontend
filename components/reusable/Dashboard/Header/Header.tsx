@@ -1,6 +1,6 @@
 import React from 'react'
 import { HiMenuAlt2 } from 'react-icons/hi'
-import { Bell, User, Settings, LogOut, ChevronDown } from 'lucide-react'
+import { Bell, User, LogOut, ChevronDown } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,19 +12,15 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import Image from 'next/image'
 
-export default function Header({ onMenuClick, user }: {
-    onMenuClick: () => void, user: {
-        name: string;
-        email: string;
-        role: string;
-        avatar: string;
-    }
-}) {
+
+
+export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
+    const { user } = useAuth();
     const notificationCount = 3
-    const pathname = usePathname();
     const router = useRouter();
     const { logout } = useAuth();
 
@@ -32,39 +28,6 @@ export default function Header({ onMenuClick, user }: {
         logout();
         router.push('/login');
     };
-
-    const getPageTitle = () => {
-        switch (pathname) {
-            // Driver routes
-            case '/driver/book-my-mot':
-                return 'Book My MOT';
-            case '/driver/my-vehicles':
-                return 'My Vehicles';
-            case '/driver/mot-reports':
-                return 'MOT Reports';
-            case '/driver/my-bookings':
-                return 'My Bookings';
-            case '/driver/notifications':
-                return 'Notifications';
-            case '/driver/contact-us':
-                return 'Contact Us';
-
-            // Garage routes
-            case '/garage/garage-profile':
-                return 'Garage Profile';
-            case '/garage/pricing':
-                return 'Pricing';
-
-            default:
-                // Dynamic default based on user role
-                if (pathname.startsWith('/garage')) {
-                    return 'Garage Dashboard';
-                } else {
-                    return 'Driver Dashboard';
-                }
-        }
-    };
-
     return (
         <nav className="bg-white">
             <div className="px-4 py-3 md:py-4 flex items-center justify-between">
@@ -128,13 +91,16 @@ export default function Header({ onMenuClick, user }: {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="flex items-center gap-2 px-2 cursor-pointer select-none">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user.avatar} alt="User Avatar" />
-                                    <AvatarFallback className="select-none">{user.name.charAt(0)}</AvatarFallback>
+                                <Avatar className="h-10 w-10">
+                                    {user?.avatar_url ? (
+                                        <Image src={user.avatar_url} alt="User Avatar" width={100} height={100} className='rounded-full' />
+                                    ) : (
+                                        <AvatarFallback className="select-none">{user?.name ? user.name.charAt(0) : 'U'}</AvatarFallback>
+                                    )}
                                 </Avatar>
                                 <div className="hidden md:flex flex-col items-start select-none">
-                                    <span className="text-sm font-medium text-gray-900 select-none">{user.name}</span>
-                                    <span className="text-xs text-gray-500 select-none capitalize">{user.role}</span>
+                                    <span className="text-sm font-medium text-gray-900 select-none">{user?.name || 'User'}</span>
+                                    <span className="text-xs text-gray-500 select-none capitalize">{user?.type ? user.type.toLowerCase() : 'driver'}</span>
                                 </div>
                                 <ChevronDown className="h-4 w-4 text-gray-500" />
                             </Button>
@@ -145,7 +111,8 @@ export default function Header({ onMenuClick, user }: {
                             <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={() => {
 
                                 // i have three role admin, garage, driver
-                                const profileRoute = user.role === 'admin' ? '/admin/profile' : user.role === 'garage' ? '/garage/profile' : '/driver/profile';
+                                const role = user?.type ? user.type.toLowerCase() : 'driver';
+                                const profileRoute = role === 'admin' ? '/admin/profile' : role === 'garage' ? '/garage/profile' : '/driver/profile';
                                 router.push(profileRoute);
                             }}>
                                 <User className="h-4 w-4" />
