@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import GaragePasswordChangeComponent from '../../_components/Common/PasswordChange'
 
 // Types
 interface ProfileFormData {
@@ -380,54 +381,7 @@ export default function DriverProfile() {
                     )}
 
                     {activeTab === 'password' && (
-                        <Card className="shadow-sm">
-                            <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
-                                <CardTitle className="text-2xl">Password</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
-                                    <PasswordInput
-                                        id="oldPassword"
-                                        label="Old Password"
-                                        placeholder="Enter your old password"
-                                        showPassword={showOldPassword}
-                                        onTogglePassword={() => setShowOldPassword(!showOldPassword)}
-                                        register={passwordForm.register}
-                                        errors={passwordForm.formState.errors}
-                                        validation={passwordValidation}
-                                    />
-
-                                    <PasswordInput
-                                        id="newPassword"
-                                        label="New Password"
-                                        placeholder="New Password"
-                                        showPassword={showNewPassword}
-                                        onTogglePassword={() => setShowNewPassword(!showNewPassword)}
-                                        register={passwordForm.register}
-                                        errors={passwordForm.formState.errors}
-                                        validation={passwordValidation}
-                                    />
-
-                                    <PasswordInput
-                                        id="confirmPassword"
-                                        label="Confirm Password"
-                                        placeholder="Conform Password"
-                                        showPassword={showConfirmPassword}
-                                        onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        register={passwordForm.register}
-                                        errors={passwordForm.formState.errors}
-                                        validation={passwordValidation}
-                                    />
-
-                                    <Button
-                                        type="submit"
-                                        className="w-full bg-[#14A228] hover:bg-green-600"
-                                    >
-                                        Save Change
-                                    </Button>
-                                </form>
-                            </CardContent>
-                        </Card>
+                        <GaragePasswordChangeComponent/>
                     )}
                 </div>
             </div>

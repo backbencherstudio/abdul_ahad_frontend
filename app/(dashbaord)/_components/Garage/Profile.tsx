@@ -1,10 +1,9 @@
 "use client"
 import React, { useState } from 'react'
 import { User, Lock } from "lucide-react"
-
 import { Card, CardContent } from "@/components/ui/card"
-import GaragePasswordChangeComponent from './PasswordChange'
 import AccountSettingsComponent from './AccountSettings'
+import CommonPasswordChangeComponent from '../Common/PasswordChange'
 
 // Tab Button Component
 const TabButton = ({
@@ -70,7 +69,7 @@ export default function ProfileComponent() {
                     )}
 
                     {activeTab === 'password' && (
-                        <GaragePasswordChangeComponent />
+                        <CommonPasswordChangeComponent />
                     )}
                 </div>
             </div>

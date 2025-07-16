@@ -66,7 +66,7 @@ const PasswordInput = ({
     </div>
 )
 
-export default function GaragePasswordChangeComponent() {
+export default function CommonPasswordChangeComponent() {
     // Password change hook
     const { changePassword, isLoading, error, resetError } = usePasswordChange()
 

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { AuthMeApi } from '@/apis/auth/loginApis'
 import { useAuth } from './useAuth'
 
-// Extended user profile interface based on AuthMeApi response
 interface UserProfile {
   id: string
   name: string
@@ -55,7 +54,6 @@ export const useProfile = (): UseProfileReturn => {
     }
   }
 
-  // Fetch profile when authentication status changes
   useEffect(() => {
     fetchProfile()
   }, [isAuthenticated])
