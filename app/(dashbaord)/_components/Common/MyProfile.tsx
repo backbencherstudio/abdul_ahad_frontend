@@ -11,15 +11,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useProfile } from "@/hooks/useProfile"
 import { useUpdateProfile } from "@/hooks/useUpdateProfile";
 import Image from 'next/image'
+import { useAuth } from "@/hooks/useAuth";
 
-// Types
 interface ProfileFormData {
     name: string
     email: string
     phone: string
 }
 
-// Validation schemas
 const profileValidation = {
     name: {
         required: "Name is required",
@@ -40,7 +39,6 @@ const profileValidation = {
     }
 }
 
-// Editable Input Component
 const EditableInput = ({
     id,
     label,
@@ -111,15 +109,20 @@ const ProfileImageUpload = ({
     <div className="flex items-center space-x-4 mb-6">
         <div className="relative">
             <Avatar className="h-24 w-24 cursor-pointer" onClick={onImageClick}>
-                <Image
-                    src={profileImage}
-                    alt="Profile"
-                    width={96}
-                    height={96}
-                />
-                <AvatarFallback className="bg-gray-200">
-                    <ImageDownIcon className="h-8 w-8 text-gray-400" />
-                </AvatarFallback>
+                {
+                    profileImage ? (
+                        <Image
+                            src={profileImage}
+                            alt="Profile"
+                            width={96}
+                            height={96}
+                        />
+                    ) : (
+                        <AvatarFallback className="bg-gray-200">
+                            <ImageDownIcon className="h-8 w-8 text-gray-400" />
+                        </AvatarFallback>
+                    )
+                }
             </Avatar>
 
             <input
@@ -138,17 +141,17 @@ const ProfileImageUpload = ({
 )
 
 export default function MyProfile() {
-    // Profile hook
-    const { profile, isLoading, error, refetch } = useProfile()
-    // Update profile hook
+    const { profile, isLoading, error, refetch } = useProfile();
     const { isLoading: isUpdating, error: updateError, success: updateSuccess, mutate } = useUpdateProfile();
+    const { checkAuth } = useAuth();
 
     // State
-    const [profileImage, setProfileImage] = useState<string>("/api/placeholder/96/96")
-    const [editingField, setEditingField] = useState<string | null>(null)
-    const [originalValues, setOriginalValues] = useState<ProfileFormData | null>(null)
-    const [hasChanges, setHasChanges] = useState(false)
-    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [profileImage, setProfileImage] = useState<string>("/api/placeholder/96/96");
+    const [editingField, setEditingField] = useState<string | null>(null);
+    const [originalValues, setOriginalValues] = useState<ProfileFormData | null>(null);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form
     const profileForm = useForm<ProfileFormData>({
@@ -157,122 +160,107 @@ export default function MyProfile() {
             email: "",
             phone: "",
         },
-    })
+    });
 
-    // Update form values when profile data is loaded
     useEffect(() => {
         if (profile) {
             const formValues = {
                 name: profile.name || "",
                 email: profile.email || "",
                 phone: profile.phone_number || "",
-            }
-
-            profileForm.reset(formValues)
-            setOriginalValues(formValues)
-
-            // Only use avatar_url for image
-            if (profile.avatar_url) {
-                setProfileImage(profile.avatar_url)
-            } else {
-                setProfileImage("/api/placeholder/96/96")
-            }
+            };
+            profileForm.reset(formValues);
+            setOriginalValues(formValues);
+            setProfileImage(profile.avatar_url || "/api/placeholder/96/96");
         }
-    }, [profile, profileForm])
+    }, [profile, profileForm]);
 
-    // Check if form values or image have changed
     const checkForChanges = () => {
-        if (!originalValues) return false
-        const currentValues = profileForm.getValues()
+        if (!originalValues) return false;
+        const currentValues = profileForm.getValues();
         const formChanged = Object.keys(currentValues).some(key =>
             currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData]
-        )
-        // Only compare against avatar_url
+        );
         const imageChanged = profileImage !== (profile?.avatar_url || "/api/placeholder/96/96");
-        const hasAnyChanges = formChanged || imageChanged;
-        setHasChanges(hasAnyChanges)
-        return hasAnyChanges
-    }
+        const hasAnyChanges = formChanged || imageChanged || !!selectedFile;
+        setHasChanges(hasAnyChanges);
+        return hasAnyChanges;
+    };
 
     const handleImageClick = () => {
-        fileInputRef.current?.click()
-    }
+        fileInputRef.current?.click();
+    };
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0]
+        const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader()
+            setSelectedFile(file);
+            const reader = new FileReader();
             reader.onload = (e) => {
                 const newImage = e.target?.result as string;
                 setProfileImage(newImage);
-            }
-            reader.readAsDataURL(file)
+            };
+            reader.readAsDataURL(file);
         }
-    }
+    };
 
     const handleEditClick = (fieldName: string) => {
-        if (editingField === fieldName) {
-            setEditingField(null)
-        } else {
-            setEditingField(fieldName)
+        setEditingField(editingField === fieldName ? null : fieldName);
+        if (editingField !== fieldName) {
             setTimeout(() => {
-                const element = document.getElementById(fieldName)
-                if (element) {
-                    element.focus()
-                }
-            }, 100)
+                const element = document.getElementById(fieldName);
+                if (element) element.focus();
+            }, 100);
         }
-    }
+    };
 
     const handleFieldBlur = () => {
         setTimeout(() => {
-            checkForChanges()
-            setEditingField(null)
-        }, 100)
-    }
-
-    // Watch for form changes
-    const watchedValues = profileForm.watch()
-
-    useEffect(() => {
-        if (originalValues) {
-            checkForChanges()
-        }
-    }, [watchedValues])
-
-    // Watch for image changes
-    useEffect(() => {
-        if (originalValues) {
             checkForChanges();
-        }
-    }, [profileImage]);
+            setEditingField(null);
+        }, 100);
+    };
+
+    const watchedValues = profileForm.watch();
+    useEffect(() => { if (originalValues) checkForChanges(); }, [watchedValues]);
+    useEffect(() => { if (originalValues) checkForChanges(); }, [profileImage, selectedFile]);
 
     const onProfileSubmit = async (data: ProfileFormData) => {
         try {
-            // Prepare payload
-            const payload: any = {
-                name: data.name,
-                email: data.email,
-                phone: data.phone,
-            };
-            // If image changed and is not the original avatar_url, include it
-            if (profileImage && profileImage !== profile?.avatar_url) {
-                payload.avatar = profileImage;
+            let payload: any;
+            let isFormData = false;
+            if (selectedFile) {
+                payload = new FormData();
+                payload.append('name', data.name);
+                payload.append('email', data.email);
+                payload.append('phone', data.phone);
+                payload.append('image', selectedFile);
+                isFormData = true;
+            } else {
+                payload = {
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone,
+                };
+                if (profileImage && profileImage !== profile?.avatar_url) {
+                    payload.image = profileImage;
+                }
             }
-            await mutate(payload);
+            await mutate(payload, isFormData);
             setOriginalValues(data);
             setHasChanges(false);
+            setSelectedFile(null);
             if (updateSuccess) {
                 toast.success('Profile updated successfully!');
                 refetch();
+                checkAuth();
             }
         } catch (error) {
             console.error('Error updating profile:', error);
             toast.error(updateError || 'Failed to update profile. Please try again.');
         }
-    }
+    };
 
-    // Show loading state
     if (isLoading) {
         return (
             <Card className="shadow-sm">
@@ -289,7 +277,6 @@ export default function MyProfile() {
         )
     }
 
-    // Show error state
     if (error) {
         return (
             <Card className="shadow-sm">
@@ -370,8 +357,8 @@ export default function MyProfile() {
                         type="submit"
                         disabled={!hasChanges || isUpdating}
                         className={`w-full transition-all ${hasChanges && !isUpdating
-                                ? 'bg-[#14A228] hover:bg-green-600'
-                                : 'bg-gray-300 cursor-not-allowed'
+                            ? 'bg-[#14A228] hover:bg-green-600'
+                            : 'bg-gray-300 cursor-not-allowed'
                             }`}
                     >
                         {isUpdating ? (

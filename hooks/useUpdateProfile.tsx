@@ -5,7 +5,7 @@ interface UpdateProfileResult {
   isLoading: boolean;
   error: string | null;
   success: boolean;
-  mutate: (data: any) => Promise<void>;
+  mutate: (data: any, isFormData?: boolean) => Promise<void>;
 }
 
 export function useUpdateProfile(): UpdateProfileResult {
@@ -13,12 +13,12 @@ export function useUpdateProfile(): UpdateProfileResult {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const mutate = async (data: any) => {
+  const mutate = async (data: any, isFormData = false) => {
     setIsLoading(true);
     setError(null);
     setSuccess(false);
     try {
-      await changesProfileApi(data);
+      await changesProfileApi(data, isFormData);
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Failed to update profile");
