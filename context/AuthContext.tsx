@@ -57,7 +57,8 @@ const createUserFromResponse = (userDetails: any): User => {
     name: userDetails.data.name,
     type: userDetails.data.type,
     avatar_url: userDetails.data.avatar_url,
-    garage_name: userDetails.data.garage_name // Add this line
+    garage_name: userDetails.data.garage_name
+
   }
 }
 
@@ -67,7 +68,8 @@ const createFallbackUser = (email: string, type: string): User => {
     email: email,
     name: 'User',
     type: type as 'DRIVER' | 'GARAGE' | 'ADMIN',
-    avatar_url: undefined
+    avatar_url: undefined,
+    garage_name: undefined
   }
 }
 
