@@ -1,12 +1,14 @@
 "use client"
 import React, { useState } from 'react'
 import { useForm } from "react-hook-form"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { toast } from "react-toastify"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { usePasswordChange } from "@/hooks/usePasswordChange"
 
 // Types
 interface PasswordFormData {
@@ -65,6 +67,9 @@ const PasswordInput = ({
 )
 
 export default function GaragePasswordChangeComponent() {
+    // Password change hook
+    const { changePassword, isLoading, error, resetError } = usePasswordChange()
+
     // State
     const [showOldPassword, setShowOldPassword] = useState(false)
     const [showNewPassword, setShowNewPassword] = useState(false)
@@ -83,14 +88,39 @@ export default function GaragePasswordChangeComponent() {
     const passwordValidation = {
         required: "This field is required",
         minLength: {
-            message: "Password must be at least 8 characters"
+            value: 6,
+            message: "Password must be at least 6 characters"
         }
     }
 
     // Handlers
-    const onPasswordSubmit = (data: PasswordFormData) => {
-        console.log('Password data:', data)
-        // Handle password change logic here
+    const onPasswordSubmit = async (data: PasswordFormData) => {
+        try {
+            if (data.newPassword !== data.confirmPassword) {
+                toast.error('New password and confirm password do not match')
+                return
+            }
+
+            if (data.oldPassword === data.newPassword) {
+                toast.error('New password must be different from old password')
+                return
+            }
+
+            const success = await changePassword({
+                old_password: data.oldPassword,
+                new_password: data.newPassword
+            })
+
+            if (success) {
+                toast.success('Password changed successfully!')
+                passwordForm.reset()
+                resetError()
+            } else {
+                toast.error(error || 'Failed to change password')
+            }
+        } catch (error) {
+            toast.error('Failed to change password. Please try again.')
+        }
     }
 
     return (
@@ -135,9 +165,20 @@ export default function GaragePasswordChangeComponent() {
 
                     <Button
                         type="submit"
-                        className="w-full bg-[#14A228] hover:bg-green-600"
+                        disabled={isLoading}
+                        className={`w-full transition-all ${isLoading
+                                ? 'bg-gray-300 cursor-not-allowed'
+                                : 'bg-[#14A228] hover:bg-green-600'
+                            }`}
                     >
-                        Save Change
+                        {isLoading ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Changing Password...
+                            </div>
+                        ) : (
+                            'Change Password'
+                        )}
                     </Button>
                 </form>
             </CardContent>

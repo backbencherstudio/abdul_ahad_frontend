@@ -31,6 +31,9 @@ interface AuthMeResponse {
         gender: string | null;
         date_of_birth: string | null;
         created_at: string;
+        vts_number: string | null;
+        primary_contact: string | null;
+        garage_name: string | null;
     };
 }
 
@@ -158,3 +161,22 @@ export const resendVerificationEmailApi = async (email: string): Promise<commonR
         }
     }
 }
+
+// changes profile api
+export const changesProfileApi = async (data: any): Promise<commonResponse> => {
+    try {
+        const response = await axiosClient.post('/api/auth/change-password', data);
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        } else if (error.message) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('Failed to change profile');
+        }
+    }
+}
+
+
+

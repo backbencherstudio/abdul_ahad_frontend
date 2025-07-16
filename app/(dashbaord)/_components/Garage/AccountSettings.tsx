@@ -1,13 +1,15 @@
 "use client"
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useForm } from "react-hook-form"
-import { Edit2, ImageDownIcon } from "lucide-react"
+import { Edit2, ImageDownIcon, Loader2 } from "lucide-react"
+import { toast } from "react-toastify"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useProfile } from "@/hooks/useProfile"
 
 // Types
 interface ProfileFormData {
@@ -60,33 +62,38 @@ const EditableInput = ({
     register: any
     errors: any
     validation: any
-}) => (
-    <div className="space-y-2">
-        <div className="flex items-center justify-between">
+}) => {
+    const isEditing = editingField === id
+
+    return (
+        <div className="space-y-2">
             <Label htmlFor={id}>{label}</Label>
-            <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => onEditClick(id)}
-            >
-                <Edit2 className="h-4 w-4" />
-            </Button>
+            <div className="relative">
+                <Input
+                    id={id}
+                    type={type}
+                    placeholder={placeholder}
+                    disabled={!isEditing}
+                    className={`pr-10 ${isEditing ? 'border-blue-500' : 'border-gray-300 bg-gray-50'}`}
+                    {...register(id, validation)}
+                    onBlur={onBlur}
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={`absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing ? 'text-blue-600' : 'text-gray-500'}`}
+                    onClick={() => onEditClick(id)}
+                >
+                    <Edit2 className="h-4 w-4" />
+                </Button>
+            </div>
+            {errors[id] && (
+                <p className="text-sm text-red-500">{errors[id].message}</p>
+            )}
         </div>
-        <Input
-            id={id}
-            type={type}
-            placeholder={placeholder}
-            className={`${editingField === id ? 'border-blue-500' : 'border-gray-300'}`}
-            {...register(id, validation)}
-            onBlur={onBlur}
-        />
-        {errors[id] && (
-            <p className="text-sm text-red-500">{errors[id].message}</p>
-        )}
-    </div>
-)
+    )
+}
 
 // Profile Image Upload Component
 const ProfileImageUpload = ({
@@ -124,9 +131,15 @@ const ProfileImageUpload = ({
 )
 
 export default function AccountSettingsComponent() {
+    // Profile hook
+    const { profile, isLoading, error, refetch } = useProfile()
+
     // State
     const [profileImage, setProfileImage] = useState<string>("/api/placeholder/96/96")
     const [editingField, setEditingField] = useState<string | null>(null)
+    const [originalValues, setOriginalValues] = useState<ProfileFormData | null>(null)
+    const [hasChanges, setHasChanges] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Form
@@ -141,7 +154,28 @@ export default function AccountSettingsComponent() {
         },
     })
 
-    // Handlers
+
+    useEffect(() => {
+        if (profile) {
+            const formValues = {
+                name: profile.garage_name || profile.name || "",
+                vtsNumber: profile.vts_number || "",
+                primaryContact: profile.primary_contact || "",
+                email: profile.email || "",
+                phone: profile.phone_number || "",
+                contactNumber: profile.phone_number || "",
+            }
+
+            profileForm.reset(formValues)
+            setOriginalValues(formValues)
+
+            if (profile.avatar) {
+                setProfileImage(profile.avatar)
+            }
+        }
+    }, [profile, profileForm])
+
+
     const handleImageClick = () => {
         fileInputRef.current?.click()
     }
@@ -158,22 +192,99 @@ export default function AccountSettingsComponent() {
     }
 
     const handleEditClick = (fieldName: string) => {
-        setEditingField(fieldName)
-        setTimeout(() => {
-            const element = document.getElementById(fieldName)
-            if (element) {
-                element.focus()
-            }
-        }, 100)
+        if (editingField === fieldName) {
+            setEditingField(null)
+        } else {
+            setEditingField(fieldName)
+            setTimeout(() => {
+                const element = document.getElementById(fieldName)
+                if (element) {
+                    element.focus()
+                }
+            }, 100)
+        }
+    }
+
+    const checkForChanges = () => {
+        if (!originalValues) return false
+
+        const currentValues = profileForm.getValues()
+        const hasChanges = Object.keys(currentValues).some(key =>
+            currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData]
+        )
+
+        setHasChanges(hasChanges)
+        return hasChanges
     }
 
     const handleFieldBlur = () => {
-        setEditingField(null)
+        setTimeout(() => {
+            checkForChanges()
+            setEditingField(null)
+        }, 100)
     }
 
-    const onProfileSubmit = (data: ProfileFormData) => {
-        console.log('Profile data:', data)
-        // Handle profile update logic here
+    const watchedValues = profileForm.watch()
+
+    useEffect(() => {
+        if (originalValues) {
+            checkForChanges()
+        }
+    }, [watchedValues])
+
+    const onProfileSubmit = async (data: ProfileFormData) => {
+        setIsSaving(true)
+        try {
+            console.log('Profile data:', data)
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            setOriginalValues(data)
+            setHasChanges(false)
+
+            toast.success('Profile updated successfully!')
+        } catch (error) {
+            console.error('Error updating profile:', error)
+            toast.error('Failed to update profile. Please try again.')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <Card className="shadow-sm">
+                <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
+                    <CardTitle className="text-2xl">Account Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-[#14A228]" />
+                        <span className="ml-2 text-gray-600">Loading profile data...</span>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (error) {
+        return (
+            <Card className="shadow-sm">
+                <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
+                    <CardTitle className="text-2xl">Account Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <div className="text-center py-8">
+                        <p className="text-red-500 mb-4">{error}</p>
+                        <Button
+                            onClick={refetch}
+                            className="bg-[#14A228] hover:bg-green-600"
+                        >
+                            Retry
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+        )
     }
 
     return (
@@ -192,8 +303,8 @@ export default function AccountSettingsComponent() {
                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                     <EditableInput
                         id="name"
-                        label="Name of Garage"
-                        placeholder="Name of Garage"
+                        label="Garage Name"
+                        placeholder="Enter Garage Name"
                         editingField={editingField}
                         onEditClick={handleEditClick}
                         onBlur={handleFieldBlur}
@@ -254,9 +365,22 @@ export default function AccountSettingsComponent() {
 
                     <Button
                         type="submit"
-                        className="w-full bg-[#14A228] hover:bg-green-600"
+                        disabled={!hasChanges || isSaving}
+                        className={`w-full transition-all  ${hasChanges && !isSaving
+                                ? 'bg-[#14A228] hover:bg-green-600 cursor-pointer'
+                                : 'bg-gray-300 cursor-not-allowed '
+                            }`}
                     >
-                        Save Change
+                        {isSaving ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Saving...
+                            </div>
+                        ) : hasChanges ? (
+                            'Save Changes'
+                        ) : (
+                            'No Changes to Save'
+                        )}
                     </Button>
                 </form>
             </CardContent>
