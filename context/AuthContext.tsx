@@ -10,6 +10,7 @@ interface User {
   name: string
   type: 'DRIVER' | 'GARAGE' | 'ADMIN'
   avatar_url?: string
+  garage_name?: string // Added for garage users
 }
 
 interface LoginResult {
@@ -55,7 +56,8 @@ const createUserFromResponse = (userDetails: any): User => {
     email: userDetails.data.email,
     name: userDetails.data.name,
     type: userDetails.data.type,
-    avatar_url: userDetails.data.avatar_url
+    avatar_url: userDetails.data.avatar_url,
+    garage_name: userDetails.data.garage_name // Add this line
   }
 }
 

@@ -149,7 +149,7 @@ export function EmailVerificationModal({
                         <Button
                             onClick={handleVerification}
                             disabled={otp.length !== 6 || isVerifying || isExpired}
-                            className="w-full bg-[#19CA32] hover:bg-[#19CA32]/90 text-white py-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32]/90 text-white py-3 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             {isVerifying ? (
                                 <div className="flex items-center gap-2">
