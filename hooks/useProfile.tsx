@@ -9,6 +9,7 @@ interface UserProfile {
   name: string
   email: string
   avatar: string | null
+  avatar_url?: string
   address: string | null
   phone_number: string | null
   vts_number: string | null

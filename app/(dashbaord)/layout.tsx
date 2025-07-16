@@ -1,5 +1,3 @@
-"use client"
-
 import DashboardLayout from '@/components/reusable/Dashboard/MainLayout/DashboardLayout'
 import { RouteProtection } from '@/lib/routeProtection'
 

@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useProfile } from "@/hooks/useProfile"
+import { useUpdateProfile } from "@/hooks/useUpdateProfile";
+import Image from 'next/image'
 
 // Types
 interface ProfileFormData {
@@ -64,7 +66,7 @@ const EditableInput = ({
     validation: any
 }) => {
     const isEditing = editingField === id
-    
+
     return (
         <div className="space-y-2">
             <Label htmlFor={id}>{label}</Label>
@@ -110,11 +112,17 @@ const ProfileImageUpload = ({
     <div className="flex items-center space-x-4 mb-6">
         <div className="relative">
             <Avatar className="h-24 w-24 cursor-pointer" onClick={onImageClick}>
-                <AvatarImage src={profileImage} alt="Profile" />
+                <Image
+                    src={profileImage}
+                    alt="Profile"
+                    width={96}
+                    height={96}
+                />
                 <AvatarFallback className="bg-gray-200">
                     <ImageDownIcon className="h-8 w-8 text-gray-400" />
                 </AvatarFallback>
             </Avatar>
+
             <input
                 ref={fileInputRef}
                 type="file"
@@ -133,7 +141,9 @@ const ProfileImageUpload = ({
 export default function MyProfile() {
     // Profile hook
     const { profile, isLoading, error, refetch } = useProfile()
-    
+    // Update profile hook
+    const { isLoading: isUpdating, error: updateError, success: updateSuccess, mutate } = useUpdateProfile();
+
     // State
     const [profileImage, setProfileImage] = useState<string>("/api/placeholder/96/96")
     const [editingField, setEditingField] = useState<string | null>(null)
@@ -158,27 +168,31 @@ export default function MyProfile() {
                 email: profile.email || "",
                 phone: profile.phone_number || "",
             }
-            
+
             profileForm.reset(formValues)
             setOriginalValues(formValues)
-            
-            if (profile.avatar) {
-                setProfileImage(profile.avatar)
+
+            // Only use avatar_url for image
+            if (profile.avatar_url) {
+                setProfileImage(profile.avatar_url)
+            } else {
+                setProfileImage("/api/placeholder/96/96")
             }
         }
     }, [profile, profileForm])
 
-    // Check if form values have changed
+    // Check if form values or image have changed
     const checkForChanges = () => {
         if (!originalValues) return false
-        
         const currentValues = profileForm.getValues()
-        const hasChanges = Object.keys(currentValues).some(key => 
+        const formChanged = Object.keys(currentValues).some(key =>
             currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData]
         )
-        
-        setHasChanges(hasChanges)
-        return hasChanges
+        // Only compare against avatar_url
+        const imageChanged = profileImage !== (profile?.avatar_url || "/api/placeholder/96/96");
+        const hasAnyChanges = formChanged || imageChanged;
+        setHasChanges(hasAnyChanges)
+        return hasAnyChanges
     }
 
     const handleImageClick = () => {
@@ -190,7 +204,8 @@ export default function MyProfile() {
         if (file) {
             const reader = new FileReader()
             reader.onload = (e) => {
-                setProfileImage(e.target?.result as string)
+                const newImage = e.target?.result as string;
+                setProfileImage(newImage);
             }
             reader.readAsDataURL(file)
         }
@@ -219,26 +234,42 @@ export default function MyProfile() {
 
     // Watch for form changes
     const watchedValues = profileForm.watch()
-    
+
     useEffect(() => {
         if (originalValues) {
             checkForChanges()
         }
     }, [watchedValues])
 
+    // Watch for image changes
+    useEffect(() => {
+        if (originalValues) {
+            checkForChanges();
+        }
+    }, [profileImage]);
+
     const onProfileSubmit = async (data: ProfileFormData) => {
         try {
-            console.log('Profile data:', data)
-            // TODO: Add API call to update profile
-            await new Promise(resolve => setTimeout(resolve, 1000))
-            
-            setOriginalValues(data)
-            setHasChanges(false)
-            
-            toast.success('Profile updated successfully!')
+            // Prepare payload
+            const payload: any = {
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+            };
+            // If image changed and is not the original avatar_url, include it
+            if (profileImage && profileImage !== profile?.avatar_url) {
+                payload.avatar = profileImage;
+            }
+            await mutate(payload);
+            setOriginalValues(data);
+            setHasChanges(false);
+            if (updateSuccess) {
+                toast.success('Profile updated successfully!');
+                refetch();
+            }
         } catch (error) {
-            console.error('Error updating profile:', error)
-            toast.error('Failed to update profile. Please try again.')
+            console.error('Error updating profile:', error);
+            toast.error(updateError || 'Failed to update profile. Please try again.');
         }
     }
 
@@ -269,7 +300,7 @@ export default function MyProfile() {
                 <CardContent className="p-6">
                     <div className="text-center py-8">
                         <p className="text-red-500 mb-4">{error}</p>
-                        <Button 
+                        <Button
                             onClick={refetch}
                             className="bg-[#14A228] hover:bg-green-600"
                         >
@@ -294,6 +325,9 @@ export default function MyProfile() {
                     fileInputRef={fileInputRef}
                 />
 
+                {updateError && (
+                    <p className="text-sm text-red-500 mb-2">{updateError}</p>
+                )}
                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                     <EditableInput
                         id="name"
@@ -335,14 +369,15 @@ export default function MyProfile() {
 
                     <Button
                         type="submit"
-                        disabled={!hasChanges}
-                        className={`w-full transition-all ${
-                            hasChanges 
-                                ? 'bg-[#14A228] hover:bg-green-600' 
+                        disabled={!hasChanges || isUpdating}
+                        className={`w-full transition-all ${hasChanges && !isUpdating
+                                ? 'bg-[#14A228] hover:bg-green-600'
                                 : 'bg-gray-300 cursor-not-allowed'
-                        }`}
+                            }`}
                     >
-                        {hasChanges ? 'Save Changes' : 'No Changes to Save'}
+                        {isUpdating ? (
+                            <><Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />Updating...</>
+                        ) : hasChanges ? 'Save Changes' : 'No Changes to Save'}
                     </Button>
                 </form>
             </CardContent>
