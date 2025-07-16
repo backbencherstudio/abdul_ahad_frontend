@@ -5,7 +5,7 @@ import axiosClient from "@/helper/axisoClients";
 interface LoginData {
     email: string;
     password: string;
-    type: 'DRIVER' | 'GARAGE' | 'ADMIN';
+    type: string;
 }
 
 interface LoginResponse {
@@ -15,7 +15,7 @@ interface LoginResponse {
         token: string;
         type: string;
     };
-    type: 'DRIVER' | 'GARAGE' | 'ADMIN';
+    type: string;
 }
 
 interface AuthMeResponse {
@@ -27,29 +27,15 @@ interface AuthMeResponse {
         avatar: string | null;
         address: string | null;
         phone_number: string | null;
-        type: 'DRIVER' | 'GARAGE' | 'ADMIN';
+        type: string;
         gender: string | null;
         date_of_birth: string | null;
         created_at: string;
     };
 }
 
-interface ForgotPasswordResponse {
-    success: boolean;
-    message: string;
-}
 
-interface VerifyEmailResponse {
-    success: boolean;
-    message: string;
-}
-
-interface VerifyResetPasswordResponse {
-    success: boolean;
-    message: string;
-}
-
-interface ResendVerificationEmailResponse {
+interface commonResponse {
     success: boolean;
     message: string;
 }
@@ -85,15 +71,15 @@ export const AuthMeApi = async (): Promise<AuthMeResponse> => {
 
 
 // forgot password api
-export const forgotPasswordApi = async (email: string): Promise<ForgotPasswordResponse> => {
+export const forgotPasswordApi = async (email: string): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/forgot-password', { email });
-        
+
         // Check if the response indicates failure
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to send reset email');
         }
-        
+
         return response.data;
     } catch (error: any) {
         if (error.response?.data?.message) {
@@ -107,15 +93,15 @@ export const forgotPasswordApi = async (email: string): Promise<ForgotPasswordRe
 }
 
 // verify email api
-export const verifyEmailApi = async (email: string, token: string): Promise<VerifyEmailResponse> => {
+export const verifyEmailApi = async (email: string, token: string): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/verify-email', { email, token });
-        
+
         // Check if the response indicates failure
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to verify email');
         }
-        
+
         return response.data;
     } catch (error: any) {
         if (error.response?.data?.message) {
@@ -129,15 +115,15 @@ export const verifyEmailApi = async (email: string, token: string): Promise<Veri
 }
 
 // verify reset password api
-export const verifyResetPasswordApi = async (email: string, token: string, password: string): Promise<VerifyResetPasswordResponse> => {
+export const verifyResetPasswordApi = async (email: string, token: string, password: string): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/reset-password', { email, token, password });
-        
+
         // Check if the response indicates failure
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to reset password');
         }
-        
+
         return response.data;
     } catch (error: any) {
         if (error.response?.data?.message) {
@@ -152,15 +138,15 @@ export const verifyResetPasswordApi = async (email: string, token: string, passw
 
 
 // resend verification email api
-export const resendVerificationEmailApi = async (email: string): Promise<ResendVerificationEmailResponse> => {
+export const resendVerificationEmailApi = async (email: string): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/resend-verification-email', { email });
-        
+
         // Check if the response indicates failure
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to resend verification email');
         }
-        
+
         return response.data;
     } catch (error: any) {
         if (error.response?.data?.message) {
