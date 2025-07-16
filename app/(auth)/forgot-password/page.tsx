@@ -1,125 +1,33 @@
 "use client"
 
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Check, ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
-import { toast } from 'react-toastify'
-import { useRouter } from 'next/navigation'
-
-interface EmailFormData {
-    email: string
-}
-
-interface CodeFormData {
-    code: string
-}
-
-interface PasswordFormData {
-    newPassword: string
-    confirmPassword: string
-}
-
-type FormStep = 'email' | 'code' | 'password'
+import { useForgotPassword } from '@/hooks/useForgotPassword'
 
 export default function ForgotPassword() {
-    const [currentStep, setCurrentStep] = useState<FormStep>('email')
-    const [userEmail, setUserEmail] = useState('')
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const router = useRouter()
-    const emailForm = useForm<EmailFormData>()
-    const codeForm = useForm<CodeFormData>()
-    const passwordForm = useForm<PasswordFormData>()
+    
+    const {
+        currentStep,
+        isLoading,
+        emailForm,
+        tokenPasswordForm,
+        handleResendEmail,
+        handleBackStep,
+        handleBack,
+        getStepTitle,
+        getSubmitButtonText,
+        getFormSubmitHandler
+    } = useForgotPassword()
 
-    const [isLoading, setIsLoading] = useState(false)
-
-    const onEmailSubmit = async (data: EmailFormData) => {
-        setIsLoading(true)
-        try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            setUserEmail(data.email)
-            setCurrentStep('code')
-            toast.success('Verification code sent to your email')
-        } catch (error) {
-            console.error('Email submission error:', error)
-            toast.error('Failed to send verification code')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const onCodeSubmit = async (data: CodeFormData) => {
-        setIsLoading(true)
-        try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            // Validate code here
-            setCurrentStep('password')
-            toast.success('Code verified successfully')
-        } catch (error) {
-            console.error('Code verification error:', error)
-            toast.error('Invalid verification code')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const onPasswordSubmit = async (data: PasswordFormData) => {
-        setIsLoading(true)
-        try {
-            if (data.newPassword !== data.confirmPassword) {
-                toast.error('Passwords do not match')
-                return
-            }
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            toast.success('Password reset successfully')
-            router.push('/login')
-        } catch (error) {
-            console.error('Password reset error:', error)
-            toast.error('Failed to reset password')
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const getStepTitle = () => {
-        switch (currentStep) {
-            case 'email':
-                return {
-                    title: 'Forgot your password?',
-                    subtitle: 'No worries, just enter your email and we\'ll send you a reset link.'
-                }
-            case 'code':
-                return {
-                    title: 'Enter verification code',
-                    subtitle: `We've sent a 6-digit code to ${userEmail}`
-                }
-            case 'password':
-                return {
-                    title: 'Create new password',
-                    subtitle: 'Please enter your new password below.'
-                }
-        }
-    }
-
-    const handleBackStep = () => {
-        if (currentStep === 'code') {
-            setCurrentStep('email')
-        } else if (currentStep === 'password') {
-            setCurrentStep('code')
-        }
-    }
-
-
-    const handleBack = () => {
-        router.back()
-    }
     return (
         <div className="min-h-screen flex flex-col lg:flex-row p-4  gap-4">
             <div
@@ -166,7 +74,7 @@ export default function ForgotPassword() {
                             <p className='text-gray-500 text-sm'>{getStepTitle().subtitle}</p>
                         </div>
 
-                        <form onSubmit={currentStep === 'email' ? emailForm.handleSubmit(onEmailSubmit) : currentStep === 'code' ? codeForm.handleSubmit(onCodeSubmit) : passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6 sm:space-y-8">
+                        <form onSubmit={getFormSubmitHandler()} className="space-y-6 sm:space-y-8">
 
                             {currentStep === 'email' && (
                                 <>
@@ -195,55 +103,56 @@ export default function ForgotPassword() {
                                 </>
                             )}
 
-                            {currentStep === 'code' && (
+                            {currentStep === 'tokenPassword' && (
                                 <>
-                                    {/* Code Field */}
+                                    {/* Token Field */}
                                     <div>
-                                        <Label htmlFor="code" className="text-sm font-medium text-gray-700 mb-2 block">
-                                            Verification Code <span className='text-red-500'>*</span>
+                                        <Label htmlFor="token" className="text-sm font-medium text-gray-700 mb-2 block">
+                                            Verification Token <span className='text-red-500'>*</span>
                                         </Label>
                                         <Input
-                                            id="code"
+                                            id="token"
                                             type="text"
-                                            placeholder='Enter your verification code'
+                                            placeholder='Enter your verification token'
                                             className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                            {...codeForm.register('code', {
-                                                required: 'Verification code is required',
-                                                pattern: {
-                                                    value: /^\d+$/,
-                                                    message: 'Invalid verification code format'
-                                                }
+                                            {...tokenPasswordForm.register('token', {
+                                                required: 'Verification token is required'
                                             })}
                                         />
-                                        {codeForm.formState.errors.code && (
-                                            <p className="text-red-500 text-sm mt-2">{codeForm.formState.errors.code.message}</p>
+                                        {tokenPasswordForm.formState.errors.token && (
+                                            <p className="text-red-500 text-sm mt-2">{tokenPasswordForm.formState.errors.token.message}</p>
                                         )}
                                     </div>
-                                </>
-                            )}
 
-                            {currentStep === 'password' && (
-                                <>
                                     {/* New Password Field */}
                                     <div>
                                         <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700 mb-2 block">
                                             New Password <span className='text-red-500'>*</span>
                                         </Label>
-                                        <Input
-                                            id="newPassword"
-                                            type={showNewPassword ? 'text' : 'password'}
-                                            placeholder='Enter your new password'
-                                            className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                            {...passwordForm.register('newPassword', {
-                                                required: 'New password is required',
-                                                minLength: {
-                                                    value: 8,
-                                                    message: 'Password must be at least 8 characters long'
-                                                }
-                                            })}
-                                        />
-                                        {passwordForm.formState.errors.newPassword && (
-                                            <p className="text-red-500 text-sm mt-2">{passwordForm.formState.errors.newPassword.message}</p>
+                                        <div className="relative">
+                                            <Input
+                                                id="newPassword"
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                placeholder='Enter your new password'
+                                                className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg pr-12"
+                                                {...tokenPasswordForm.register('newPassword', {
+                                                    required: 'New password is required',
+                                                    minLength: {
+                                                        value: 8,
+                                                        message: 'Password must be at least 8 characters long'
+                                                    }
+                                                })}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                            >
+                                                {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
+                                        </div>
+                                        {tokenPasswordForm.formState.errors.newPassword && (
+                                            <p className="text-red-500 text-sm mt-2">{tokenPasswordForm.formState.errors.newPassword.message}</p>
                                         )}
                                     </div>
 
@@ -252,18 +161,27 @@ export default function ForgotPassword() {
                                         <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 mb-2 block">
                                             Confirm Password <span className='text-red-500'>*</span>
                                         </Label>
-                                        <Input
-                                            id="confirmPassword"
-                                            type={showConfirmPassword ? 'text' : 'password'}
-                                            placeholder='Confirm your new password'
-                                            className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
-                                            {...passwordForm.register('confirmPassword', {
-                                                required: 'Confirmation password is required',
-                                                validate: (value) => value === passwordForm.watch('newPassword') || 'Passwords do not match'
-                                            })}
-                                        />
-                                        {passwordForm.formState.errors.confirmPassword && (
-                                            <p className="text-red-500 text-sm mt-2">{passwordForm.formState.errors.confirmPassword.message}</p>
+                                        <div className="relative">
+                                            <Input
+                                                id="confirmPassword"
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                placeholder='Confirm your new password'
+                                                className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg pr-12"
+                                                {...tokenPasswordForm.register('confirmPassword', {
+                                                    required: 'Confirmation password is required',
+                                                    validate: (value) => value === tokenPasswordForm.watch('newPassword') || 'Passwords do not match'
+                                                })}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                            </button>
+                                        </div>
+                                        {tokenPasswordForm.formState.errors.confirmPassword && (
+                                            <p className="text-red-500 text-sm mt-2">{tokenPasswordForm.formState.errors.confirmPassword.message}</p>
                                         )}
                                     </div>
                                 </>
@@ -281,15 +199,13 @@ export default function ForgotPassword() {
                                         <span>Please wait...</span>
                                     </div>
                                 ) : (
-                                    currentStep === 'email' ? 'Send Code' :
-                                        currentStep === 'code' ? 'Verify Code' :
-                                            'Reset Password'
+                                    getSubmitButtonText()
                                 )}
                             </Button>
 
                             {/* Navigation Links */}
                             <div className="text-center pt-4 space-y-2">
-                                {currentStep === 'code' && (
+                                {currentStep === 'tokenPassword' && (
                                     <Button
                                         type="button"
                                         variant="ghost"
@@ -301,25 +217,23 @@ export default function ForgotPassword() {
                                     </Button>
                                 )}
 
-                                {currentStep === 'code' && (
+                                {currentStep === 'tokenPassword' && (
                                     <div className="text-sm text-gray-600">
-                                        Didn't receive the code?{' '}
+                                        Didn't receive the email?{' '}
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                // Resend code logic
-                                                toast.success('Code resent to your email')
-                                            }}
-                                            className="text-[#19CA32] hover:underline font-medium"
+                                            onClick={handleResendEmail}
+                                            disabled={isLoading}
+                                            className="text-[#19CA32] hover:underline font-medium disabled:opacity-50"
                                         >
-                                            Resend Code
+                                            Resend Email
                                         </button>
                                     </div>
                                 )}
 
-                                {/* <Link href="/login" className="text-[#19CA32] underline text-sm flex justify-center font-medium hover:scale-105 transition-all duration-300">
+                                <Link href="/login" className="text-[#19CA32] underline text-sm flex justify-center font-medium hover:scale-105 transition-all duration-300">
                                     Return to login
-                                </Link> */}
+                                </Link>
                             </div>
 
                         </form>
