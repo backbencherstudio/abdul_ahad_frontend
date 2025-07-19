@@ -1,10 +1,14 @@
+import DashboardLayout from '@/components/reusable/Dashboard/MainLayout/DashboardLayout'
+import { RouteProtection } from '@/lib/routeProtection'
 
-import DashboardLayout from '@/components/reusable/Dashboard/MainLayout/DashboardLayout';
-
-export default function DriverDashboardLayout({
+export default function DashboardLayoutWrapper({
     children,
 }: {
     children: React.ReactNode
 }) {
-    return <DashboardLayout>{children}</DashboardLayout>;
+    return (
+        <RouteProtection>
+            <DashboardLayout>{children}</DashboardLayout>
+        </RouteProtection>
+    )
 }

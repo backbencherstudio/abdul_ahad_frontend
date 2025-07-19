@@ -8,18 +8,21 @@ import { Eye, EyeOff, Check, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useDriverRegister } from '@/hooks/useDriverRegister'
+import { EmailVerificationModal } from '@/components/reusable/EmailVerificationModal'
 
 interface FormData {
+    name: string
     email: string
+    phoneNumber: string
     password: string
     agreeToTerms: boolean
 }
-
 const data = [
     {
         id: 1,
@@ -43,27 +46,26 @@ const data = [
         title: 'Stay road-legal with zero stress',
     },
 ]
-export default function DriverSignInPage() {
+export default function DriverRegister() {
     const [showPassword, setShowPassword] = useState(false)
-    const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
-    const [isLoading, setIsLoading] = useState(false)
+    const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<FormData>()
     const router = useRouter()
-    const { loginWithType } = useAuth()
+    const { registerDriver, isLoading, error, showVerificationModal, registeredEmail, handleVerificationSuccess, closeVerificationModal } = useDriverRegister()
+
+    // Watch the agreeToTerms checkbox to enable/disable the submit button
+    const agreeToTerms = watch('agreeToTerms')
+
+    const onVerificationSuccess = () => {
+        handleVerificationSuccess();
+        reset();
+    }
 
     const onSubmit = async (data: FormData) => {
-        setIsLoading(true)
         try {
-            const result = await loginWithType(data.email, data.password, 'DRIVER')
-            if (result.success) {
-                toast.success(result.message)
-                router.push('/driver/book-my-mot')
-            } else {
-                toast.error(result.message)
-            }
+            const response = await registerDriver(data)
+            toast.success(response?.message || 'Account created successfully')
         } catch (error: any) {
-            toast.error(error.message || 'Login failed')
-        } finally {
-            setIsLoading(false)
+            toast.error(error.message || 'Registration failed')
         }
     }
 
@@ -71,10 +73,10 @@ export default function DriverSignInPage() {
         setShowPassword(!showPassword)
     }
 
+
     const handleBack = () => {
         router.back()
     }
-
     return (
         <div className="min-h-screen flex flex-col lg:flex-row p-4  gap-4">
             <div
@@ -131,11 +133,26 @@ export default function DriverSignInPage() {
                 <div className="w-full max-w-full  lg:max-w-lg xl:max-w-xl">
                     <div className="bg-white rounded-xl border border-[#19CA32]  p-8 sm:p-10 lg:p-12">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 mb-8 sm:mb-10">
-                            Let’s get you signed in
+                            Let's create your account.
                         </h2>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
-
+                            {/* Name Field */}
+                            <div>
+                                <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Name <span className='text-red-500'>*</span>
+                                </Label>
+                                <Input
+                                    id="name"
+                                    placeholder='Enter your name'
+                                    type="text"
+                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
+                                    {...register('name', { required: 'Name is required' })}
+                                />
+                                {errors.name && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.name.message}</p>
+                                )}
+                            </div>
 
                             {/* Email Field */}
                             <div>
@@ -160,7 +177,22 @@ export default function DriverSignInPage() {
                                 )}
                             </div>
 
-
+                            {/* Phone Number Field */}
+                            <div>
+                                <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Phone Number <span className='text-red-500'>*</span>
+                                </Label>
+                                <Input
+                                    id="phoneNumber"
+                                    type="tel"
+                                    placeholder='Enter your phone number'
+                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
+                                    {...register('phoneNumber', { required: 'Phone number is required' })}
+                                />
+                                {errors.phoneNumber && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.phoneNumber.message}</p>
+                                )}
+                            </div>
 
                             {/* Password Field */}
                             <div>
@@ -197,18 +229,41 @@ export default function DriverSignInPage() {
                                     <p className="text-red-500 text-sm mt-2">{errors.password.message}</p>
                                 )}
                             </div>
-                            {/* forget password */}
-                            <div className="flex justify-end ">
-                                <Link href="/forgot-password" className="text-[#19CA32] underline  text-sm hover:scale-105 transition-all duration-300">
-                                    Forget Password
-                                </Link>
+
+                            {/* Terms and Privacy Policy Checkbox */}
+                            <div className="flex items-center space-x-2 ">
+                                <Checkbox
+                                    id="terms"
+                                    className="h-4 w-4 cursor-pointer"
+                                    checked={agreeToTerms || false}
+                                    onCheckedChange={(checked) => {
+                                        setValue('agreeToTerms', checked === true);
+                                    }}
+                                />
+                                <Label htmlFor="terms" className="text-sm text-gray-600 leading-relaxed">
+                                    I agree to the{' '}
+                                    <Link href="/terms" className="text-[#19CA32] hover:underline font-medium">
+                                        Terms
+                                    </Link>{' '}
+                                    and{' '}
+                                    <Link href="/privacy" className="text-[#19CA32] hover:underline font-medium">
+                                        Privacy Policy
+                                    </Link>
+                                </Label>
                             </div>
+                            {errors.agreeToTerms && (
+                                <p className="text-red-500 text-sm mt-2">{errors.agreeToTerms.message}</p>
+                            )}
+
+                            {error && (
+                                <p className="text-red-500 text-sm mt-2">{error}</p>
+                            )}
 
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                disabled={isLoading}
-                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed text-white py-5 rounded-lg font-medium text-base transition-all duration-200  hover:shadow-lg hover:shadow-green-500"
+                                disabled={isLoading || !agreeToTerms}
+                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed text-white py-5 rounded-lg font-medium text-base transition-all duration-200 hover:shadow-lg hover:shadow-green-500 disabled:hover:shadow-none"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-2">
@@ -216,16 +271,16 @@ export default function DriverSignInPage() {
                                         <span>Please wait...</span>
                                     </div>
                                 ) : (
-                                    'Log in Account'
+                                    'Continue'
                                 )}
                             </Button>
 
                             {/* Login Link */}
                             <div className="text-center pt-4">
                                 <span className="text-sm text-gray-600">
-                                    Don’t have account ?{' '}
-                                    <Link href="/create-account/driver" className="text-[#19CA32] underline font-medium">
-                                        Create Account
+                                    Already have an account?{' '}
+                                    <Link href="/login/driver" className="text-[#19CA32] hover:underline font-medium">
+                                        Log in
                                     </Link>
                                 </span>
                             </div>
@@ -233,6 +288,14 @@ export default function DriverSignInPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Email Verification Modal */}
+            <EmailVerificationModal
+                isOpen={showVerificationModal}
+                onClose={closeVerificationModal}
+                email={registeredEmail}
+                onVerificationSuccess={onVerificationSuccess}
+            />
         </div>
     )
 }

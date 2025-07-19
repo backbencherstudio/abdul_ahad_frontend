@@ -24,19 +24,15 @@ import {
 import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import { toast } from 'react-toastify';
 import { LayoutGrid, Building2, Truck, Calendar } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
-    user: {
-        name: string;
-        email: string;
-        role: string;
-        avatar: string;
-    };
 }
 
-export default function Sidebar({ onClose, user }: SidebarProps) {
+export default function Sidebar({ onClose }: SidebarProps) {
+    const { user } = useAuth();
     const pathname = usePathname();
     const router = useRouter();
 
@@ -92,9 +88,12 @@ export default function Sidebar({ onClose, user }: SidebarProps) {
             {/* Navigation Menu - Takes up available space */}
             <div className="flex-1 overflow-y-auto">
                 <nav className="mt-4 px-3">
-                    <ul className="space-y-3">
+                    <ul className="space-y-5">
                         {menuItems
-                            .filter(item => item.role === user.role)
+                            .filter(item => {
+                                const role = user?.type ? user.type.toLowerCase() : 'driver';
+                                return item.role === role;
+                            })
                             .map((item) => {
                                 const isActive = item.href === '/driver/book-my-mot'
                                     ? pathname.startsWith('/driver/book-my-mot')
@@ -124,7 +123,7 @@ export default function Sidebar({ onClose, user }: SidebarProps) {
             <div className="mt-auto">
                 {/* role based alert */}
                 {
-                    user.role === 'garage' && (
+                    (user?.type && user.type.toLowerCase() === 'garage') && (
                         <div className="p-2">
                             <div className="bg-red-500 text-white px-6 py-6 rounded-lg space-y-2" role="alert">
                                 <h1 className="font-bold text-md text-center font-Inter">Account not active</h1>

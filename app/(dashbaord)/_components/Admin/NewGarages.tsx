@@ -30,7 +30,7 @@ export default function NewGarages() {
             try {
                 const response = await fetch('/data/ManageGarageData.json');
                 const jsonData = await response.json();
-                setData(jsonData.slice(0, 3));
+                setData(jsonData.slice(0, 8));
             } catch (error) {
                 console.error('Error fetching data:', error);
                 toast.error('Failed to load garage data');

@@ -1,48 +1,48 @@
-
 'use client'
 import React, { useState } from 'react'
 import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
 import Link from 'next/link'
-import { ArrowLeft, EyeOff } from 'lucide-react'
-import { Eye } from 'lucide-react'
-import { Loader2 } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { toast } from 'react-toastify'
 import { useForm } from 'react-hook-form'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useGarageRegister } from '@/hooks/useGarageRegister'
+import { EmailVerificationModal } from '@/components/reusable/EmailVerificationModal'
+
 
 interface FormData {
+    nameOfGarage: string
+    vtsNumber: string
+    primaryContactPerson: string
     email: string
+    contactNumber: string
     password: string
     agreeToTerms: boolean
 }
 
-export default function AdminLogin() {
+export default function GarageRegister() {
+
     const [showPassword, setShowPassword] = useState(false)
-    const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
-    const [isLoading, setIsLoading] = useState(false)
+    const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>()
     const router = useRouter()
-    const { loginWithType } = useAuth()
+    const { registerGarage, isLoading, error, showVerificationModal, registeredEmail, handleVerificationSuccess, closeVerificationModal } = useGarageRegister()
+
+    const onVerificationSuccess = () => {
+        handleVerificationSuccess();
+        reset();
+    }
 
     const onSubmit = async (data: FormData) => {
-        setIsLoading(true)
         try {
-            const result = await loginWithType(data.email, data.password, 'ADMIN')
-            if (result.success) {
-                toast.success(result.message)
-                router.push('/admin/dashboard')
-            } else {
-                toast.error(result.message)
-            }
+            const response = await registerGarage(data)
+            toast.success(response?.message || 'Account created successfully')
         } catch (error: any) {
-            toast.error(error.message || 'Login failed')
-        } finally {
-            setIsLoading(false)
+            toast.error(error.message || 'Registration failed')
         }
     }
 
@@ -50,9 +50,11 @@ export default function AdminLogin() {
         setShowPassword(!showPassword)
     }
 
+
     const handleBack = () => {
         router.back()
     }
+
     return (
         <div className="min-h-screen flex flex-col lg:flex-row p-4  gap-4">
             <div
@@ -88,22 +90,70 @@ export default function AdminLogin() {
                 </div>
             </div>
 
-
             {/* Right Side - Form */}
             <div className="flex-1 lg:flex-1 flex items-center justify-center rounded-2xl">
                 <div className="w-full max-w-full  lg:max-w-lg xl:max-w-xl">
                     <div className="bg-white rounded-xl border border-[#19CA32]  p-8 sm:p-10 ">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 mb-8 sm:mb-10">
-                            Admin Login
+                            Let's set up your membership
                         </h2>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 ">
+                            {/* Name of Garage Field */}
+                            <div>
+                                <Label htmlFor="nameOfGarage" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Name of Garage
+                                </Label>
+                                <Input
+                                    id="nameOfGarage"
+                                    placeholder='Enter garage name'
+                                    type="text"
+                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
+                                    {...register('nameOfGarage', { required: 'Garage name is required' })}
+                                />
+                                {errors.nameOfGarage && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.nameOfGarage.message}</p>
+                                )}
+                            </div>
 
+                            {/* VTS Number Field */}
+                            <div>
+                                <Label htmlFor="vtsNumber" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    VTS Number
+                                </Label>
+                                <Input
+                                    id="vtsNumber"
+                                    placeholder='Enter VTS number'
+                                    type="text"
+                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
+                                    {...register('vtsNumber', { required: 'VTS number is required' })}
+                                />
+                                {errors.vtsNumber && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.vtsNumber.message}</p>
+                                )}
+                            </div>
+
+                            {/* Primary Contact Person Field */}
+                            <div>
+                                <Label htmlFor="primaryContactPerson" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Primary Contact Person
+                                </Label>
+                                <Input
+                                    id="primaryContactPerson"
+                                    placeholder='Enter contact person name'
+                                    type="text"
+                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
+                                    {...register('primaryContactPerson', { required: 'Primary contact person is required' })}
+                                />
+                                {errors.primaryContactPerson && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.primaryContactPerson.message}</p>
+                                )}
+                            </div>
 
                             {/* Email Field */}
                             <div>
                                 <Label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Email <span className='text-red-500'>*</span>
+                                    Email
                                 </Label>
                                 <Input
                                     id="email"
@@ -123,10 +173,27 @@ export default function AdminLogin() {
                                 )}
                             </div>
 
+                            {/* Contact Number Field */}
+                            <div>
+                                <Label htmlFor="contactNumber" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    Contact Number
+                                </Label>
+                                <Input
+                                    id="contactNumber"
+                                    type="tel"
+                                    placeholder='Enter your contact number'
+                                    className="mt-2 py-5 border border-[#19CA32] focus:border-[#19CA32] focus:ring-[#19CA32] text-base px-4 rounded-lg"
+                                    {...register('contactNumber', { required: 'Contact number is required' })}
+                                />
+                                {errors.contactNumber && (
+                                    <p className="text-red-500 text-sm mt-2">{errors.contactNumber.message}</p>
+                                )}
+                            </div>
+
                             {/* Password Field */}
                             <div>
                                 <Label htmlFor="password" className="text-sm font-medium text-gray-700 mb-2 block">
-                                    Password <span className='text-red-500'>*</span>
+                                    Password
                                 </Label>
                                 <div className="relative mt-2">
                                     <Input
@@ -158,18 +225,20 @@ export default function AdminLogin() {
                                     <p className="text-red-500 text-sm mt-2">{errors.password.message}</p>
                                 )}
                             </div>
-                            {/* forget password */}
-                            <div className="flex justify-end ">
-                                <Link href="/forgot-password" className="text-[#19CA32] underline  text-sm hover:scale-105 transition-all duration-300">
-                                    Forget Password
-                                </Link>
-                            </div>
+
+                            {errors.agreeToTerms && (
+                                <p className="text-red-500 text-sm mt-2">{errors.agreeToTerms.message}</p>
+                            )}
+
+                            {error && (
+                                <p className="text-red-500 text-sm mt-2">{error}</p>
+                            )}
 
                             {/* Submit Button */}
                             <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed text-white py-5 rounded-lg font-medium text-base transition-all duration-200  hover:shadow-lg hover:shadow-green-500"
+                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#19CA32] disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed text-white py-5 rounded-lg font-medium text-base transition-all duration-200 hover:shadow-lg hover:shadow-green-500 disabled:hover:shadow-none"
                             >
                                 {isLoading ? (
                                     <div className="flex items-center justify-center gap-2">
@@ -177,13 +246,31 @@ export default function AdminLogin() {
                                         <span>Please wait...</span>
                                     </div>
                                 ) : (
-                                    'Log in Account'
+                                    'Continue'
                                 )}
                             </Button>
+
+                            {/* Login Link */}
+                            <div className="text-center pt-4">
+                                <span className="text-sm text-gray-600">
+                                    Already have an account?{' '}
+                                    <Link href="/login/garage" className="text-[#19CA32] hover:underline font-medium">
+                                        Log in
+                                    </Link>
+                                </span>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
+
+            {/* Email Verification Modal */}
+            <EmailVerificationModal
+                isOpen={showVerificationModal}
+                onClose={closeVerificationModal}
+                email={registeredEmail}
+                onVerificationSuccess={onVerificationSuccess}
+            />
         </div>
     )
 }

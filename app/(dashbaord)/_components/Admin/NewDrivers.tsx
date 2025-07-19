@@ -28,7 +28,7 @@ export default function NewDrivers() {
                 const response = await fetch('/data/ManageDriver.json');
                 const jsonData = await response.json();
                 // Show only first 3 drivers
-                setData(jsonData.slice(0, 3));
+                setData(jsonData.slice(0, 8));
             } catch (error) {
                 console.error('Error fetching data:', error);
                 toast.error('Failed to load drivers data');

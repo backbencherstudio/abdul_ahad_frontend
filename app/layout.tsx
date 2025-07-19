@@ -3,6 +3,7 @@ import "./globals.css";
 import { AppConfig } from "@/config/app.config";
 import { Inter, Inder, Nunito_Sans } from "next/font/google";
 import { ToastContainer } from "react-toastify";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: AppConfig().app.name,
@@ -36,8 +37,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${inder.variable} ${nunitoSans.variable}`}>
       <body className={inter.className}>
-        <ToastContainer position="top-center" />
-        {children}</body>
+        <AuthProvider>
+          <ToastContainer position="top-center" />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }
