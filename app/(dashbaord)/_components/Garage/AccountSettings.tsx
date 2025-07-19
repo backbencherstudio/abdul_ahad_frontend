@@ -12,6 +12,7 @@ import { useProfile } from "@/hooks/useProfile"
 import ProfileImageUpload from '../Common/CommonImage';
 import { useUpdateProfile } from '@/hooks/useUpdateProfile';
 import { useAuth } from '@/hooks/useAuth';
+import { EmailChangeModal } from '@/components/reusable/EmailChangeModal';
 
 // Types
 interface ProfileFormData {
@@ -66,6 +67,7 @@ const EditableInput = ({
     validation: any
 }) => {
     const isEditing = editingField === id
+    const isEmailField = id === 'email'
 
     return (
         <div className="space-y-2">
@@ -75,8 +77,8 @@ const EditableInput = ({
                     id={id}
                     type={type}
                     placeholder={placeholder}
-                    disabled={!isEditing}
-                    className={`pr-10 ${isEditing ? 'border-blue-500' : 'border-gray-300 bg-gray-50'}`}
+                    disabled={!isEditing || isEmailField}
+                    className={`pr-10 ${isEditing && !isEmailField ? 'border-blue-500' : 'border-gray-300 bg-gray-50'}`}
                     {...register(id, validation)}
                     onBlur={onBlur}
                 />
@@ -84,7 +86,7 @@ const EditableInput = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing ? 'text-blue-600' : 'text-gray-500'}`}
+                    className={`absolute cursor-pointer right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing && !isEmailField ? 'text-blue-600' : 'text-gray-500'}`}
                     onClick={() => onEditClick(id)}
                 >
                     <Edit2 className="h-4 w-4" />
@@ -111,6 +113,7 @@ export default function AccountSettingsComponent() {
     const [isSaving, setIsSaving] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
     // Form
     const profileForm = useForm<ProfileFormData>({
@@ -159,6 +162,11 @@ export default function AccountSettingsComponent() {
     };
 
     const handleEditClick = (fieldName: string) => {
+        if (fieldName === 'email') {
+            setIsEmailModalOpen(true);
+            return;
+        }
+        
         if (editingField === fieldName) {
             setEditingField(null)
         } else {
@@ -175,9 +183,11 @@ export default function AccountSettingsComponent() {
     const checkForChanges = () => {
         if (!originalValues) return false;
         const currentValues = profileForm.getValues();
-        const formChanged = Object.keys(currentValues).some(key =>
-            currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData]
-        );
+        // Exclude email from form changes since it's handled separately via modal
+        const formChanged = Object.keys(currentValues).some(key => {
+            if (key === 'email') return false; // Email changes are handled via modal
+            return currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData];
+        });
         const imageChanged = profileImage !== (profile?.avatar_url || "/api/placeholder/96/96");
         const hasAnyChanges = formChanged || imageChanged || !!selectedFile;
         setHasChanges(hasAnyChanges);
@@ -243,6 +253,19 @@ export default function AccountSettingsComponent() {
         }
     };
 
+    const handleEmailChangeSuccess = async (newEmail: string) => {
+        try {
+            await refetch();
+            await checkAuth();
+            // Update the form with new email
+            profileForm.setValue('email', newEmail);
+            setOriginalValues(prev => prev ? { ...prev, email: newEmail } : null);
+            setHasChanges(false);
+        } catch (error) {
+            console.error('Error updating email:', error);
+        }
+    };
+
     if (isLoading) {
         return (
             <Card className="shadow-sm">
@@ -281,103 +304,113 @@ export default function AccountSettingsComponent() {
     }
 
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
-                <CardTitle className="text-2xl">Account Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-                <ProfileImageUpload
-                    profileImage={profileImage}
-                    onImageClick={handleImageClick}
-                    onImageChange={handleImageChange}
-                    fileInputRef={fileInputRef}
-                    onImageError={() => setProfileImage("")}
-                />
-
-                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
-                    <EditableInput
-                        id="name"
-                        label="Garage Name"
-                        placeholder="Enter Garage Name"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={profileValidation.name}
+        <>
+            <Card className="shadow-sm">
+                <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
+                    <CardTitle className="text-2xl">Account Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <ProfileImageUpload
+                        profileImage={profileImage}
+                        onImageClick={handleImageClick}
+                        onImageChange={handleImageChange}
+                        fileInputRef={fileInputRef}
+                        onImageError={() => setProfileImage("")}
                     />
 
-                    <EditableInput
-                        id="vtsNumber"
-                        label="VTS Number"
-                        placeholder="Enter VTS Number"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={{ required: "VTS Number is required" }}
-                    />
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                        <EditableInput
+                            id="name"
+                            label="Garage Name"
+                            placeholder="Enter Garage Name"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={profileValidation.name}
+                        />
 
-                    <EditableInput
-                        id="primaryContact"
-                        label="Primary Contact Person"
-                        placeholder="Enter Primary Contact Person"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={{ required: "Primary Contact Person is required" }}
-                    />
+                        <EditableInput
+                            id="vtsNumber"
+                            label="VTS Number"
+                            placeholder="Enter VTS Number"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={{ required: "VTS Number is required" }}
+                        />
 
-                    <EditableInput
-                        id="email"
-                        label="Email"
-                        type="email"
-                        placeholder="Enter your email"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={profileValidation.email}
-                    />
+                        <EditableInput
+                            id="primaryContact"
+                            label="Primary Contact Person"
+                            placeholder="Enter Primary Contact Person"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={{ required: "Primary Contact Person is required" }}
+                        />
 
-                    <EditableInput
-                        id="contactNumber"
-                        label="Contact Number"
-                        type="tel"
-                        placeholder="Enter contact number"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={{ required: "Contact Number is required" }}
-                    />
+                        <EditableInput
+                            id="email"
+                            label="Email"
+                            type="email"
+                            placeholder="Enter your email"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={profileValidation.email}
+                        />
 
-                    <Button
-                        type="submit"
-                        disabled={!hasChanges || isSaving}
-                        className={`w-full transition-all  ${hasChanges && !isSaving
-                            ? 'bg-[#14A228] hover:bg-green-600 cursor-pointer'
-                            : 'bg-gray-300 cursor-not-allowed '
-                            }`}
-                    >
-                        {isSaving ? (
-                            <div className="flex items-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Saving...
-                            </div>
-                        ) : hasChanges ? (
-                            'Save Changes'
-                        ) : (
-                            'No Changes to Save'
-                        )}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+                        <EditableInput
+                            id="contactNumber"
+                            label="Contact Number"
+                            type="tel"
+                            placeholder="Enter contact number"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={{ required: "Contact Number is required" }}
+                        />
+
+                        <Button
+                            type="submit"
+                            disabled={!hasChanges || isSaving}
+                            className={`w-full transition-all  ${hasChanges && !isSaving
+                                ? 'bg-[#14A228] hover:bg-green-600 cursor-pointer'
+                                : 'bg-gray-300 cursor-not-allowed '
+                                }`}
+                        >
+                            {isSaving ? (
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Saving...
+                                </div>
+                            ) : hasChanges ? (
+                                'Save Changes'
+                            ) : (
+                                'No Changes to Save'
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+
+            {/* Email Change Modal */}
+            <EmailChangeModal
+                isOpen={isEmailModalOpen}
+                onClose={() => setIsEmailModalOpen(false)}
+                currentEmail={profile?.email || ""}
+                onEmailChangeSuccess={handleEmailChangeSuccess}
+            />
+        </>
     )
 }
