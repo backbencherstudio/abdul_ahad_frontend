@@ -180,3 +180,48 @@ export const changesProfileApi = async (data: any): Promise<commonResponse> => {
 
 
 
+// change email request api
+export const changeEmailRequestApi = async (data: any): Promise<commonResponse> => {
+    try {
+        const response = await axiosClient.post('/api/auth/request-email-change', data);
+        
+        // Check if the response indicates failure
+        if (response.data.success === false) {
+            throw new Error(response.data.message || 'Failed to change email request');
+        }
+        
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        } else if (error.message) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('Failed to change email request');
+        }
+    }
+}
+
+// changes email api
+export const changesEmailApi = async (data: any): Promise<commonResponse> => {
+    try {
+        const response = await axiosClient.post('/api/auth/change-email', data);
+        
+        // Check if the response indicates failure
+        if (response.data.success === false) {
+            throw new Error(response.data.message || 'Failed to change email');
+        }
+        
+        return response.data;
+    } catch (error: any) {
+        if (error.response?.data?.message) {
+            throw new Error(error.response.data.message);
+        } else if (error.message) {
+            throw new Error(error.message);
+        } else {
+            throw new Error('Failed to change email');
+        }
+    }
+}
+
+

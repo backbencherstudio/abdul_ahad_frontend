@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { changesProfileApi } from '@/apis/auth/loginApis'
+import { changesProfileApi } from '@/apis/auth/authApis'
 
 // Password change data interface
 interface PasswordChangeData {

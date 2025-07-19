@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
-import { forgotPasswordApi, verifyResetPasswordApi, resendVerificationEmailApi } from '@/apis/auth/loginApis'
+import { forgotPasswordApi, verifyResetPasswordApi, resendVerificationEmailApi } from '@/apis/auth/authApis'
 
 interface EmailFormData {
     email: string

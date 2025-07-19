@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { loginApi, AuthMeApi } from '@/apis/auth/loginApis'
+import { loginApi, AuthMeApi } from '@/apis/auth/authApis'
 
 // Types
 interface User {

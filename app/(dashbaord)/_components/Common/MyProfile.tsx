@@ -11,6 +11,7 @@ import { useProfile } from "@/hooks/useProfile"
 import { useUpdateProfile } from "@/hooks/useUpdateProfile";
 import { useAuth } from "@/hooks/useAuth";
 import ProfileImageUpload from './CommonImage';
+import { EmailChangeModal } from '@/components/reusable/EmailChangeModal';
 
 interface ProfileFormData {
     name: string
@@ -62,6 +63,7 @@ const EditableInput = ({
     validation: any
 }) => {
     const isEditing = editingField === id
+    const isEmailField = id === 'email'
 
     return (
         <div className="space-y-2">
@@ -71,8 +73,8 @@ const EditableInput = ({
                     id={id}
                     type={type}
                     placeholder={placeholder}
-                    disabled={!isEditing}
-                    className={`pr-10 ${isEditing ? 'border-blue-500' : 'border-gray-300 bg-gray-50'}`}
+                    disabled={!isEditing || isEmailField}
+                    className={`pr-10 ${isEditing && !isEmailField ? 'border-blue-500' : 'border-gray-300 bg-gray-50'}`}
                     {...register(id, validation)}
                     onBlur={onBlur}
                 />
@@ -80,7 +82,7 @@ const EditableInput = ({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className={`absolute cursor-pointer right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing ? 'text-blue-600' : 'text-gray-500'}`}
+                    className={`absolute cursor-pointer right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 ${isEditing && !isEmailField ? 'text-blue-600' : 'text-gray-500'}`}
                     onClick={() => onEditClick(id)}
                 >
                     <Edit2 className="h-4 w-4" />
@@ -105,6 +107,7 @@ export default function MyProfile() {
     const [hasChanges, setHasChanges] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
     // Form
     const profileForm = useForm<ProfileFormData>({
@@ -131,9 +134,11 @@ export default function MyProfile() {
     const checkForChanges = () => {
         if (!originalValues) return false;
         const currentValues = profileForm.getValues();
-        const formChanged = Object.keys(currentValues).some(key =>
-            currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData]
-        );
+        // Exclude email from form changes since it's handled separately via modal
+        const formChanged = Object.keys(currentValues).some(key => {
+            if (key === 'email') return false; // Email changes are handled via modal
+            return currentValues[key as keyof ProfileFormData] !== originalValues[key as keyof ProfileFormData];
+        });
         const imageChanged = profileImage !== (profile?.avatar_url || "/api/placeholder/96/96");
         const hasAnyChanges = formChanged || imageChanged || !!selectedFile;
         setHasChanges(hasAnyChanges);
@@ -158,6 +163,11 @@ export default function MyProfile() {
     };
 
     const handleEditClick = (fieldName: string) => {
+        if (fieldName === 'email') {
+            setIsEmailModalOpen(true);
+            return;
+        }
+        
         setEditingField(editingField === fieldName ? null : fieldName);
         if (editingField !== fieldName) {
             setTimeout(() => {
@@ -212,6 +222,19 @@ export default function MyProfile() {
         }
     };
 
+    const handleEmailChangeSuccess = async (newEmail: string) => {
+        try {
+            await refetch();
+            await checkAuth();
+            // Update the form with new email
+            profileForm.setValue('email', newEmail);
+            setOriginalValues(prev => prev ? { ...prev, email: newEmail } : null);
+            setHasChanges(false);
+        } catch (error) {
+            console.error('Error updating email:', error);
+        }
+    };
+
     if (isLoading) {
         return (
             <Card className="shadow-sm">
@@ -250,75 +273,85 @@ export default function MyProfile() {
     }
 
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
-                <CardTitle className="text-2xl">My Profile</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-                <ProfileImageUpload
-                    profileImage={profileImage}
-                    onImageClick={handleImageClick}
-                    onImageChange={handleImageChange}
-                    fileInputRef={fileInputRef}
-                    onImageError={() => setProfileImage("")}
-                />
-
-                {updateError && (
-                    <p className="text-sm text-red-500 mb-2">{updateError}</p>
-                )}
-                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
-                    <EditableInput
-                        id="name"
-                        label="Name"
-                        placeholder="Enter your name"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={profileValidation.name}
+        <>
+            <Card className="shadow-sm">
+                <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
+                    <CardTitle className="text-2xl">My Profile</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                    <ProfileImageUpload
+                        profileImage={profileImage}
+                        onImageClick={handleImageClick}
+                        onImageChange={handleImageChange}
+                        fileInputRef={fileInputRef}
+                        onImageError={() => setProfileImage("")}
                     />
 
-                    <EditableInput
-                        id="email"
-                        label="Email"
-                        type="email"
-                        placeholder="Enter your email"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={profileValidation.email}
-                    />
+                    {updateError && (
+                        <p className="text-sm text-red-500 mb-2">{updateError}</p>
+                    )}
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+                        <EditableInput
+                            id="name"
+                            label="Name"
+                            placeholder="Enter your name"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={profileValidation.name}
+                        />
 
-                    <EditableInput
-                        id="phone"
-                        label="Phone Number"
-                        type="tel"
-                        placeholder="Enter your phone number"
-                        editingField={editingField}
-                        onEditClick={handleEditClick}
-                        onBlur={handleFieldBlur}
-                        register={profileForm.register}
-                        errors={profileForm.formState.errors}
-                        validation={profileValidation.phone}
-                    />
+                        <EditableInput
+                            id="email"
+                            label="Email"
+                            type="email"
+                            placeholder="Enter your email"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={profileValidation.email}
+                        />
 
-                    <Button
-                        type="submit"
-                        disabled={!hasChanges || isUpdating}
-                        className={`w-full cursor-pointer transition-all ${hasChanges && !isUpdating
-                            ? 'bg-[#14A228] hover:bg-green-600'
-                            : 'bg-gray-300 cursor-not-allowed'
-                            }`}
-                    >
-                        {isUpdating ? (
-                            <><Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />Updating...</>
-                        ) : hasChanges ? 'Save Changes' : 'No Changes to Save'}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+                        <EditableInput
+                            id="phone"
+                            label="Phone Number"
+                            type="tel"
+                            placeholder="Enter your phone number"
+                            editingField={editingField}
+                            onEditClick={handleEditClick}
+                            onBlur={handleFieldBlur}
+                            register={profileForm.register}
+                            errors={profileForm.formState.errors}
+                            validation={profileValidation.phone}
+                        />
+
+                        <Button
+                            type="submit"
+                            disabled={!hasChanges || isUpdating}
+                            className={`w-full cursor-pointer transition-all ${hasChanges && !isUpdating
+                                ? 'bg-[#14A228] hover:bg-green-600'
+                                : 'bg-gray-300 cursor-not-allowed'
+                                }`}
+                        >
+                            {isUpdating ? (
+                                <><Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />Updating...</>
+                            ) : hasChanges ? 'Save Changes' : 'No Changes to Save'}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+
+            {/* Email Change Modal */}
+            <EmailChangeModal
+                isOpen={isEmailModalOpen}
+                onClose={() => setIsEmailModalOpen(false)}
+                currentEmail={profile?.email || ""}
+                onEmailChangeSuccess={handleEmailChangeSuccess}
+            />
+        </>
     )
 }

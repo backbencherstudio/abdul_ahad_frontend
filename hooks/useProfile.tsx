@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { AuthMeApi } from '@/apis/auth/loginApis'
+import { AuthMeApi } from '@/apis/auth/authApis'
 import { useAuth } from './useAuth'
 
 interface UserProfile {
