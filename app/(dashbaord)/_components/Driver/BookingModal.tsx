@@ -22,56 +22,56 @@ interface CustomDatePickerProps {
 const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect, onClose }) => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [tempSelected, setTempSelected] = useState<Date | undefined>(selected)
-    
+
     const currentYear = currentDate.getFullYear()
     const currentMonth = currentDate.getMonth()
-    
+
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ]
-    
+
     const years = Array.from({ length: 10 }, (_, i) => currentYear + i)
-    
+
     const daysInMonth = getDaysInMonth(currentDate)
     const startDate = startOfMonth(currentDate)
     const startDayOfWeek = getDay(startDate)
-    
+
     const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-    
+
     const handleDateClick = (day: number) => {
         const newDate = new Date(currentYear, currentMonth, day)
         setTempSelected(newDate)
     }
-    
+
     const handleApply = () => {
         if (tempSelected) {
             onSelect(tempSelected)
         }
         onClose()
     }
-    
+
     const handleCancel = () => {
         setTempSelected(selected)
         onClose()
     }
-    
+
     const handleMonthChange = (month: number) => {
         setCurrentDate(new Date(currentYear, month, 1))
     }
-    
+
     const handleYearChange = (year: number) => {
         setCurrentDate(new Date(year, currentMonth, 1))
     }
-    
+
     const handlePrevMonth = () => {
         setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
     }
-    
+
     const handleNextMonth = () => {
         setCurrentDate(new Date(currentYear, currentMonth + 1, 1))
     }
-    
+
     return (
         <div className="p-4 bg-white rounded-lg shadow-lg w-80">
             {/* Header with navigation */}
@@ -84,7 +84,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
-                
+
                 <div className="flex items-center space-x-2">
                     {/* Month Dropdown */}
                     <select
@@ -98,7 +98,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
                             </option>
                         ))}
                     </select>
-                    
+
                     {/* Year Dropdown */}
                     <select
                         value={currentYear}
@@ -112,7 +112,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
                         ))}
                     </select>
                 </div>
-                
+
                 <button
                     onClick={handleNextMonth}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -122,7 +122,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
                     </svg>
                 </button>
             </div>
-            
+
             {/* Days of week header */}
             <div className="grid grid-cols-7 gap-1 mb-2">
                 {days.map((day) => (
@@ -131,25 +131,25 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
                     </div>
                 ))}
             </div>
-            
+
             {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-1 mb-4">
                 {/* Empty cells for days before month start */}
                 {Array.from({ length: startDayOfWeek }, (_, i) => (
                     <div key={`empty-${i}`} className="h-8" />
                 ))}
-                
+
                 {/* Days of the month */}
                 {Array.from({ length: daysInMonth }, (_, i) => {
                     const day = i + 1
-                    const isSelected = tempSelected?.getDate() === day && 
-                                     tempSelected?.getMonth() === currentMonth && 
-                                     tempSelected?.getFullYear() === currentYear
-                    const isToday = new Date().getDate() === day && 
-                                   new Date().getMonth() === currentMonth && 
-                                   new Date().getFullYear() === currentYear
+                    const isSelected = tempSelected?.getDate() === day &&
+                        tempSelected?.getMonth() === currentMonth &&
+                        tempSelected?.getFullYear() === currentYear
+                    const isToday = new Date().getDate() === day &&
+                        new Date().getMonth() === currentMonth &&
+                        new Date().getFullYear() === currentYear
                     const isPast = new Date(currentYear, currentMonth, day) < new Date(new Date().setHours(0, 0, 0, 0))
-                    
+
                     return (
                         <button
                             key={day}
@@ -168,7 +168,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
                     )
                 })}
             </div>
-            
+
             {/* Action buttons */}
             <div className="flex justify-between space-x-2">
                 <Button
@@ -287,16 +287,16 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                 onClose={onClose}
                 title="Garage Booking"
                 showHeader={false}
-                className="max-w-sm mx-4"
+                className="max-w-sm h-auto "
             >
-                <div className="bg-white rounded-lg overflow-hidden shadow-lg">
+                <div className="bg-white rounded-lg ">
                     {/* Header */}
                     <div className="bg-[#19CA32] text-white p-4">
                         <h2 className="text-lg font-semibold">Garage Booking</h2>
                     </div>
 
                     {/* Form Content */}
-                    <form onSubmit={handleBookingSubmit} className="p-6">
+                    <form onSubmit={handleBookingSubmit} className="p-6 overflow-hidden shadow-lg overflow-y-auto max-h-[90vh] lg:max-h-[85vh] md:max-h-[80vh] sm:max-h-[75vh] max-h-[70vh]">
                         <div className="space-y-4">
                             {/* Name Field */}
                             <div>
@@ -347,7 +347,7 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                             </div>
 
                             {/* Date and Time Row */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {/* Select Date */}
                                 <div>
                                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -439,7 +439,7 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                             {/* Submit Button */}
                             <Button
                                 type="submit"
-                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-semibold py-3 text-base rounded-lg transition-all duration-200"
+                                className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-semibold py-3 text-sm xl:text-base rounded-lg transition-all duration-200"
                             >
                                 Book My MOT
                             </Button>

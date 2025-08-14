@@ -60,13 +60,13 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
                     {/* Garage Details */}
                     <div className="flex-1">
                         <div className='border-b border-gray-200 pb-3 mb-3'>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                            <h3 className="text-lg xl:text-xl font-semibold text-gray-900 mb-1">
                                 Garage: {garage.name}
                             </h3>
-                            <p className="text-gray-600">Address : {garage.address}</p>
+                            <p className="text-gray-600 text-sm xl:text-base">Address : {garage.address}</p>
                         </div>
 
-                        <div className="space-y-1 text-sm text-gray-600">
+                        <div className="space-y-1 text-sm xl:text-base text-gray-600">
                             <div>Postcode : {garage.postcode}</div>
                             <div>Contact : {garage.phone}</div>
                             <div>Email : {garage.email}</div>
@@ -76,12 +76,12 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
 
                     {/* Action Buttons and Price */}
                     <div className="flex flex-col items-end gap-3 w-full lg:w-48">
-                        <div className="text-3xl font-bold text-[#19CA32]">
+                        <div className="text-2xl xl:text-3xl font-bold text-[#19CA32]">
                             £ {garage.motFee}.25
                         </div>
 
                         <div className="w-full space-y-2">
-                            <Button 
+                            <Button
                                 className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm rounded-lg"
                                 onClick={() => handleBookNow(garage)}
                             >
