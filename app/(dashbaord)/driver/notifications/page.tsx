@@ -69,7 +69,7 @@ export default function Notifications() {
                         {notification.isExpired && (
                             <div className="bg-red-500 text-white text-center py-4">
                                 <div className="text-md font-medium font-inder mb-1">{notification.expiryDate}</div>
-                                <div className="text-2xl font-inder font-semibold">This Vehicle's MOT Has Expired</div>
+                                <div className="sm:text-xl md:text-2xl font-inder font-semibold">This Vehicle's MOT Has Expired</div>
                             </div>
                         )}
 

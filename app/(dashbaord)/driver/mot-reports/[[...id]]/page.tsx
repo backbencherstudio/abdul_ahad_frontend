@@ -146,13 +146,18 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
             {/* Header */}
             <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                    <div className="flex  sm:items-center gap-2 sm:gap-4">
-                        <div className="text-base sm:text-lg font-bold text-gray-900">
-                            {vehicleData.make.toUpperCase()} {vehicleData.model.toUpperCase()}
+                    <div className="flex  sm:items-center gap-2 sm:gap-4 justify-between w-full">
+                        <div className='flex gap-2 items-center'>
+                            <div className="text-base sm:text-lg font-bold text-gray-900">
+                                {vehicleData.make.toUpperCase()} {vehicleData.model.toUpperCase()}
+                            </div>
+                            <span className={`px-3 py-1 rounded text-sm font-medium ${styles.badge} w-fit`}>
+                                {report.motStatus}
+                            </span>
                         </div>
-                        <span className={`px-3 py-1 rounded text-sm font-medium ${styles.badge} w-fit`}>
-                            {report.motStatus}
-                        </span>
+                        <div className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-bold  block sm:hidden">
+                            {vehicleData.registrationNumber}
+                        </div>
                     </div>
                     <div className="flex items-center gap-2 self-start sm:self-auto">
                         <Button variant="outline" size="sm" className="flex items-center gap-1 px-2 sm:px-3 py-1">
@@ -168,7 +173,7 @@ const ReportCard = ({ report, vehicleData, onDownloadClick }: {
                         </Button>
                     </div>
                 </div>
-                <div className="mt-2 sm:mt-3">
+                <div className="mt-2 sm:mt-3 hidden sm:block">
                     <div className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-bold inline-block">
                         {vehicleData.registrationNumber}
                     </div>
@@ -424,7 +429,7 @@ export default function MotReports() {
                 onClose={handleCloseModal}
                 title={selectedVehicleForModal ? `MOT Details for ${selectedVehicleForModal.vehicleReg}` : "MOT Details"}
                 showHeader={false}
-                className="max-w-sm sm:max-w-md mx-4"
+                className="max-w-sm sm:max-w-md "
             >
                 {selectedVehicleForModal && (
                     <div className="bg-white rounded-lg overflow-hidden">
@@ -468,7 +473,7 @@ export default function MotReports() {
                 onClose={handleCloseDownloadModal}
                 title="Download Test Certificates"
                 showHeader={false}
-                className="max-w-md sm:max-w-lg mx-4"
+                className="max-w-md sm:max-w-lg"
             >
                 <div className="bg-white rounded-lg overflow-hidden">
                     {/* Green Header */}

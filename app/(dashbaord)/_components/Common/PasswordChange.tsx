@@ -126,7 +126,7 @@ export default function CommonPasswordChangeComponent() {
     return (
         <Card className="shadow-sm">
             <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
-                <CardTitle className="text-2xl">Password</CardTitle>
+                <CardTitle className="text-xl sm:text-2xl">Password</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
                 <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
