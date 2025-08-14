@@ -11,14 +11,20 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     remotePatterns: [
-      
+      {
+        protocol: "https",
+        hostname: "i.ibb.co",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
       {
         protocol: "http",
         hostname: "192.168.4.4",
-        port: "4000",
+        port: "5000",
         pathname: "/**",
-      }
-     
+      },
     ],
   },
 };

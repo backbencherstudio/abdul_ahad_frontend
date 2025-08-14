@@ -35,6 +35,7 @@ export default function ManageDrivers() {
     const [endPopoverOpen, setEndPopoverOpen] = useState(false);
     const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
     const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
+    const selectAllCheckboxRef = React.useRef<any>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -101,14 +102,6 @@ export default function ManageDrivers() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
-    // Selection logic
-    const isAllSelected = paginatedData.length > 0 && paginatedData.every(row => selectedIds.includes(row.id));
-    const isIndeterminate = selectedIds.length > 0 && !isAllSelected;
-
-    const handleSelectRow = (id: number) => {
-        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    };
-
     // Date filter logic
     const motDateFilteredData = useMemo(() => {
         if (!startDate && !endDate) return filteredData;
@@ -120,6 +113,36 @@ export default function ManageDrivers() {
         });
     }, [filteredData, startDate, endDate]);
     const motPaginatedData = motDateFilteredData.slice(startIndex, startIndex + itemsPerPage);
+
+    // Selection logic
+    const isAllSelected = motDateFilteredData.length > 0 && motDateFilteredData.every(row => selectedIds.includes(row.id));
+    const isIndeterminate = selectedIds.length > 0 && !isAllSelected;
+
+    const handleSelectRow = (id: number) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    };
+
+    const handleSelectAll = () => {
+        if (isAllSelected) {
+            // If all are selected, deselect all
+            setSelectedIds([]);
+        } else {
+            // If not all are selected, select all filtered data (across all pages)
+            const allFilteredIds = motDateFilteredData.map(row => row.id);
+            setSelectedIds(allFilteredIds);
+        }
+    };
+
+    // Handle indeterminate state for select all checkbox
+    useEffect(() => {
+        if (selectAllCheckboxRef.current) {
+            // Access the underlying DOM element for indeterminate state
+            const domElement = selectAllCheckboxRef.current.querySelector('input[type="checkbox"]') || selectAllCheckboxRef.current;
+            if (domElement && 'indeterminate' in domElement) {
+                domElement.indeterminate = isIndeterminate;
+            }
+        }
+    }, [isIndeterminate]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -204,7 +227,15 @@ export default function ManageDrivers() {
     const columnsWithCheckbox = [
         {
             key: 'select',
-            label: '',
+            label: (
+                <Checkbox
+                    ref={selectAllCheckboxRef}
+                    checked={isAllSelected}
+                    className='cursor-pointer'
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all rows"
+                />
+            ),
             width: '40px',
             render: (_: any, row: any) => (
                 <Checkbox
@@ -220,17 +251,17 @@ export default function ManageDrivers() {
 
     return (
         <>
-            <div className='mb-2 flex justify-between items-center flex-col lg:flex-row gap-4'>
+            <div className='mb-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4'>
                 <h1 className='text-2xl font-semibold'>List of All Drivers</h1>
 
                 {/* Date Filter Bar - always visible */}
-                <div className="  flex items-center justify-end py-4 gap-4">
-                    <div className="flex flex-col relative">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+                    <div className="flex flex-col relative w-full lg:w-auto">
                         <span className="text-xs font-medium mb-1">Start Date</span>
-                        <div className="flex items-center">
+                        <div className="flex items-center ">
                             <Popover open={startPopoverOpen} onOpenChange={setStartPopoverOpen}>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-40 justify-start text-left font-normal">
+                                    <Button variant="outline" className="w-full lg:w-40 justify-start text-left font-normal">
                                         {startDate ? format(startDate, 'dd/MM/yyyy') : 'DD/MM/YYYY'}
                                     </Button>
                                 </PopoverTrigger>
@@ -247,7 +278,7 @@ export default function ManageDrivers() {
                                                 setStartPopoverOpen(false);
                                             }}
                                         >
-                                            Cancel
+                                            Cancel 
                                         </Button>
                                         <Button
                                             className="w-1/2 bg-[#19CA32] hover:bg-[#16b82e] text-white"
@@ -274,12 +305,12 @@ export default function ManageDrivers() {
                         </div>
                     </div>
                     {/* End Date */}
-                    <div className="flex flex-col relative">
+                    <div className="flex flex-col relative w-full lg:w-auto">
                         <span className="text-xs font-medium mb-1">End Date</span>
                         <div className="flex items-center">
                             <Popover open={endPopoverOpen} onOpenChange={setEndPopoverOpen}>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-40 justify-start text-left font-normal">
+                                    <Button variant="outline" className="w-full lg:w-40 justify-start text-left font-normal">
                                         {endDate ? format(endDate, 'dd/MM/yyyy') : 'DD/MM/YYYY'}
                                     </Button>
                                 </PopoverTrigger>
@@ -326,9 +357,9 @@ export default function ManageDrivers() {
             </div>
 
             {/* Tabs and Search */}
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
                 {/* Tabs on the left */}
-                <nav className="flex flex-wrap w-full lg:w-auto gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
+                <nav className="flex flex-wrap gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
                     {tabs.map((tab) => (
                         <button
                             key={tab.key}
@@ -355,7 +386,7 @@ export default function ManageDrivers() {
                         placeholder="Search drivers..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full lg:w-80 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                        className="block w-full lg:w-auto pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                     />
                 </div>
             </div>
