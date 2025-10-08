@@ -63,7 +63,7 @@ export default function ReusableTable({
         <div className={` ${className}`}>
             {/* Table */}
             <div className="overflow-x-auto rounded-t-lg border border-gray-300">
-                <table className="min-w-full divide-y divide-gray-200  w-full">
+                <table className="max-w-full divide-y divide-gray-200 w-full ">
                     <thead className="bg-gray-50">
                         <tr>
                             {columns.map((column) => (

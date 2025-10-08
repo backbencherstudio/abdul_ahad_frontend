@@ -22,7 +22,7 @@ export default function CustomReusableModal({
 }: CustomReusableModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className={`max-w-md mx-auto border p-0 overflow-hidden rounded-lg ${className}`}>
+            <DialogContent className={`max-w-md  mx-auto border p-5 overflow-hidden rounded-lg ${className}`}>
                 {customHeader ? (
                     <>
                         {/* Visually hidden DialogTitle for accessibility */}

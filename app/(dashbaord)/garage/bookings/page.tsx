@@ -168,7 +168,7 @@ export default function Bookings() {
     }
 
     return (
-        <div className="">
+        <>
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">List of all Bookings</h1>
             </div>
@@ -208,12 +208,13 @@ export default function Bookings() {
                 </div>
             </div>
 
-            <ReusableTable
-                data={paginatedData}
-                columns={columns}
-                actions={actions}
-                className=""
-            />
+                <ReusableTable
+                    data={paginatedData}
+                    columns={columns}
+                    actions={actions}
+                    className=""
+                />
+                
             
             <ReusablePagination
                 currentPage={currentPage}
@@ -224,6 +225,6 @@ export default function Bookings() {
                 onItemsPerPageChange={handleItemsPerPageChange}
                 className=""
             />
-        </div>
+        </>
     )
 }

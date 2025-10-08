@@ -52,7 +52,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         { icon: HiCurrencyDollar, label: 'Pricing', href: '/garage/pricing', role: 'garage' },
         { icon: HiCheckCircle, label: 'Availability', href: '/garage/availability', role: 'garage' },
         { icon: HiClipboardList, label: 'Bookings', href: '/garage/bookings', role: 'garage' },
-        { icon: HiCreditCard, label: 'Payment', href: '/garage/payment', role: 'garage' },
+        { icon: HiCreditCard, label: 'Subscription', href: '/garage/subscription', role: 'garage' },
         { icon: HiReceiptTax, label: 'Invoices', href: '/garage/invoices', role: 'garage' },
         { icon: HiMail, label: 'Contact Us', href: '/garage/contact-us', role: 'garage' },
         { icon: HiQuestionMarkCircle, label: 'FAQ', href: '/garage/faq', role: 'garage' },
