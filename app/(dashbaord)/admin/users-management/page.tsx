@@ -141,10 +141,10 @@ export default function UserManagement() {
                 const roles = Array.isArray(row.roles) ? row.roles : []
                 if (roles.length === 0) return <span className="text-xs text-gray-400">—</span>
 
-                const colorByName: Record<string, { bg: string; text: string; border: string }> = {
-                    super_admin: { bg: 'bg-violet-100', text: 'text-violet-800', border: 'border-violet-200' },
-                    support_admin: { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200' },
-                    financial_admin: { bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-200' },
+                const colorByName: Record<string, { bg: string; text: string }> = {
+                    super_admin: { bg: 'bg-violet-50', text: 'text-violet-700' },
+                    support_admin: { bg: 'bg-blue-50', text: 'text-blue-700' },
+                    financial_admin: { bg: 'bg-amber-50', text: 'text-amber-700' },
                 }
 
                 const visible = roles.slice(0, 2)
@@ -154,20 +154,21 @@ export default function UserManagement() {
                 return (
                     <div className="flex flex-wrap items-center gap-1 max-w-[220px]">
                         {visible.map((role: any) => {
-                            const c = colorByName[role.name] || { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-200' }
+                            const c = colorByName[role.name] || { bg: 'bg-gray-50', text: 'text-gray-700' }
                             return (
                                 <span
                                     key={role.id}
-                                    className={`inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-full ${c.bg} ${c.text} border ${c.border}`}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium rounded-full ${c.bg} ${c.text} shadow-[0_0_0_1px_rgba(0,0,0,0.02)]`}
                                 >
-                                    {role.title}
+                                    <span className={`h-1.5 w-1.5 rounded-full ${c.text.replace('text-', 'bg-')}`}></span>
+                                    <span className="truncate max-w-[120px]">{role.title}</span>
                                 </span>
                             )
                         })}
                         {restCount > 0 && (
                             <span
                                 title={restTitles}
-                                className="inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-700 border border-gray-200"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-medium rounded-full bg-gray-50 text-gray-700 shadow-[0_0_0_1px_rgba(0,0,0,0.02)]"
                             >
                                 +{restCount}
                             </span>

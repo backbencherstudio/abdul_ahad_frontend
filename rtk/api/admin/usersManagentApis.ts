@@ -39,6 +39,54 @@ interface UsersResponse {
     statistics: Statistics;
 }
 
+// Detailed response for user creation
+interface CreateUserResponse {
+    success: boolean;
+    message?: string;
+    data: {
+        id: string;
+        email: string;
+        name: string;
+        type: string;
+        email_verified_at?: string | null;
+        approved_at?: string | null;
+        billing_id?: string | null;
+        roles: Array<{ id: string; title?: string; name: string; created_at?: string }>;
+        created_at?: string;
+        roles_added?: number;
+        roles_removed?: number;
+        assignment_strategy?: string;
+        intelligent_reasoning?: string;
+        actions_performed?: string[];
+    };
+}
+
+// Detailed response for role assignment
+interface AssignRoleResponse {
+    success: boolean;
+    message?: string;
+    data: {
+        id: string;
+        name: string;
+        email: string;
+        type: string;
+        roles: Array<{
+            id: string;
+            title?: string;
+            name: string;
+            created_at?: string;
+        }>;
+        roles_added?: number;
+        roles_removed?: number;
+        role_changes?: {
+            added?: Array<{ id: string; name: string; title?: string }>;
+            removed?: Array<{ id: string; name: string; title?: string }>;
+        };
+        assignment_strategy?: string;
+        intelligent_reasoning?: string;
+    };
+}
+
 // get all users 
 export const usersManagementApi = createApi({
     reducerPath: 'usersManagemenApi',
@@ -47,7 +95,7 @@ export const usersManagementApi = createApi({
     endpoints: (builder) => ({
 
         // create user api
-        createUser: builder.mutation<{ success?: boolean; message?: string } | void, { email: string; password: string; name: string; type: string; role_ids: string[] }>({
+        createUser: builder.mutation<CreateUserResponse, { email: string; password: string; name: string; type: string; role_ids: string[] }>({
             query: (body) => ({
                 url: `/api/admin/user`,
                 method: 'POST',
@@ -108,7 +156,7 @@ export const usersManagementApi = createApi({
 
 
         // assign role to user api
-        assignRoleToUser: builder.mutation<{ success?: boolean; message?: string } | void, { id: string; role_ids: string[] }>({
+        assignRoleToUser: builder.mutation<AssignRoleResponse, { id: string; role_ids: string[] }>({
             query: ({ id, role_ids }) => ({
                 url: `/api/admin/user/${id}/roles`,
                 method: 'POST',

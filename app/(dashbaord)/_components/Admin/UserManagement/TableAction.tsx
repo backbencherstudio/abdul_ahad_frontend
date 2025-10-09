@@ -7,7 +7,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from '@/components/ui/dropdown-menu'
-import { MoreVertical, Eye, Pencil, Ban as BanIcon, CheckCircle, UserPlus, UserMinus, Trash2, Shield } from 'lucide-react'
+import { MoreVertical, Eye, Pencil, Ban as BanIcon, CheckCircle, UserPlus, UserMinus, Shield } from 'lucide-react'
 import RoleList from './RoleList'
 import { useBanUserMutation, useUnbanUserMutation, useGetRolesQuery, useAssignRoleToUserMutation, useRemoveRoleFromUserMutation, setUserRoles, useAppDispatch } from '@/rtk'
 
@@ -27,10 +27,15 @@ export default function TableAction({ row }: TableActionProps) {
     const [removeRole, { isLoading: removing }] = useRemoveRoleFromUserMutation()
     const [confirmOpen, setConfirmOpen] = React.useState(false)
     const isSuperAdmin = Array.isArray(row.roles) && row.roles.some((r: any) => r.name === 'super_admin')
+    const isAdminAccount = String(row?.type) === 'ADMIN'
+    const isBanned = !row?.approved_at
     const [reason, setReason] = React.useState('')
     const { data: fetchedRolesResp } = useGetRolesQuery()
     const [selectedRoleIds, setSelectedRoleIds] = React.useState<string[]>(Array.isArray(row.roles) ? row.roles.map((r: any) => r.id) : [])
     const [confirmAssignOpen, setConfirmAssignOpen] = React.useState(false)
+    const [assignResultOpen, setAssignResultOpen] = React.useState(false)
+    const [assignMessage, setAssignMessage] = React.useState('')
+    const [assignResult, setAssignResult] = React.useState<any>(null)
 
     const handleBanUnban = async () => {
         try {
@@ -59,7 +64,7 @@ export default function TableAction({ row }: TableActionProps) {
             }
         }
     }
-  return (
+    return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <button className="bg-gray-100 cursor-pointer text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors">
@@ -97,11 +102,10 @@ export default function TableAction({ row }: TableActionProps) {
 
 
 
-                {isSuperAdmin ? (
+                {isSuperAdmin || !isAdminAccount || isBanned ? (
                     <DropdownMenuItem
                         disabled
-                        onSelect={(e) => { e.preventDefault(); toast.error('Cannot modify roles of super administrator'); }}
-                        className="cursor-not-allowed opacity-60"
+                        className="cursor-not-allowed pointer-events-none opacity-60 text-gray-400"
                     >
                         <UserPlus className="w-4 h-4 mr-2" />
                         Assign Role
@@ -145,43 +149,64 @@ export default function TableAction({ row }: TableActionProps) {
                     </DropdownMenuSub>
                 )}
 
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer text-orange-600">
+                {isAdminAccount && !isBanned ? (
+                    isSuperAdmin ? (
+                        <DropdownMenuItem
+                            disabled
+                            className="cursor-not-allowed pointer-events-none opacity-60 text-gray-400"
+                        >
+                            <UserMinus className="w-4 h-4 mr-2" />
+                            Remove Role
+                        </DropdownMenuItem>
+                    ) : (
+                        <DropdownMenuSub>
+                            <DropdownMenuSubTrigger className="cursor-pointer text-orange-600">
+                                <UserMinus className="w-4 h-4 mr-2" />
+                                Remove Role
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="w-60">
+                                {Array.isArray(row.roles) && row.roles.length > 0 ? (
+                                    row.roles.map((r: any) => (
+                                        <DropdownMenuItem
+                                            key={r.id}
+                                            disabled={r.name === 'super_admin' || removing}
+                                            onSelect={async (e) => {
+                                                e.preventDefault()
+                                                if (r.name === 'super_admin') return
+                                                try {
+                                                    const res = await removeRole({ id: row.id, role_id: r.id }).unwrap()
+                                                    if ((res as any)?.success === false) {
+                                                        toast.error(((res as any)?.message) || 'Operation failed')
+                                                    } else {
+                                                        const roles = (row.roles || []).filter((rr: any) => rr.id !== r.id)
+                                                        dispatch(setUserRoles({ id: row.id, roles }))
+                                                        setSelectedRoleIds((prev) => prev.filter((rid) => rid !== r.id))
+                                                        toast.success('Role removed')
+                                                    }
+                                                } catch (err: any) {
+                                                    toast.error(err?.data?.message || 'Operation failed')
+                                                }
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            <Shield className="w-4 h-4 mr-2" /> {r.title || r.name}
+                                        </DropdownMenuItem>
+                                    ))
+                                ) : (
+                                    <DropdownMenuItem disabled className="opacity-60">No roles to remove</DropdownMenuItem>
+                                )}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                    )
+                ) : (
+                    <DropdownMenuItem
+                        disabled
+                        className="cursor-not-allowed pointer-events-none opacity-60 text-gray-400"
+                    >
                         <UserMinus className="w-4 h-4 mr-2" />
                         Remove Role
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="w-60">
-                        {Array.isArray(row.roles) && row.roles.length > 0 ? (
-                            row.roles.map((r: any) => (
-                                <DropdownMenuItem
-                                    key={r.id}
-                                    disabled={r.name === 'super_admin' || removing}
-                                    onSelect={async (e) => {
-                                        e.preventDefault()
-                                        if (r.name === 'super_admin') return
-                                        try {
-                                            const res = await removeRole({ id: row.id, role_id: r.id }).unwrap()
-                                            if ((res as any)?.success === false) {
-                                                toast.error(((res as any)?.message) || 'Operation failed')
-                                            } else {
-                                                const roles = (row.roles || []).filter((rr: any) => rr.id !== r.id)
-                                                dispatch(setUserRoles({ id: row.id, roles }))
-                                                toast.success('Role removed')
-                                            }
-                                        } catch (err: any) {
-                                            toast.error(err?.data?.message || 'Operation failed')
-                                        }
-                                    }}
-                                    className="cursor-pointer"
-                                >
-                                    <Shield className="w-4 h-4 mr-2" /> {r.title || r.name}
-                                </DropdownMenuItem>
-                            ))
-                        ) : (
-                            <DropdownMenuItem disabled className="opacity-60">No roles to remove</DropdownMenuItem>
-                        )}
-                    </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                    </DropdownMenuItem>
+                )}
 
             </DropdownMenuContent>
 
@@ -275,7 +300,14 @@ export default function TableAction({ row }: TableActionProps) {
                                         toast.success('Roles updated')
                                         const roles = (fetchedRolesResp?.data?.roles || []).filter((r: any) => selectedRoleIds.includes(r.id))
                                         dispatch(setUserRoles({ id: row.id, roles }))
+                                        setSelectedRoleIds(roles.map((r: any) => r.id))
                                         setConfirmAssignOpen(false)
+                                        const msg = (res as any)?.message
+                                        if (msg) {
+                                            setAssignMessage(msg)
+                                            setAssignResult(res)
+                                            setTimeout(() => setAssignResultOpen(true), 700)
+                                        }
                                     }
                                 } catch (err: any) {
                                     toast.error(err?.data?.message || 'Operation failed')
@@ -285,8 +317,88 @@ export default function TableAction({ row }: TableActionProps) {
                             {assigning ? 'Processing...' : 'Confirm'}
                         </Button>
                     </div>
-    </div>
+                </div>
+            </CustomReusableModal>
+
+            {/* Assign Result Alert Modal */}
+            <CustomReusableModal
+                isOpen={assignResultOpen}
+                onClose={() => setAssignResultOpen(false)}
+                showHeader
+                className="max-w-lg"
+                title="Roles Assigned"
+                description=""
+                icon={<Shield className="w-7 h-7" />}
+                variant="success"
+            >
+                <div className="space-y-5 text-gray-800">
+                    {/* Message */}
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 transition-all duration-300 ease-out animate-in fade-in-50 slide-in-from-top-2">
+                        <p className="text-base font-semibold flex items-start gap-2">
+                            <Shield className="w-5 h-5 text-emerald-600 mt-0.5" />
+                            <span>{assignMessage || 'Roles have been updated successfully.'}</span>
+                        </p>
+                    </div>
+
+                    {/* Counts */}
+                    {assignResult?.data ? (
+                        <div className="grid grid-cols-2 gap-3 animate-in fade-in-50 slide-in-from-bottom-2">
+                            <div className="rounded-md border border-gray-200 p-3">
+                                <p className="text-xs text-gray-500">Roles Added</p>
+                                <p className="text-2xl font-bold text-emerald-700">{assignResult?.data?.roles_added ?? 0}</p>
+                            </div>
+                            <div className="rounded-md border border-gray-200 p-3">
+                                <p className="text-xs text-gray-500">Roles Removed</p>
+                                <p className="text-2xl font-bold text-rose-600">{assignResult?.data?.roles_removed ?? 0}</p>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    {/* Changes */}
+                    <div className="space-y-4">
+                        {assignResult?.data?.role_changes?.added?.length ? (
+                            <div className="transition-all duration-300 ease-out animate-in fade-in-50 slide-in-from-left-2">
+                                <p className="text-sm font-medium text-emerald-700">Added Roles</p>
+                                <ul className="mt-2 flex flex-wrap gap-2">
+                                    {assignResult.data.role_changes.added.map((r: any) => (
+                                        <li key={r.id} className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            {r.title || r.name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : null}
+                        {assignResult?.data?.role_changes?.removed?.length ? (
+                            <div className="transition-all duration-300 ease-out animate-in fade-in-50 slide-in-from-right-2">
+                                <p className="text-sm font-medium text-rose-700">Removed Roles</p>
+                                <ul className="mt-2 flex flex-wrap gap-2">
+                                    {assignResult.data.role_changes.removed.map((r: any) => (
+                                        <li key={r.id} className="text-xs px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                                            {r.title || r.name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Strategy & Reasoning */}
+                    {(assignResult?.data?.assignment_strategy || assignResult?.data?.intelligent_reasoning) ? (
+                        <div className="rounded-lg border border-gray-200 bg-white p-4 animate-in fade-in-50 slide-in-from-bottom-2">
+                            {assignResult?.data?.assignment_strategy ? (
+                                <p className="text-sm"><span className="font-semibold">Strategy:</span> {assignResult.data.assignment_strategy.replace(/_/g, ' ')}</p>
+                            ) : null}
+                            {assignResult?.data?.intelligent_reasoning ? (
+                                <p className="text-sm mt-1 italic text-gray-600">{assignResult.data.intelligent_reasoning}</p>
+                            ) : null}
+                        </div>
+                    ) : null}
+
+                    <div className="flex justify-end pt-1">
+                        <Button className="bg-emerald-600 hover:bg-emerald-700 cursor-pointer" onClick={() => setAssignResultOpen(false)}>OK</Button>
+                    </div>
+                </div>
             </CustomReusableModal>
         </DropdownMenu>
-  )
+    )
 }
