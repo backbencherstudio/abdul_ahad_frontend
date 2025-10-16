@@ -86,7 +86,7 @@ export default function Navbar() {
                                 {/* Header Section */}
                                 <div className='bg-[#14A228] text-white p-6 pb-8'>
                                     <h2 className='text-2xl font-bold font-arial-rounded'>simplymot.co.uk</h2>
-                                    <p className='text-sm text-white/80 mt-1'>Your trusted MOT service</p>
+                                    <p className='text-sm text-white/80 mt-1'>MOT Bookings Made Simple</p>
                                 </div>
 
                                 {/* Navigation Content */}
