@@ -211,11 +211,12 @@ export default function UserManagement() {
         {
             label: 'Actions',
             variant: 'primary' as const,
-            render: (row: any) => <TableAction row={row} />,
+            render: (row: any) => <TableAction row={row} onEditClick={(userId) => setEditUserId(userId)} />,
         },
     ];
 
     const [createOpen, setCreateOpen] = React.useState(false)
+    const [editUserId, setEditUserId] = React.useState<string | null>(null)
 
     return (
         <div className="space-y-6">
@@ -227,7 +228,7 @@ export default function UserManagement() {
                 </div>
                 <button
                     onClick={() => setCreateOpen(true)}
-                    className="border border-green-600 hover:bg-green-600 cursor-pointer text-green-600 py-2 px-3 rounded-lg font-semibold transition duration-300 flex items-center space-x-2 hover:shadow-lg hover:text-white text-sm"
+                    className="border border-green-600 hover:bg-green-600 bg-green-600 cursor-pointer text-white py-2 px-3 rounded-lg font-semibold transition duration-300 flex items-center space-x-2 hover:shadow-lg hover:text-white text-sm"
                 >
                     <Plus className='w-5 h-5' />
                     <span>Create New User</span>
@@ -278,8 +279,15 @@ export default function UserManagement() {
                     </>
                 )}
             </div>
-            {/* Create User Modal */}
-            <CreateNewUser open={createOpen} onClose={() => setCreateOpen(false)} />
+            {/* Create/Edit User Modal */}
+            <CreateNewUser 
+                open={createOpen || !!editUserId} 
+                onClose={() => {
+                    setCreateOpen(false)
+                    setEditUserId(null)
+                }} 
+                editUserId={editUserId}
+            />
         </div>
 
 

@@ -3,27 +3,48 @@ import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReu
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { useCreateUserMutation, useGetRolesQuery } from '@/rtk'
+import { useCreateUserMutation, useUpdateUserMutation, useGetUserByIdQuery, useGetRolesQuery } from '@/rtk'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import RoleList from './RoleList'
-import { Eye, EyeOff, Shield } from 'lucide-react'
+import { Eye, EyeOff, Pencil } from 'lucide-react'
 import { toast } from 'react-toastify'
 
 interface CreateNewUserProps {
     open: boolean
     onClose: () => void
+    editUserId?: string | null
 }
 
-export default function CreateNewUser({ open, onClose }: CreateNewUserProps) {
-    const [form, setForm] = React.useState({ name: '', email: '', password: '', type: 'ADMIN' })
+export default function CreateNewUser({ open, onClose, editUserId }: CreateNewUserProps) {
+    const isEditMode = Boolean(editUserId)
+    const [form, setForm] = React.useState({ name: '', email: '', password: '', phone_number: '', type: 'ADMIN' })
+    const [originalEmail, setOriginalEmail] = React.useState('')
+    const [isEmailEditable, setIsEmailEditable] = React.useState(false)
     const [roleIds, setRoleIds] = React.useState<string[]>([])
     const { data: rolesResp } = useGetRolesQuery()
+    const { data: userResponse, isLoading: loadingUser } = useGetUserByIdQuery(editUserId || '', { skip: !editUserId })
     const [createUser, { isLoading: creating }] = useCreateUserMutation()
+    const [updateUser, { isLoading: updating }] = useUpdateUserMutation()
     const [rolesOpen, setRolesOpen] = React.useState(false)
     const [showPwd, setShowPwd] = React.useState(false)
-    const [resultOpen, setResultOpen] = React.useState(false)
-    const [resultMessage, setResultMessage] = React.useState('')
-    const [resultData, setResultData] = React.useState<any>(null)
+
+    React.useEffect(() => {
+        if (isEditMode && userResponse?.data && open) {
+            const userData = userResponse.data
+            setForm({
+                name: userData.name || '',
+                email: userData.email || '',
+                password: '',
+                phone_number: userData.phone_number || '',
+                type: userData.type || 'ADMIN'
+            })
+            setOriginalEmail(userData.email || '')
+            setIsEmailEditable(false)
+            setRoleIds((userData.roles || []).map((r: any) => r.id))
+        } else if (!open) {
+            reset()
+        }
+    }, [isEditMode, userResponse, open])
 
     React.useEffect(() => {
         if (form.type !== 'ADMIN' && roleIds.length > 0) {
@@ -31,36 +52,75 @@ export default function CreateNewUser({ open, onClose }: CreateNewUserProps) {
         }
     }, [form.type])
 
-    const reset = () => { setForm({ name: '', email: '', password: '', type: 'ADMIN' }); setRoleIds([]) }
+    const reset = () => { 
+        setForm({ name: '', email: '', password: '', phone_number: '', type: 'ADMIN' })
+        setRoleIds([])
+        setOriginalEmail('')
+        setIsEmailEditable(false)
+    }
 
     return (
         <>
             <CustomReusableModal
                 isOpen={open}
-                onClose={() => { if (!creating) onClose() }}
+                onClose={() => { if (!creating && !updating) onClose() }}
                 showHeader
                 className="!max-w-lg"
-                title="Create New User"
-                description="Fill in the details to create a user."
+                title={isEditMode ? "Edit User" : "Create New User"}
+                description={isEditMode ? "Update user information." : "Fill in the details to create a user."}
             >
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" />
+                {loadingUser && isEditMode ? (
+                    <div className="flex justify-center items-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                        <span className="ml-3 text-gray-600">Loading user...</span>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@example.com" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <div className="relative">
-                            <Input type={showPwd ? 'text' : 'password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" />
-                            <button type="button" onClick={() => setShowPwd((v) => !v)} className="absolute inset-y-0 right-2 my-auto h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700 cursor-pointer">
-                                {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
+                ) : (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" />
                         </div>
-                    </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <div className="relative">
+                                <Input 
+                                    type="email" 
+                                    value={form.email} 
+                                    onChange={(e) => setForm({ ...form, email: e.target.value })} 
+                                    placeholder="email@example.com"
+                                    disabled={isEditMode && !isEmailEditable}
+                                    className={isEditMode && !isEmailEditable ? 'bg-gray-50 pr-10' : ''}
+                                />
+                                {isEditMode && (
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsEmailEditable(!isEmailEditable)} 
+                                        className="absolute inset-y-0 right-2 my-auto h-8 w-8 flex items-center justify-center text-gray-500 hover:text-green-600 cursor-pointer transition-colors"
+                                        title={isEmailEditable ? "Lock email" : "Edit email"}
+                                    >
+                                        <Pencil className={`w-4 h-4 ${isEmailEditable ? 'text-green-600' : ''}`} />
+                                    </button>
+                                )}
+                            </div>
+                            {isEditMode && !isEmailEditable && (
+                                <p className="text-xs text-gray-500 mt-1">Click <Pencil className="inline w-3 h-3" /> to edit email</p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <Input type="tel" value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} placeholder="+44 123 456 7890" />
+                        </div>
+                        {!isEditMode && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <div className="relative">
+                                    <Input type={showPwd ? 'text' : 'password'} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••••" />
+                                    <button type="button" onClick={() => setShowPwd((v) => !v)} className="absolute inset-y-0 right-2 my-auto h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700 cursor-pointer">
+                                        {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                         <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
@@ -102,115 +162,78 @@ export default function CreateNewUser({ open, onClose }: CreateNewUserProps) {
                         </Popover>
                     </div>
                 ) : null}
-                    <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="outline" className="cursor-pointer" onClick={() => onClose()} disabled={creating}>Cancel</Button>
-                        <Button className="bg-emerald-600 hover:bg-emerald-700 cursor-pointer" disabled={creating} onClick={async () => {
-                            try {
-                                const res = await createUser({ ...form, role_ids: roleIds }).unwrap()
-                                if ((res as any)?.success === false) {
-                                    const msg = (res as any)?.message || 'Failed'
-                                    toast.error(msg)
-                                } else {
-                                    setResultMessage((res as any)?.message || 'User created successfully')
-                                    setResultData(res)
-                                    // Close the create modal first
-                                    onClose()
-                                    // Show the alert modal after a short delay
-                                    setTimeout(() => setResultOpen(true), 500)
-                                }
-                            } catch (err: any) {
-                                const status = err?.status
-                                const msg = err?.data?.message || err?.message || 'Failed'
-                                if (status === 409 || /already exists/i.test(msg)) {
-                                    toast.error('Email already exists. Please use a different email.')
-                                } else {
-                                    toast.error(msg)
-                                }
-                            }
-                        }}>{creating ? 'Creating...' : 'Create'}</Button>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="outline" className="cursor-pointer" onClick={() => onClose()} disabled={creating || updating}>Cancel</Button>
+                            <Button 
+                                className="bg-emerald-600 hover:bg-emerald-700 cursor-pointer" 
+                                disabled={creating || updating || loadingUser} 
+                                onClick={async () => {
+                                    try {
+                                        if (isEditMode && editUserId) {
+                                            const userData = userResponse?.data
+                                            if (!userData) return
+                                            
+                                            const updatePayload: any = { 
+                                                id: editUserId,
+                                                type: form.type
+                                            }
+                                            let hasChanges = false
+                                            
+                                            if (form.name !== userData.name) {
+                                                updatePayload.name = form.name
+                                                hasChanges = true
+                                            }
+                                            
+                                            if (form.email !== originalEmail) {
+                                                updatePayload.email = form.email
+                                                hasChanges = true
+                                            }
+                                            
+                                            if (form.phone_number !== (userData.phone_number || '')) {
+                                                updatePayload.phone_number = form.phone_number
+                                                hasChanges = true
+                                            }
+                                            
+                                            if (form.type !== userData.type) {
+                                                hasChanges = true
+                                            }
+                                            
+                                            if (!hasChanges) {
+                                                toast.info('No changes to update')
+                                                onClose()
+                                                return
+                                            }
+                                            
+                                            const res = await updateUser(updatePayload).unwrap()
+                                            
+                                            if ((res as any)?.success === false) {
+                                                const msg = (res as any)?.message || 'Failed to update'
+                                                toast.error(msg)
+                                            } else {
+                                                toast.success('User updated successfully')
+                                                onClose()
+                                            }
+                                        } else {
+                                            await createUser({ ...form, role_ids: roleIds }).unwrap()
+                                            toast.success('User created successfully')
+                                            onClose()
+                                        }
+                                    } catch (err: any) {
+                                        const status = err?.status
+                                        const msg = err?.data?.message || err?.message || 'Failed'
+                                        if (status === 409 || /already exists/i.test(msg)) {
+                                            toast.error('Email already exists. Please use a different email.')
+                                        } else {
+                                            toast.error(msg)
+                                        }
+                                    }
+                                }}
+                            >
+                                {creating || updating ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update' : 'Create')}
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </CustomReusableModal>
-
-            {/* alert modal*/}
-            <CustomReusableModal
-                isOpen={resultOpen}
-                onClose={() => setResultOpen(false)}
-                showHeader
-                className="!max-w-lg "
-                title="User Created"
-                description=""
-                icon={<Shield className="w-7 h-7" />}
-                variant="success"
-            >
-                <div className="space-y-5 text-gray-800">
-                    {/* Message */}
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 transition-all duration-300 ease-out animate-in fade-in-50 slide-in-from-top-2">
-                        <p className="text-base font-semibold flex items-start gap-2">
-                            <Shield className="w-5 h-5 text-emerald-600 mt-0.5" />
-                            <span>{resultMessage || 'User created successfully.'}</span>
-                        </p>
-                    </div>
-
-                    {/* Counts */}
-                    {resultData?.data ? (
-                        <div className="grid grid-cols-2 gap-3 animate-in fade-in-50 slide-in-from-bottom-2">
-                            <div className="rounded-md border border-gray-200 p-3">
-                                <p className="text-xs text-gray-500">Roles Added</p>
-                                <p className="text-2xl font-bold text-emerald-700">{resultData?.data?.roles_added ?? (resultData?.data?.roles?.length || 0)}</p>
-                            </div>
-                            <div className="rounded-md border border-gray-200 p-3">
-                                <p className="text-xs text-gray-500">Roles Removed</p>
-                                <p className="text-2xl font-bold text-rose-600">{resultData?.data?.roles_removed ?? 0}</p>
-                            </div>
-                        </div>
-                    ) : null}
-
-                    {/* Assigned Roles */}
-                    {resultData?.data?.roles?.length ? (
-                        <div className="transition-all duration-300 ease-out animate-in fade-in-50 slide-in-from-left-2">
-                            <p className="text-sm font-medium text-emerald-700">Assigned Roles</p>
-                            <ul className="mt-2 flex flex-wrap gap-2">
-                                {resultData.data.roles.map((r: any) => (
-                                    <li key={r.id} className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                        {r.title || r.name}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ) : null}
-
-                    {/* Strategy & Reasoning */}
-                    {(resultData?.data?.assignment_strategy || resultData?.data?.intelligent_reasoning) ? (
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 animate-in fade-in-50 slide-in-from-bottom-2">
-                            {resultData?.data?.assignment_strategy ? (
-                                <p className="text-sm"><span className="font-semibold">Strategy:</span> {resultData.data.assignment_strategy.replace(/_/g, ' ')}</p>
-                            ) : null}
-                            {resultData?.data?.intelligent_reasoning ? (
-                                <p className="text-sm mt-1 italic text-gray-600">{resultData.data.intelligent_reasoning}</p>
-                            ) : null}
-                        </div>
-                    ) : null}
-
-                    {/* Actions Performed */}
-                    {Array.isArray(resultData?.data?.actions_performed) && resultData.data.actions_performed.length > 0 ? (
-                        <div className="rounded-lg border border-gray-200 bg-white p-4 animate-in fade-in-50 slide-in-from-right-2">
-                            <p className="text-sm font-medium text-gray-700">Actions Performed</p>
-                            <ul className="mt-2 list-disc pl-5 space-y-1 text-sm text-gray-700">
-                                {resultData.data.actions_performed.map((a: string, idx: number) => (
-                                    <li key={idx}>{a}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    ) : null}
-
-                    <div className="flex justify-end pt-1">
-                        <Button
-                            className="bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
-                            onClick={() => { setResultOpen(false); reset(); onClose(); }}
-                        >OK</Button>
-                    </div>
-                </div>
+                )}
             </CustomReusableModal>
         </>
     )

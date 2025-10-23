@@ -1,4 +1,5 @@
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,9 +18,11 @@ import { toast } from 'react-toastify'
 
 interface TableActionProps {
     row: any
+    onEditClick?: (userId: string) => void
 }
 
-export default function TableAction({ row }: TableActionProps) {
+export default function TableAction({ row, onEditClick }: TableActionProps) {
+    const router = useRouter()
     const dispatch = useAppDispatch()
     const [banUser, { isLoading: banning }] = useBanUserMutation()
     const [unbanUser, { isLoading: unbanning }] = useUnbanUserMutation()
@@ -73,14 +76,18 @@ export default function TableAction({ row }: TableActionProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
-                    onClick={() => (window.location.href = `/admin/users-management/${row.id}`)}
+                    onClick={() => router.push(`/admin/users-management/${row.id}`)}
                     className="cursor-pointer"
                 >
                     <Eye className="w-4 h-4 mr-2" />
                     View Details
                 </DropdownMenuItem>
 
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem 
+                    className="cursor-pointer"
+                    onClick={() => onEditClick?.(row.id)}
+                    disabled={isSuperAdmin}
+                >
                     <Pencil className="w-4 h-4 mr-2" />
                     Edit User
                 </DropdownMenuItem>

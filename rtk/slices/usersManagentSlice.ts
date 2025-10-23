@@ -1,29 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PAGINATION_CONFIG } from '../../config/pagination.config';
-
-
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    phone_number: string | null;
-    address: string | null;
-    type: string;
-    approved_at: string;
-    created_at: string;
-    updated_at: string;
-    avatar_url: string | null;
-    roles?: any[];
-}
-
-interface Statistics {
-    total_users: number;
-    total_banned_users: number;
-    total_admin_users: number;
-    total_garage_users: number;
-    total_driver_users: number;
-    total_approved_users: number;
-}
+import type { User, Statistics } from '@/types';
 
 interface UsersState {
     users: User[];
