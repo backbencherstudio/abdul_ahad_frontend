@@ -3,7 +3,7 @@
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGetUserByIdQuery } from '@/rtk';
-import { ArrowLeft, Mail, Phone, Calendar, Shield, CheckCircle, XCircle, Lock, MapPin, CreditCard, Crown } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Calendar, Shield, CheckCircle, XCircle, Lock, MapPin, CreditCard, Crown, Warehouse, Car } from 'lucide-react';
 import Image from 'next/image';
 
 export default function UserDetails() {
@@ -128,15 +128,30 @@ export default function UserDetails() {
                         <div className="flex-1 sm:mt-4 space-y-4">
                             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                                 <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{user.name}</h2>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate capitalize">{user.name}</h2>
+
                                         {/* Super Admin Crown Badge */}
                                         {user.roles?.some(role => role.name === 'super_admin') && (
                                             <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-gradient-to-r from-yellow-500 to-amber-600 text-white text-xs font-semibold rounded-full ">
-                                                <span className="text-base sm:text-lg">
-                                                    <Crown className="w-4 h-4 text-white" />
-                                                </span>
-                                                <span className="hidden sm:inline">KING</span>
+                                                <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                                                <span className="">KING</span>
+                                            </span>
+                                        )}
+
+                                        {/* Garage Badge */}
+                                        {user.type === 'GARAGE' && (
+                                            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-semibold rounded-full ">
+                                                <Warehouse className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                                                <span className="">GARAGE</span>
+                                            </span>
+                                        )}
+
+                                        {/* Driver Badge */}
+                                        {user.type === 'DRIVER' && (
+                                            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs font-semibold rounded-full">
+                                                <Car className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                                                <span className="">DRIVER</span>
                                             </span>
                                         )}
                                     </div>

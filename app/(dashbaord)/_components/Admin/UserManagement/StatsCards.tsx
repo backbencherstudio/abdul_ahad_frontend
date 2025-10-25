@@ -41,7 +41,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, colors })
                 <div className={`w-8 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r ${colors.accent} rounded-full`}></div>
             </div>
 
-            <div className="p-2 sm:p-3 lg:p-4 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl group-hover:bg-white/15 transition-all duration-300 group-hover:rotate-6 self-end sm:self-auto">
+            <div className="p-2 border border-white/40 sm:p-3 lg:p-4 bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl group-hover:bg-white/15 transition-all duration-300 group-hover:rotate-6 self-end sm:self-auto">
                 <Icon className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${colors.icon}`} />
             </div>
         </div>
@@ -58,10 +58,10 @@ export default function StatsCards({ statistics, isLoading }: StatsCardsProps) {
             icon: Users,
             colors: {
                 bg: 'from-slate-600 via-slate-700 to-slate-800',
-                text: 'text-slate-200',
-                icon: 'text-blue-300',
+                text: 'text-white-200',
+                icon: 'text-white-300',
                 accent: 'from-blue-400 to-blue-500',
-               
+
             }
         },
         {
@@ -70,10 +70,10 @@ export default function StatsCards({ statistics, isLoading }: StatsCardsProps) {
             icon: CheckCircle,
             colors: {
                 bg: 'from-emerald-600 via-emerald-700 to-emerald-800',
-                text: 'text-emerald-200',
-                icon: 'text-emerald-300',
+                text: 'text-white-200',
+                icon: 'text-white-300',
                 accent: 'from-emerald-400 to-emerald-500',
-                
+
             }
         },
         {
@@ -82,10 +82,10 @@ export default function StatsCards({ statistics, isLoading }: StatsCardsProps) {
             icon: Ban,
             colors: {
                 bg: 'from-rose-600 via-rose-700 to-rose-800',
-                text: 'text-rose-200',
-                icon: 'text-rose-300',
+                text: 'text-white-200',
+                icon: 'text-white-300',
                 accent: 'from-rose-400 to-rose-500',
-               
+
             }
         },
         {
@@ -94,10 +94,10 @@ export default function StatsCards({ statistics, isLoading }: StatsCardsProps) {
             icon: Shield,
             colors: {
                 bg: 'from-violet-600 via-violet-700 to-violet-800',
-                text: 'text-violet-200',
-                icon: 'text-violet-300',
+                text: 'text-white-200',
+                icon: 'text-white-300',
                 accent: 'from-violet-400 to-violet-500',
-                
+
             }
         }
     ];

@@ -83,41 +83,35 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
                     View Details
                 </DropdownMenuItem>
 
-                <DropdownMenuItem 
-                    className="cursor-pointer"
-                    onClick={() => onEditClick?.(row.id)}
-                    disabled={isSuperAdmin}
-                >
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Edit User
-                </DropdownMenuItem>
+                {!isSuperAdmin && (
+                    <DropdownMenuItem
+                        className="cursor-pointer"
+                        onClick={() => onEditClick?.(row.id)}
+                    >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit User
+                    </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                    onSelect={(e) => { e.preventDefault(); setConfirmOpen(true); }}
-                    disabled={Array.isArray(row.roles) && row.roles.some((r: any) => r.name === 'super_admin')}
-                    className={`cursor-pointer ${row.approved_at ? 'text-red-600' : 'text-green-600'}`}
-                >
-                    {row.approved_at ? (
-                        <BanIcon className={`w-4 h-4 mr-2 ${banning ? 'opacity-50' : ''}`} />
-                    ) : (
-                        <CheckCircle className={`w-4 h-4 mr-2 ${unbanning ? 'opacity-50' : ''}`} />
-                    )}
-                    {row.approved_at ? (banning ? 'Banning...' : 'Ban User') : (unbanning ? 'Unbanning...' : 'Unban User')}
-                </DropdownMenuItem>
-
-
-
-                {isSuperAdmin || !isAdminAccount || isBanned ? (
+                {!isSuperAdmin && (
                     <DropdownMenuItem
-                        disabled
-                        className="cursor-not-allowed pointer-events-none opacity-60 text-gray-400"
+                        onSelect={(e) => { e.preventDefault(); setConfirmOpen(true); }}
+                        className={`cursor-pointer ${row.approved_at ? 'text-red-600' : 'text-green-600'}`}
                     >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Assign Role
+                        {row.approved_at ? (
+                            <BanIcon className={`w-4 h-4 mr-2 ${banning ? 'opacity-50' : ''}`} />
+                        ) : (
+                            <CheckCircle className={`w-4 h-4 mr-2 ${unbanning ? 'opacity-50' : ''}`} />
+                        )}
+                        {row.approved_at ? (banning ? 'Banning...' : 'Ban User') : (unbanning ? 'Unbanning...' : 'Unban User')}
                     </DropdownMenuItem>
-                ) : (
+                )}
+
+
+
+                {!isSuperAdmin && isAdminAccount && !isBanned && (
                     <DropdownMenuSub>
                         <DropdownMenuSubTrigger className="cursor-pointer">
                             <UserPlus className="w-4 h-4 mr-2" />
@@ -156,63 +150,45 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
                     </DropdownMenuSub>
                 )}
 
-                {isAdminAccount && !isBanned ? (
-                    isSuperAdmin ? (
-                        <DropdownMenuItem
-                            disabled
-                            className="cursor-not-allowed pointer-events-none opacity-60 text-gray-400"
-                        >
+                {isAdminAccount && !isBanned && !isSuperAdmin && (
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="cursor-pointer text-orange-600">
                             <UserMinus className="w-4 h-4 mr-2" />
                             Remove Role
-                        </DropdownMenuItem>
-                    ) : (
-                        <DropdownMenuSub>
-                            <DropdownMenuSubTrigger className="cursor-pointer text-orange-600">
-                                <UserMinus className="w-4 h-4 mr-2" />
-                                Remove Role
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="w-60">
-                                {Array.isArray(row.roles) && row.roles.length > 0 ? (
-                                    row.roles.map((r: any) => (
-                                        <DropdownMenuItem
-                                            key={r.id}
-                                            disabled={r.name === 'super_admin' || removing}
-                                            onSelect={async (e) => {
-                                                e.preventDefault()
-                                                if (r.name === 'super_admin') return
-                                                try {
-                                                    const res = await removeRole({ id: row.id, role_id: r.id }).unwrap()
-                                                    if ((res as any)?.success === false) {
-                                                        toast.error(((res as any)?.message) || 'Operation failed')
-                                                    } else {
-                                                        const roles = (row.roles || []).filter((rr: any) => rr.id !== r.id)
-                                                        dispatch(setUserRoles({ id: row.id, roles }))
-                                                        setSelectedRoleIds((prev) => prev.filter((rid) => rid !== r.id))
-                                                        toast.success('Role removed')
-                                                    }
-                                                } catch (err: any) {
-                                                    toast.error(err?.data?.message || 'Operation failed')
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="w-60">
+                            {Array.isArray(row.roles) && row.roles.length > 0 ? (
+                                row.roles.map((r: any) => (
+                                    <DropdownMenuItem
+                                        key={r.id}
+                                        disabled={r.name === 'super_admin' || removing}
+                                        onSelect={async (e) => {
+                                            e.preventDefault()
+                                            if (r.name === 'super_admin') return
+                                            try {
+                                                const res = await removeRole({ id: row.id, role_id: r.id }).unwrap()
+                                                if ((res as any)?.success === false) {
+                                                    toast.error(((res as any)?.message) || 'Operation failed')
+                                                } else {
+                                                    const roles = (row.roles || []).filter((rr: any) => rr.id !== r.id)
+                                                    dispatch(setUserRoles({ id: row.id, roles }))
+                                                    setSelectedRoleIds((prev) => prev.filter((rid) => rid !== r.id))
+                                                    toast.success('Role removed')
                                                 }
-                                            }}
-                                            className="cursor-pointer"
-                                        >
-                                            <Shield className="w-4 h-4 mr-2" /> {r.title || r.name}
-                                        </DropdownMenuItem>
-                                    ))
-                                ) : (
-                                    <DropdownMenuItem disabled className="opacity-60">No roles to remove</DropdownMenuItem>
-                                )}
-                            </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                    )
-                ) : (
-                    <DropdownMenuItem
-                        disabled
-                        className="cursor-not-allowed pointer-events-none opacity-60 text-gray-400"
-                    >
-                        <UserMinus className="w-4 h-4 mr-2" />
-                        Remove Role
-                    </DropdownMenuItem>
+                                            } catch (err: any) {
+                                                toast.error(err?.data?.message || 'Operation failed')
+                                            }
+                                        }}
+                                        className="cursor-pointer"
+                                    >
+                                        <Shield className="w-4 h-4 mr-2" /> {r.title || r.name}
+                                    </DropdownMenuItem>
+                                ))
+                            ) : (
+                                <DropdownMenuItem disabled className="opacity-60">No roles to remove</DropdownMenuItem>
+                            )}
+                        </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                 )}
 
             </DropdownMenuContent>

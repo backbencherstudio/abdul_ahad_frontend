@@ -4,6 +4,7 @@ import { usersManagementApi } from './api/admin/usersManagentApis';
 import { roleManagementApi } from './api/admin/roleManagementApis';
 import subscriptionSlice from './slices/subscriptionSlice';
 import usersManagementSlice from './slices/usersManagentSlice';
+import roleManagementSlice from './slices/roleManagementSlice';
 
 export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
         [roleManagementApi.reducerPath]: roleManagementApi.reducer,
         subscription: subscriptionSlice,
         usersManagement: usersManagementSlice,
+        roleManagement: roleManagementSlice,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(subscriptionApi.middleware, usersManagementApi.middleware, roleManagementApi.middleware),
