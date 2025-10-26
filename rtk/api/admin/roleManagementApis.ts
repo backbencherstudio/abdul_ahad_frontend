@@ -62,20 +62,21 @@ export const roleManagementApi = createApi({
         }),
 
         // get all roles
-        getRoles: builder.query<{ success: boolean; data: { roles: Role[]; pagination?: any } }, { page?: number; limit?: number } | void>({
-            query: (arg) => {
-                const params = arg || {};
-                const page = params.page || PAGINATION_CONFIG.DEFAULT_PAGE;
-                const limit = params.limit || PAGINATION_CONFIG.DEFAULT_LIMIT;
-                const queryParams = new URLSearchParams();
-                queryParams.append('page', page.toString());
-                queryParams.append('limit', limit.toString());
-                return {
-                    url: `/api/admin/roles?${queryParams.toString()}`,
-                };
-            },
-            providesTags: ['Role'],
-        }),
+       getRoles: builder.query<{ success: boolean; data: { roles: Role[]; pagination?: any } }, { page?: number; limit?: number } | void>({
+        query: (arg) => {
+            const params = arg || {};
+            const page = params.page || PAGINATION_CONFIG.DEFAULT_PAGE;
+            const limit = params.limit || PAGINATION_CONFIG.DEFAULT_LIMIT;
+            const queryParams = new URLSearchParams();
+            queryParams.append('page', page.toString());
+            queryParams.append('limit', limit.toString());
+            return {
+                url: `/api/admin/roles?${queryParams.toString()}`,
+            };
+        },
+        providesTags: ['Role'],
+        
+    }),
 
         // get role by id
         getRoleById: builder.query<{ success: boolean; data: Role }, string>({
@@ -86,8 +87,7 @@ export const roleManagementApi = createApi({
         // assign permissions to role api
         assignPermissionsToRole: builder.mutation<
             { success: boolean; data: Role }, 
-            { id: string; mode: 'assign' | 'remove' | 'replace'; permission_ids: string[] }
-        >({
+            { id: string; mode: 'assign' | 'remove' | 'replace'; permission_ids: string[] }>({
             query: ({ id, mode, permission_ids }) => ({
                 url: `/api/admin/roles/${id}/permissions`,
                 method: 'POST',

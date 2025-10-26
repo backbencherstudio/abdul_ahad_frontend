@@ -31,10 +31,10 @@ const initialState: UsersState = {
         approved: null,
     },
     pagination: {
-        currentPage: PAGINATION_CONFIG.DEFAULT_PAGE,
-        itemsPerPage: PAGINATION_CONFIG.DEFAULT_LIMIT,
+        currentPage: 1,
+        itemsPerPage: 10,
         totalItems: 0,
-        totalPages: 0,
+        totalPages: 1,
     },
     loading: false,
     error: null,
