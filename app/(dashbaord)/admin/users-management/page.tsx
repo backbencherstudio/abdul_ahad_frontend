@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/rtk';
 import { useGetUsersQuery } from '@/rtk';
 import {
-    setCurrentPage,
-    setItemsPerPage,
-    setPagination,
-    setStatistics,
-} from '@/rtk';
+    setCurrentPage as setUsersCurrentPage,
+    setItemsPerPage as setUsersItemsPerPage,
+    setPagination as setUsersPagination,
+    setStatistics as setUsersStatistics,
+} from '@/rtk/slices/usersManagentSlice';
 import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable';
 import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination';
 import { Plus } from 'lucide-react';
@@ -22,6 +22,7 @@ export default function UserManagement() {
     const dispatch = useAppDispatch();
     const { filters, pagination } = useAppSelector((state) => state.usersManagement);
 
+
     // Fetch users data
     const { data: usersData, isLoading, error, refetch } = useGetUsersQuery({
         approved: filters.approved,
@@ -29,30 +30,32 @@ export default function UserManagement() {
         type: filters.type,
         page: pagination.currentPage,
         limit: pagination.itemsPerPage,
+    }, {
+        refetchOnMountOrArgChange: true,
     });
 
     // Update Redux state when API data changes
     useEffect(() => {
         if (usersData) {
-            dispatch(setPagination({
+            dispatch(setUsersPagination({
                 totalItems: usersData.pagination.total,
                 totalPages: usersData.pagination.totalPages,
             }));
 
             if (usersData.statistics) {
-                dispatch(setStatistics(usersData.statistics));
+                dispatch(setUsersStatistics(usersData.statistics));
             }
         }
     }, [usersData, dispatch]);
 
     // Handle page change
     const handlePageChange = (page: number) => {
-        dispatch(setCurrentPage(page));
+        dispatch(setUsersCurrentPage(page));
     };
 
     // Handle items per page change
     const handleItemsPerPageChange = (itemsPerPage: number) => {
-        dispatch(setItemsPerPage(itemsPerPage));
+        dispatch(setUsersItemsPerPage(itemsPerPage));
     };
 
     // Table columns configuration
@@ -267,25 +270,27 @@ export default function UserManagement() {
                             className="rounded-t-xl"
                         />
 
-                        <ReusablePagination
-                            currentPage={pagination.currentPage}
-                            totalPages={usersData?.pagination?.totalPages || 1}
-                            itemsPerPage={pagination.itemsPerPage}
-                            totalItems={usersData?.pagination?.total || 0}
-                            onPageChange={handlePageChange}
-                            onItemsPerPageChange={handleItemsPerPageChange}
-                            className=""
-                        />
+                        {usersData?.pagination && (
+                            <ReusablePagination
+                                key={`pagination-${usersData.pagination.totalPages}`}
+                                currentPage={usersData.pagination.page}
+                                totalPages={usersData.pagination.totalPages}
+                                itemsPerPage={pagination.itemsPerPage}
+                                totalItems={usersData.pagination.total}
+                                onPageChange={handlePageChange}
+                                onItemsPerPageChange={handleItemsPerPageChange}
+                            />
+                        )}
                     </>
                 )}
             </div>
             {/* Create/Edit User Modal */}
-            <CreateNewUser 
-                open={createOpen || !!editUserId} 
+            <CreateNewUser
+                open={createOpen || !!editUserId}
                 onClose={() => {
                     setCreateOpen(false)
                     setEditUserId(null)
-                }} 
+                }}
                 editUserId={editUserId}
             />
         </div>

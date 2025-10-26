@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from '../baseApi';
 import { PAGINATION_CONFIG } from '../../../config/pagination.config';
+
 import type {
     User,
     UsersResponse,
@@ -29,22 +30,34 @@ export const usersManagementApi = createApi({
 
         // get all users
         getUsers: builder.query<UsersResponse, { approved?: boolean | null; q?: string; type?: string; page?: number; limit?: number }>({
-            query: ({ approved, q = '', type = '', page = PAGINATION_CONFIG.DEFAULT_PAGE, limit = PAGINATION_CONFIG.DEFAULT_LIMIT }) => {
-                const params = new URLSearchParams();
+            query: (params) => {
+                const queryParams = new URLSearchParams();
 
-                if (approved === true) {
-                    params.append('approved', 'approved');
-                } else if (approved === false) {
-                    params.append('approved', 'false');
+                // Handle approved status
+                if (params.approved === true) {
+                    queryParams.append('approved', 'approved');
+                } else if (params.approved === false) {
+                    queryParams.append('approved', 'false');
                 }
 
-                if (q) params.append('q', q);
-                if (type) params.append('type', type);
-                params.append('page', page.toString());
-                params.append('limit', limit.toString());
+                // Handle search query
+                if (params.q && params.q.trim()) {
+                    queryParams.append('q', params.q);
+                }
+
+                // Handle user type filter
+                if (params.type && params.type.trim()) {
+                    queryParams.append('type', params.type);
+                }
+
+                // Add page number (default from config)
+                queryParams.append('page', (params.page || PAGINATION_CONFIG.DEFAULT_PAGE).toString());
+
+                // Add items per page (default from config)
+                queryParams.append('limit', (params.limit || PAGINATION_CONFIG.DEFAULT_LIMIT).toString());
 
                 return {
-                    url: `/api/admin/user?${params.toString()}`,
+                    url: `/api/admin/user?${queryParams.toString()}`,
                 };
             },
             providesTags: ['Users'],

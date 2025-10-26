@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PAGINATION_CONFIG } from '../../config/pagination.config';
+
 import type { User, Statistics } from '@/types';
 
 interface UsersState {
@@ -31,8 +32,8 @@ const initialState: UsersState = {
         approved: null,
     },
     pagination: {
-        currentPage: 1,
-        itemsPerPage: 10,
+        currentPage: PAGINATION_CONFIG.DEFAULT_PAGE,
+        itemsPerPage: PAGINATION_CONFIG.DEFAULT_LIMIT,
         totalItems: 0,
         totalPages: 1,
     },
@@ -52,22 +53,22 @@ const usersManagementSlice = createSlice({
         },
         setSearchFilter: (state, action: PayloadAction<string>) => {
             state.filters.search = action.payload;
-            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE; // Reset to first page when searching
+            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE;
         },
         setTypeFilter: (state, action: PayloadAction<string>) => {
             state.filters.type = action.payload;
-            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE; // Reset to first page when filtering
+            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE;
         },
         setApprovedFilter: (state, action: PayloadAction<boolean | null>) => {
             state.filters.approved = action.payload;
-            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE; // Reset to first page when filtering
+            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE;
         },
         setCurrentPage: (state, action: PayloadAction<number>) => {
             state.pagination.currentPage = action.payload;
         },
         setItemsPerPage: (state, action: PayloadAction<number>) => {
             state.pagination.itemsPerPage = action.payload;
-            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE; // Reset to first page when changing items per page
+            state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE;
         },
         setPagination: (state, action: PayloadAction<{ totalItems: number; totalPages: number }>) => {
             state.pagination.totalItems = action.payload.totalItems;

@@ -21,12 +21,15 @@ export default function RolesManagement() {
     const dispatch = useAppDispatch();
     const { pagination } = useAppSelector((state) => state.roleManagement);
 
+    // Fetch roles data using Redux pagination state
     const { data: rolesData, isLoading, error, refetch } = useGetRolesQuery({
         page: pagination.currentPage,
         limit: pagination.itemsPerPage,
     });
+
     const { data: statsData, isLoading: loadingStats } = useGetStatisticsDataQuery();
     const [deleteRole, { isLoading: deleting }] = useDeleteRoleMutation();
+
     const [createOpen, setCreateOpen] = React.useState(false);
     const [editRoleId, setEditRoleId] = React.useState<string | null>(null);
     const [viewRoleId, setViewRoleId] = React.useState<string | null>(null);
@@ -35,12 +38,13 @@ export default function RolesManagement() {
     const [assignPermissionsOpen, setAssignPermissionsOpen] = React.useState(false);
     const [roleForPermissions, setRoleForPermissions] = React.useState<{ id: string; name: string; title: string } | null>(null);
 
-    // Update Redux state when API data changes
+    // Update Redux pagination state when API data changes
     useEffect(() => {
         if (rolesData?.data?.pagination) {
+            const apiPagination = rolesData.data.pagination;
             dispatch(setPagination({
-                totalItems: rolesData.data.pagination.total,
-                totalPages: rolesData.data.pagination.pages,
+                totalItems: apiPagination.total || 0,
+                totalPages: apiPagination.pages || 1,
             }));
         }
     }, [rolesData, dispatch]);
@@ -189,6 +193,7 @@ export default function RolesManagement() {
         },
     ];
 
+    // Extract roles and stats data
     const roles = rolesData?.data?.roles || [];
     const stats = statsData?.data;
 
@@ -254,9 +259,9 @@ export default function RolesManagement() {
 
                         <ReusablePagination
                             currentPage={pagination.currentPage}
-                            totalPages={rolesData?.data?.pagination?.pages || 1}
+                            totalPages={pagination.totalPages}
                             itemsPerPage={pagination.itemsPerPage}
-                            totalItems={rolesData?.data?.pagination?.total || 0}
+                            totalItems={pagination.totalItems}
                             onPageChange={handlePageChange}
                             onItemsPerPageChange={handleItemsPerPageChange}
                             className=""

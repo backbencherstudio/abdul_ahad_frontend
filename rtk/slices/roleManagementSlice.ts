@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { PAGINATION_CONFIG } from '../../config/pagination.config'
 
 interface RoleItem { id: string; name: string; title?: string; description?: string }
 
@@ -17,8 +18,8 @@ interface RoleState {
 const initialState: RoleState = {
   rolesByUserId: {},
   pagination: {
-    currentPage: 1,
-    itemsPerPage: 10,
+    currentPage: PAGINATION_CONFIG.DEFAULT_PAGE,
+    itemsPerPage: PAGINATION_CONFIG.DEFAULT_LIMIT,
     totalItems: 0,
     totalPages: 1,
   }
@@ -40,7 +41,7 @@ const roleManagementSlice = createSlice({
     },
     setItemsPerPage: (state, action: PayloadAction<number>) => {
       state.pagination.itemsPerPage = action.payload
-      state.pagination.currentPage = 1
+      state.pagination.currentPage = PAGINATION_CONFIG.DEFAULT_PAGE
     },
   }
 })
