@@ -3,8 +3,8 @@ import { subscriptionApi } from './api/garage/subscriptionApis';
 import { usersManagementApi } from './api/admin/usersManagentApis';
 import { roleManagementApi } from './api/admin/roleManagementApis';
 import subscriptionSlice from './slices/subscriptionSlice';
-import usersManagementSlice from './slices/usersManagentSlice';
-import roleManagementSlice from './slices/roleManagementSlice';
+import usersManagementSlice from './slices/admin/usersManagentSlice';
+import roleManagementSlice from './slices/admin/roleManagementSlice';
 
 export const store = configureStore({
     reducer: {

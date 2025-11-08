@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { PAGINATION_CONFIG } from '../../config/pagination.config'
+import { PAGINATION_CONFIG } from '../../../config/pagination.config'
 
 interface RoleItem { id: string; name: string; title?: string; description?: string }
 

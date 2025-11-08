@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { PAGINATION_CONFIG } from '../../config/pagination.config';
+import { PAGINATION_CONFIG } from '../../../config/pagination.config';
 
 import type { User, Statistics } from '@/types';
 
