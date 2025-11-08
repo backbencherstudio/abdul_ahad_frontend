@@ -2,7 +2,7 @@
 
 import SmalButtonReuseable from '@/components/reusable/SmalButtonReuseable'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
 import { Menu } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -19,11 +19,11 @@ export default function Navbar() {
     const additionalMenuItems = [
         {
             name: 'Contact Us',
-            link: '/contact'
+            link: '/contact-us'
         },
         {
             name: 'Cookie Policy',
-            link: '/cookie-policy'
+            link: '/cookies-policy'
         },
         {
             name: 'Privacy Policy',
@@ -41,6 +41,12 @@ export default function Navbar() {
     const handleLogIn = () => {
         setIsOpen(false)
         router.push('/login')
+    }
+
+    // handle additional menu item navigation
+    const handleMenuNavigation = (link: string) => {
+        setIsOpen(false)
+        router.push(link)
     }
 
     return (
@@ -75,6 +81,7 @@ export default function Navbar() {
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className='w-[320px] bg-gradient-to-br from-white to-gray-50 border-r border-gray-200 p-0'>
+                            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                             <div className='flex flex-col h-full'>
                                 {/* Header Section */}
                                 <div className='bg-[#14A228] text-white p-6 pb-8'>
@@ -90,14 +97,14 @@ export default function Navbar() {
                                         <Button
                                             variant="outline"
                                             className='w-full cursor-pointer justify-start h-12 text-left border-2 border-[#14A228] text-[#14A228] font-medium hover:bg-[#14A228] hover:text-white transition-all duration-300 shadow-sm'
-                                            onClick={() => setIsOpen(false)}
+                                            onClick={handleLogIn}
                                         >
                                             <span className='ml-2'>Log in to your account</span>
                                         </Button>
 
                                         <Button
                                             className='w-full cursor-pointer justify-start h-12 text-left bg-[#14A228] text-white font-medium hover:bg-[#14A228]/90 transition-all duration-300 shadow-lg'
-                                            onClick={() => setIsOpen(false)}
+                                            onClick={handleCreateAccount}
                                         >
                                             <span className='ml-2'>Create new account</span>
                                         </Button>
@@ -111,7 +118,7 @@ export default function Navbar() {
                                                 <button
                                                     key={item.name}
                                                     className='w-full cursor-pointer text-left px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200'
-                                                    onClick={() => setIsOpen(false)}
+                                                    onClick={() => handleMenuNavigation(item.link)}
                                                 >
                                                     {item.name}
                                                 </button>

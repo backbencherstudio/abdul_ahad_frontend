@@ -85,10 +85,6 @@ export default function ReusablePagination({
         return pages
     }
 
-    if (totalPages <= 1) {
-        return null
-    }
-
     return (
         <div className={`bg-white/50 rounded-b-lg px-4 py-3 sm:px-6 border-b border-r border-l border-gray-300 ${className}`}>
             {/* Desktop Layout */}
@@ -110,8 +106,9 @@ export default function ReusablePagination({
                 </div>
 
                 {/* Page numbers */}
-                <div className="flex items-center space-x-1">
-                    {getPageNumbers().map((page, index) => (
+                {totalPages > 1 && (
+                    <div className="flex items-center space-x-1">
+                        {getPageNumbers().map((page, index) => (
                         <button
                             key={index}
                             onClick={() => typeof page === 'number' && onPageChange(page)}
@@ -125,14 +122,15 @@ export default function ReusablePagination({
                         >
                             {page}
                         </button>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Previous/Next buttons */}
                 <div className="flex items-center space-x-2">
                     <button
                         onClick={handlePrevious}
-                        disabled={currentPage === 1}
+                        disabled={currentPage === 1 || totalPages <= 1}
                         className="flex items-center cursor-pointer px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +140,7 @@ export default function ReusablePagination({
                     </button>
                     <button
                         onClick={handleNext}
-                        disabled={currentPage === totalPages}
+                        disabled={currentPage === totalPages || totalPages <= 1}
                         className="flex items-center cursor-pointer px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <span className="hidden sm:inline">Next</span>

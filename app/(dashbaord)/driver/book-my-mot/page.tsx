@@ -121,11 +121,11 @@ export default function BookMyMOT() {
     return (
         <div className="w-full mx-auto">
             <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-md shadow-sm p-4 sm:p-6  mb-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 items-start bg-[#F8FAFB] p-4 rounded-md">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4  bg-[#F8FAFB] p-4 rounded-md items-center">
                     {/* Registration Number */}
-                    <div className="space-y-2">
-                        <Label htmlFor="registrationNumber" className="text-sm font-medium text-gray-700">
-                            Registration Number
+                    <div>
+                        <Label htmlFor="registrationNumber" className="text-sm mb-2 font-medium text-gray-700">
+                            Registration Number <span className="text-red-500">*</span>
                         </Label>
                         <Input
                             id="registrationNumber"
@@ -148,9 +148,9 @@ export default function BookMyMOT() {
                     </div>
 
                     {/* Postcode */}
-                    <div className="space-y-2">
-                        <Label htmlFor="postcode" className="text-sm font-medium text-gray-700">
-                            Postcode
+                    <div>
+                        <Label htmlFor="postcode" className="text-sm mb-2 font-medium text-gray-700">
+                            Postcode <span className="text-red-500">*</span>
                         </Label>
                         <Input
                             id="postcode"
@@ -169,16 +169,15 @@ export default function BookMyMOT() {
                     </div>
 
                     {/* Find Garage Button */}
-                    <div className="sm:col-span-2 lg:col-span-1 space-y-2">
-                        <div className="h-6"></div>
+                    <div className="sm:col-span-2 lg:col-span-1 mt-2">
+
                         <Button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-5 bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium text-base rounded-md transition-all duration-200 hover:shadow-lg cursor-pointer disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed"
+                            className="w-full py-5  bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium text-sm xl:text-base rounded-md transition-all duration-200 hover:shadow-lg cursor-pointer disabled:bg-[#19CA32]/70 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Searching...' : 'Find Garage'}
                         </Button>
-                        <div className="h-5"></div>
                     </div>
                 </div>
             </form>
@@ -203,7 +202,7 @@ export default function BookMyMOT() {
                         <div className="bg-white rounded-md shadow-sm p-4 sm:p-6 mt-8">
                             {/* Payment Message */}
                             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                <p className="text-gray-700 text-xl font-medium">
+                                <p className="text-gray-700 text-base xl:text-xl font-medium">
                                     No upfront payment required - simply pay at your appointment.
                                 </p>
                             </div>

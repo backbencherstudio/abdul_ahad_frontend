@@ -4,6 +4,7 @@ import { AppConfig } from "@/config/app.config";
 import { Inter, Inder, Nunito_Sans } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "@/context/AuthContext";
+import { ReduxProvider } from "@/rtk/ReduxProvider";
 
 export const metadata: Metadata = {
   title: AppConfig().app.name,
@@ -37,10 +38,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${inder.variable} ${nunitoSans.variable}`}>
       <body className={inter.className}>
-        <AuthProvider>
-          <ToastContainer position="top-center" />
-          {children}
-        </AuthProvider>
+        <ReduxProvider>
+          <AuthProvider>
+            <ToastContainer position="top-center" />
+            {children}
+          </AuthProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

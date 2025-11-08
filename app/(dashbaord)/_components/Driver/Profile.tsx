@@ -26,7 +26,7 @@ const TabButton = ({
             : 'text-gray-700 hover:bg-gray-50'
             }`}
     >
-        <Icon className={`h-5 w-5 ${isActive ? 'text-green-600' : 'text-gray-500'
+        <Icon className={`h-5 w-5 hidden sm:block ${isActive ? 'text-green-600' : 'text-gray-500'
             }`} />
         {children}
     </button>

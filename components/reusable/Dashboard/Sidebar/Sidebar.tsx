@@ -23,7 +23,7 @@ import {
 } from 'react-icons/hi';
 import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import { toast } from 'react-toastify';
-import { LayoutGrid, Building2, Truck, Calendar } from 'lucide-react';
+import { LayoutGrid, Building2, Truck, Calendar, Users, RollerCoaster, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 interface SidebarProps {
@@ -52,16 +52,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
         { icon: HiCurrencyDollar, label: 'Pricing', href: '/garage/pricing', role: 'garage' },
         { icon: HiCheckCircle, label: 'Availability', href: '/garage/availability', role: 'garage' },
         { icon: HiClipboardList, label: 'Bookings', href: '/garage/bookings', role: 'garage' },
-        { icon: HiCreditCard, label: 'Payment', href: '/garage/payment', role: 'garage' },
+        { icon: HiCreditCard, label: 'Subscription', href: '/garage/subscription', role: 'garage' },
         { icon: HiReceiptTax, label: 'Invoices', href: '/garage/invoices', role: 'garage' },
         { icon: HiMail, label: 'Contact Us', href: '/garage/contact-us', role: 'garage' },
         { icon: HiQuestionMarkCircle, label: 'FAQ', href: '/garage/faq', role: 'garage' },
 
         // admin
         { icon: LayoutGrid, label: 'Dashboard', href: '/admin/dashboard', role: 'admin' },
-        { icon: Building2, label: 'Manage Garages', href: '/admin/manage-garages', role: 'admin' },
-        { icon: Truck, label: 'Manage Drivers', href: '/admin/manage-drivers', role: 'admin' },
-        { icon: Calendar, label: 'Manage Bookings', href: '/admin/manage-bookings', role: 'admin' },
+        { icon: Building2, label: 'Garages Management', href: '/admin/manage-garages', role: 'admin' },
+        { icon: Truck, label: 'Drivers Management', href: '/admin/manage-drivers', role: 'admin' },
+        { icon: Calendar, label: 'Bookings Management', href: '/admin/manage-bookings', role: 'admin' },
+        { icon: Users, label: 'Users Management', href: '/admin/users-management', role: 'admin' },
+        { icon: User, label: 'Role Management', href: '/admin/roles-management', role: 'admin' },
 
     ];
 
@@ -71,7 +73,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
     };
 
     return (
-        <div className="w-64 h-screen bg-white flex flex-col">
+        <div className="w-72 h-screen bg-white flex flex-col">
             {/* Header */}
             <div className="py-5 px-3 flex justify-between items-center mt-2">
                 <div>

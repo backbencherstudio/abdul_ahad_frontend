@@ -2,7 +2,7 @@ import React from 'react'
 
 interface TableColumn {
     key: string
-    label: string
+    label: string | React.ReactNode
     width?: string
     render?: (value: any, row: any) => React.ReactNode
 }
@@ -63,7 +63,7 @@ export default function ReusableTable({
         <div className={` ${className}`}>
             {/* Table */}
             <div className="overflow-x-auto rounded-t-lg border border-gray-300">
-                <table className="min-w-full divide-y divide-gray-200  w-full">
+                <table className="max-w-full divide-y divide-gray-200 w-full ">
                     <thead className="bg-gray-50">
                         <tr>
                             {columns.map((column) => (
@@ -71,7 +71,7 @@ export default function ReusableTable({
                                     key={column.key}
                                     scope="col"
                                     style={{ width: column.width }}
-                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider overflow-hidden"
+                                    className="px-6 py-3 whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider overflow-hidden"
                                 >
                                     {column.label}
                                 </th>

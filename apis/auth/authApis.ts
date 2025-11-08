@@ -162,7 +162,7 @@ export const resendVerificationEmailApi = async (email: string): Promise<commonR
     }
 }
 
-// changes profile api
+// changes password api
 export const changesProfileApi = async (data: any): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/change-password', data);
@@ -184,8 +184,6 @@ export const changesProfileApi = async (data: any): Promise<commonResponse> => {
 export const changeEmailRequestApi = async (data: any): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/request-email-change', data);
-        
-        // Check if the response indicates failure
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to change email request');
         }
@@ -206,8 +204,6 @@ export const changeEmailRequestApi = async (data: any): Promise<commonResponse> 
 export const changesEmailApi = async (data: any): Promise<commonResponse> => {
     try {
         const response = await axiosClient.post('/api/auth/change-email', data);
-        
-        // Check if the response indicates failure
         if (response.data.success === false) {
             throw new Error(response.data.message || 'Failed to change email');
         }

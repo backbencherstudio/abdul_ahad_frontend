@@ -29,10 +29,10 @@ interface Garage {
 }
 
 const formatTime = (time: string): string => {
-    const cleanTime = time.replace(/[^0-9:]/g, '') 
+    const cleanTime = time.replace(/[^0-9:]/g, '')
     const [hours, minutes] = cleanTime.split(':').map(Number)
 
-    if (isNaN(hours) || isNaN(minutes)) return time 
+    if (isNaN(hours) || isNaN(minutes)) return time
 
     const period = hours >= 12 ? 'PM' : 'AM'
     const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
@@ -125,12 +125,12 @@ function DetailsContent() {
                     </div>
 
                     {/* MOT Fee and Retest Fee */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 bg-[#F8FAFB] p-3 sm:p-4 rounded-lg border border-[#D2D2D5]">
-                        <div className="p-3 sm:p-4 rounded-lg text-center sm:text-left">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 py-4 gap-3 sm:gap-4 bg-[#F8FAFB] p-3 sm:p-4 rounded-lg border border-[#D2D2D5]">
+                        <div className="px-3 sm:px-4 rounded-lg text-center sm:text-left">
                             <div className="text-base sm:text-lg font-bold text-gray-900 mb-1">MOT Fee</div>
                             <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#19CA32]">£ {garage.motFee}</div>
                         </div>
-                        <div className="p-3 sm:p-4 rounded-lg text-center sm:text-left">
+                        <div className="px-3 sm:px-4 rounded-lg text-center sm:text-left">
                             <div className="text-base sm:text-lg font-bold text-gray-900 mb-1">Retest Fee</div>
                             <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#19CA32]">£ {garage.restestFee}</div>
                         </div>
@@ -222,7 +222,7 @@ function DetailsContent() {
                             <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                                 <Button
                                     onClick={() => setIsBookingModalOpen(true)}
-                                    className="w-full  bg-[#19CA32] hover:bg-[#16b82e] text-white font-semibold py-4 sm:py-6 text-base sm:text-lg rounded-lg cursor-pointer transition-all duration-200"
+                                    className="w-full  bg-[#19CA32] hover:bg-[#16b82e] text-white font-semibold py-4 sm:py-6 text-sm xl:text-base rounded-lg cursor-pointer transition-all duration-200"
                                 >
                                     Book My MOT
                                 </Button>

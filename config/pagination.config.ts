@@ -1,0 +1,11 @@
+export const PAGINATION_CONFIG = {
+    DEFAULT_PAGE: 1,
+    DEFAULT_LIMIT: 10,
+} as const
+
+export const SUBSCRIPTION_CONFIG = {
+    PAGINATION: PAGINATION_CONFIG,
+    PLANS: {
+        MAX_PLANS_DISPLAY: PAGINATION_CONFIG.DEFAULT_LIMIT,
+    }
+} as const

@@ -5,12 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown } from 'lucide-react'
+import { Check, ChevronsUpDown, ArrowLeft } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import Image from 'next/image'
+import { SubscriptionPlan } from '../../../../rtk'
 
 interface PaymentMethodProps {
     onBack: () => void;
+    selectedPlan?: SubscriptionPlan | null;
+    onCheckout?: () => void;
+    isCheckoutLoading?: boolean;
 }
 
 interface Country {
@@ -20,7 +24,7 @@ interface Country {
     cca2: string;
 }
 
-export default function PaymentMethod({ onBack }: PaymentMethodProps) {
+export default function PaymentMethod({ onBack, selectedPlan, onCheckout, isCheckoutLoading = false }: PaymentMethodProps) {
     const [countries, setCountries] = useState<{ name: string; code: string; }[]>([])
     const [selectedCountry, setSelectedCountry] = useState<string>("")
     const [open, setOpen] = useState(false)
@@ -67,13 +71,22 @@ export default function PaymentMethod({ onBack }: PaymentMethodProps) {
     return (
         <div className="w-full max-w-2xl p-6 bg-white rounded-2xl border border-[#19CA32]">
             <div className="mb-6">
+                <button 
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to Plans
+                </button>
                 <h2 className="text-2xl font-semibold text-gray-900">Payment Method</h2>
             </div>
 
-            <div className="flex justify-between items-center mb-6">
-                <span className="text-base text-gray-900">Monthly Plan</span>
-                <span className="text-base font-medium text-gray-900">£49/month</span>
-            </div>
+            {selectedPlan && (
+                <div className="flex justify-between items-center mb-6">
+                    <span className="text-base text-gray-900">{selectedPlan.name}</span>
+                    <span className="text-base font-medium text-gray-900">{selectedPlan.price_formatted}/month</span>
+                </div>
+            )}
 
             <div className="bg-[#F8FAFB] border rounded-xl p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -194,8 +207,12 @@ export default function PaymentMethod({ onBack }: PaymentMethodProps) {
                 </div>
             </div>
 
-            <Button className="w-full cursor-pointer h-11 bg-[#19CA32] hover:bg-[#19ca31a5] text-white font-medium rounded-lg">
-                Subscribe
+            <Button 
+                className="w-full cursor-pointer h-11 bg-[#19CA32] hover:bg-[#19ca31a5] text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={onCheckout}
+                disabled={isCheckoutLoading}
+            >
+                {isCheckoutLoading ? 'Processing...' : 'Subscribe'}
             </Button>
 
             <button

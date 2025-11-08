@@ -58,8 +58,8 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
             />
         </div>
         <div>
-            <h3 className="text-lg font-medium">Profile Picture</h3>
-            <p className="text-sm text-gray-500">Click to upload a new image</p>
+            <h3 className="text-base sm:text-lg font-medium">Profile Picture</h3>
+            <p className="text-xs sm:text-sm text-gray-500">Click to upload a new image</p>
         </div>
     </div>
 );

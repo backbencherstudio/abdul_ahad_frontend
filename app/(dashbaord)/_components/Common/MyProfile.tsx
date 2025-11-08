@@ -276,7 +276,7 @@ export default function MyProfile() {
         <>
             <Card className="shadow-sm">
                 <CardHeader className="bg-[#14A228] text-white rounded-t-lg p-5">
-                    <CardTitle className="text-2xl">My Profile</CardTitle>
+                    <CardTitle className="text-xl sm:text-2xl">My Profile</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
                     <ProfileImageUpload
