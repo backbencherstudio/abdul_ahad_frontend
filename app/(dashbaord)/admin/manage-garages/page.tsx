@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import { toast } from 'react-toastify'
+import useGarages from './hooks/useGarages'
 
 
 const BRAND_COLOR = '#19CA32';
@@ -44,6 +45,19 @@ export default function ManageGarages() {
 
         fetchData();
     }, []);
+    const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [status, setStatus] = useState("all");
+  const [search, setSearch] = useState("");
+
+  // Call the hook
+  const { data:apiData, isLoading, isError, error, } = useGarages({
+    page,
+    limit,
+    status,
+    search,
+  });
+  console.log(apiData, "check out data from api")
 
     // Define tabs with counts
     const tabs = [
