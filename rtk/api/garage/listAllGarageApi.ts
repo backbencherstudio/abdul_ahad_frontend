@@ -1,6 +1,6 @@
-import { createApi } from '@reduxjs/toolkit/query/react';
-import { baseQuery } from '../baseApi';
-import { PAGINATION_CONFIG } from '../../../config/pagination.config';
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQuery } from "../baseApi";
+import { PAGINATION_CONFIG } from "../../../config/pagination.config";
 
 export type Garage = {
   id: string;
@@ -13,6 +13,27 @@ export type Garage = {
   approved_at: string | null;
   vts_number: string;
   primary_contact: string;
+};
+export type SingleGarage = {
+  id: string;
+  garage_name: string;
+  email: string;
+  phone_number: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  zip_code: string | null;
+  status: number; // 0 = inactive, 1 = active
+  created_at: string;
+  approved_at: string | null;
+  vts_number: string;
+  primary_contact: string;
+};
+
+export type IAGarageResponse = {
+  data: SingleGarage;
+  pagination: Pagination;
 };
 
 export type Pagination = {
@@ -33,72 +54,87 @@ export type GaragesAPIResponse = {
 };
 
 export const garagesApi = createApi({
-  reducerPath: 'garagesApi',
+  reducerPath: "garagesApi",
   baseQuery,
-  tagTypes: ['Garages'],
+  tagTypes: ["Garages"],
   endpoints: (builder) => ({
     // Get all garages
-    getGarages: builder.query<GaragesAPIResponse, { page?: number; limit?: number; status?: string; search?: string }>({
+    getAllGarages: builder.query<
+      GaragesAPIResponse,
+      { page?: number; limit?: number; status?: string; search?: string }
+    >({
       query: (params) => {
         const queryParams = new URLSearchParams();
 
-        if (params.status) queryParams.append('status', params.status);
-        if (params.search) queryParams.append('search', params.search);
+        if (params.status) queryParams.append("status", params.status);
+        if (params.search) queryParams.append("search", params.search);
 
-        queryParams.append('page', (params.page || PAGINATION_CONFIG.DEFAULT_PAGE).toString());
-        queryParams.append('limit', (params.limit || PAGINATION_CONFIG.DEFAULT_LIMIT).toString());
+        queryParams.append(
+          "page",
+          (params.page || PAGINATION_CONFIG.DEFAULT_PAGE).toString()
+        );
+        queryParams.append(
+          "limit",
+          (params.limit || PAGINATION_CONFIG.DEFAULT_LIMIT).toString()
+        );
 
         return {
           url: `/api/admin/garage?${queryParams.toString()}`,
-          method: 'GET',
+          method: "GET",
         };
       },
-      providesTags: ['Garages'],
+      providesTags: ["Garages"],
     }),
 
     // Get a garage by ID
-    getGarageById: builder.query<Garage, string>({
+    getAGarageById: builder.query<IAGarageResponse, string>({
       query: (id) => ({
         url: `/api/admin/garage/${id}`,
-        method: 'GET',
+        method: "GET",
       }),
-      providesTags: ['Garages'],
+      providesTags: ["Garages"],
     }),
 
     // Update a garage
-    updateGarage: builder.mutation<{ success?: boolean; message?: string }, { id: string; body: Partial<Garage> }>({
+    updateGarage: builder.mutation<
+      { success?: boolean; message?: string },
+      { id: string; body: Partial<Garage> }
+    >({
       query: ({ id, body }) => ({
         url: `/api/admin/garage/${id}`,
-        method: 'PATCH',
+        method: "PATCH",
         body,
       }),
-      invalidatesTags: ['Garages'],
+      invalidatesTags: ["Garages"],
     }),
 
     // Create a garage
     createGarage: builder.mutation<Garage, Partial<Garage>>({
       query: (body) => ({
         url: `/api/admin/garage`,
-        method: 'POST',
+        method: "POST",
         body,
       }),
-      invalidatesTags: ['Garages'],
+      invalidatesTags: ["Garages"],
     }),
 
     // Delete a garage
-    deleteGarage: builder.mutation<{ success?: boolean; message?: string }, string>({
+    deleteGarage: builder.mutation<
+      { success?: boolean; message?: string },
+      string
+    >({
       query: (id) => ({
         url: `/api/admin/garage/${id}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
-      invalidatesTags: ['Garages'],
+      invalidatesTags: ["Garages"],
     }),
   }),
 });
 
 export const {
-  useGetGaragesQuery,
-  useGetGarageByIdQuery,
+  useGetAllGaragesQuery,
+  useGetAGarageByIdQuery,
   useCreateGarageMutation,
   useUpdateGarageMutation,
   useDeleteGarageMutation,
