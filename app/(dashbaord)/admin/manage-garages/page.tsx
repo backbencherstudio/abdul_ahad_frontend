@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import { toast } from 'react-toastify'
-import useGarages from './hooks/useGarages'
+import { useGetGaragesQuery } from '@/rtk/api/garage/listAllGarageApi'
 
 
 const BRAND_COLOR = '#19CA32';
@@ -20,7 +20,7 @@ const DANGER_COLOR = '#F04438';
 
 export default function ManageGarages() {
     const [data, setData] = useState([]);
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeTab, setActiveTab] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -45,19 +45,9 @@ export default function ManageGarages() {
 
         fetchData();
     }, []);
-    const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [status, setStatus] = useState("all");
-  const [search, setSearch] = useState("");
 
-  // Call the hook
-  const { data:apiData, isLoading, isError, error, } = useGarages({
-    page,
-    limit,
-    status,
-    search,
-  });
-  console.log(apiData, "check out data from api")
+const garagesInfo = useGetGaragesQuery({page:currentPage, limit:itemsPerPage, search:searchTerm, status:activeTab});
+console.log(garagesInfo?.data?.data?.garages, 'check api data from outside')
 
     // Define tabs with counts
     const tabs = [
@@ -102,7 +92,8 @@ export default function ManageGarages() {
     // Pagination logic
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+    const paginatedData = garagesInfo?.data?.data?.garages?.slice(startIndex, startIndex + itemsPerPage);
+    console.log(paginatedData, 'chek pagination data')
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -150,91 +141,112 @@ export default function ManageGarages() {
                 </div>
             )
         },
+        
         {
-            key: 'subscription_date',
-            label: 'Subscription Date',
+            key: 'primary_contact',
+            label: 'Primary Contact',
+            width: '15%'
+        },
+         {
+            key: 'phone_number',
+            label: 'Phone',
             width: '15%'
         },
         {
-            key: 'subscription',
-            label: 'Subscription',
+            key: 'email',
+            label: 'Email',
+            width: '15%'
+        },
+        {
+            key: 'status',
+            label: 'Status',
             width: '15%',
             render: (value: string) => (
-                <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${value.toLowerCase() === 'paid'
+                <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${value == '1'
                     ? 'bg-green-100 text-green-800 border border-green-300'
                     : 'bg-red-100 text-red-800 border border-red-300'
                     }`}>
-                    {value}
+                    {value == 1 ? "Paid" : "Unpaid"}
                 </span>
             )
         },
-        {
-            key: 'listing',
-            label: 'Listing',
-            width: '15%',
-            render: (value: string, row: any) => (
-                <div className="flex items-center justify-between gap-2">
-                    <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${value.toLowerCase() === 'active'
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : 'bg-red-100 text-red-800 border border-red-300'
-                        }`}>
-                        {value}
-                    </span>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className=" space-y-2">
-                            <div className="space-y-2">
-                                <Button
-                                    variant="ghost"
-                                    className={`w-full justify-start ${value.toLowerCase() === 'active' ? 'bg-green-50' : ''}`}
-                                    onClick={() => {
-                                        // Add your status change logic here
-                                        console.log('Set to Active')
-                                    }}
-                                >
-                                    Active
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    className={`w-full justify-start ${value.toLowerCase() === 'deactive' ? 'bg-red-50' : ''}`}
-                                    onClick={() => {
-                                        // Add your status change logic here
-                                        console.log('Set to Deactive')
-                                    }}
-                                >
-                                    Deactive
-                                </Button>
-                            </div>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            )
+         {
+            key: 'created_at',
+            label: 'Created At',
+            width: '15%'
         },
         {
-            key: 'message',
-            label: 'Message',
-            width: '15%',
-            render: (value: string, row: any) => (
-                <span
-                    className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value.toLowerCase() === 'send'
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : 'bg-[#F5F5F5] text-[#666666] border border-[#666666]'
-                        }`}
-                    onClick={() => {
-                        if (value.toLowerCase() === 'send') {
-                            setSelectedGarage(row);
-                            setOpenMessageModal(true);
-                        }
-                    }}
-                >
-                    {value}
-                </span>
-            )
+            key: 'approved_at',
+            label: 'Approved At',
+            width: '15%'
         },
+        // {
+        //     key: 'listing',
+        //     label: 'Listing',
+        //     width: '15%',
+        //     render: (value: string, row: any) => (
+        //         <div className="flex items-center justify-between gap-2">
+        //             <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${value?.toLowerCase() === 'active'
+        //                 ? 'bg-green-100 text-green-800 border border-green-300'
+        //                 : 'bg-red-100 text-red-800 border border-red-300'
+        //                 }`}>
+        //                 {value}
+        //             </span>
+        //             <DropdownMenu>
+        //                 <DropdownMenuTrigger asChild>
+        //                     <Button variant="ghost" className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer">
+        //                         <MoreVertical className="h-4 w-4" />
+        //                     </Button>
+        //                 </DropdownMenuTrigger>
+        //                 <DropdownMenuContent align="end" className=" space-y-2">
+        //                     <div className="space-y-2">
+        //                         <Button
+        //                             variant="ghost"
+        //                             className={`w-full justify-start ${value?.toLowerCase() === 'active' ? 'bg-green-50' : ''}`}
+        //                             onClick={() => {
+        //                                 // Add your status change logic here
+        //                                 console.log('Set to Active')
+        //                             }}
+        //                         >
+        //                             Active
+        //                         </Button>
+        //                         <Button
+        //                             variant="ghost"
+        //                             className={`w-full justify-start ${value?.toLowerCase() === 'deactive' ? 'bg-red-50' : ''}`}
+        //                             onClick={() => {
+        //                                 // Add your status change logic here
+        //                                 console.log('Set to Deactive')
+        //                             }}
+        //                         >
+        //                             Deactive
+        //                         </Button>
+        //                     </div>
+        //                 </DropdownMenuContent>
+        //             </DropdownMenu>
+        //         </div>
+        //     )
+        // },
+        // {
+        //     key: 'message',
+        //     label: 'Message',
+        //     width: '15%',
+        //     render: (value: string, row: any) => (
+        //         <span
+        //             className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value?.toLowerCase() === 'send'
+        //                 ? 'bg-green-100 text-green-800 border border-green-300'
+        //                 : 'bg-[#F5F5F5] text-[#666666] border border-[#666666]'
+        //                 }`}
+        //             onClick={() => {
+        //                 if (value?.toLowerCase() === 'send') {
+        //                     setSelectedGarage(row);
+        //                     setOpenMessageModal(true);
+        //                 }
+        //             }}
+        //         >
+        //             {value}
+        //         </span>
+        //     )
+        // },
 
     ]
 
