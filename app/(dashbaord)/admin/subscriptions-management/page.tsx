@@ -11,8 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
-import { useGetAGarageByIdQuery } from "@/rtk/api/admin/garages-management/listAllGarageApi";
-import { useGetAllSubscriptionsQuery } from "@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI";
+import {
+  useGetAllSubscriptionsQuery,
+  useGetASubscriptionQuery,
+} from "@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI";
 
 const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
@@ -24,7 +26,8 @@ export default function SubscriptionsManagement() {
   const [openMessageModal, setOpenMessageModal] = React.useState(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
-  const [currentGarageId, setCurrentGarageId] = React.useState<any>(null);
+  const [currentSubscriptionId, setCurrentSubscriptionId] =
+    React.useState<any>(null);
 
   const [message, setMessage] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
@@ -35,9 +38,13 @@ export default function SubscriptionsManagement() {
     limit: itemsPerPage,
   });
   console.log(allSubscriptions.data, "check all subscritions");
-  const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
-    refetchOnMountOrArgChange: true,
-  });
+  const getASingleSubscription = useGetASubscriptionQuery(
+    currentSubscriptionId,
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
+  console.log(getASingleSubscription.data, "check single subscription data");
 
   // Pagination logic
   const totalPages = Math.ceil(
@@ -59,7 +66,7 @@ export default function SubscriptionsManagement() {
   };
   const handleCurrentGarageId = (id) => {
     console.log("clicked", id);
-    setCurrentGarageId(id);
+    setCurrentSubscriptionId(id);
   };
 
   const columns = [
@@ -89,69 +96,152 @@ export default function SubscriptionsManagement() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 p-4 space-y-2">
-              {getAGarageData?.status === "fulfilled" && (
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Garage Name</div>
-                  <div className="font-medium text-sm mb-2">
-                    {getAGarageData?.data?.data?.garage_name || "-"}
+              {getASingleSubscription?.status === "fulfilled" && (
+                <div className="space-y-3">
+                  {/* Subscription Name */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Subscription Name
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.name || "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">
-                    Primary Contact Person
-                  </div>
-                  <div className="font-medium text-sm mb-2">
-                    {getAGarageData?.data?.data?.primary_contact || "-"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">VTS Number</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.vts_number || "-"}
+                  {/* Description */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Description
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.description || "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">Email</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.email || "-"}
+                  {/* Price Formatted */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Price</div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.price_formatted || "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">Number</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.phone_number || "-"}
+                  {/* Price Pence */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Price (pence)
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.price_pence || "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">Address</div>
-                  <div className="mb-2 text-sm">
-                    {[
-                      getAGarageData?.data?.data?.address,
-                      getAGarageData?.data?.data?.city,
-                      getAGarageData?.data?.data?.state,
-                      getAGarageData?.data?.data?.country,
-                      getAGarageData?.data?.data?.zip_code,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "N/A"}
+                  {/* Currency */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Currency</div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.currency || "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">Status</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.status === 1
-                      ? "Active"
-                      : "Inactive"}
+                  {/* Max Bookings */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Max Bookings / Month
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.max_bookings_per_month ||
+                        "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">Created At</div>
-                  <div className="mb-2 text-sm">
-                    {new Date(
-                      getAGarageData?.data?.data?.created_at
-                    ).toLocaleString()}
+                  {/* Max Vehicles */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Max Vehicles
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.max_vehicles || "-"}
+                    </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 mb-1">Approved At</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.approved_at
-                      ? new Date(
-                          getAGarageData?.data?.data?.approved_at
-                        ).toLocaleString()
-                      : "N/A"}
+                  {/* Priority Support */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Priority Support
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.priority_support
+                        ? "Yes"
+                        : "No"}
+                    </div>
+                  </div>
+
+                  {/* Advanced Analytics */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Advanced Analytics
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.advanced_analytics
+                        ? "Yes"
+                        : "No"}
+                    </div>
+                  </div>
+
+                  {/* Custom Branding */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Custom Branding
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.custom_branding
+                        ? "Yes"
+                        : "No"}
+                    </div>
+                  </div>
+
+                  {/* Is Active */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Active Status
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data?.is_active
+                        ? "Active"
+                        : "Inactive"}
+                    </div>
+                  </div>
+
+                  {/* Active Subscriptions Count */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Active Subscriptions Count
+                    </div>
+                    <div className="font-medium text-sm">
+                      {getASingleSubscription.data
+                        ?.active_subscriptions_count ?? "-"}
+                    </div>
+                  </div>
+
+                  {/* Created At */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Created At</div>
+                    <div className="font-medium text-sm">
+                      {new Date(
+                        getASingleSubscription.data?.created_at
+                      ).toLocaleString() || "-"}
+                    </div>
+                  </div>
+
+                  {/* Updated At */}
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">Updated At</div>
+                    <div className="font-medium text-sm">
+                      {new Date(
+                        getASingleSubscription.data?.updated_at
+                      ).toLocaleString() || "-"}
+                    </div>
                   </div>
                 </div>
               )}

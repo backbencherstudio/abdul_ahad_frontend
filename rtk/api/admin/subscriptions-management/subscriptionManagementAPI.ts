@@ -2,18 +2,6 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../../baseApi";
 import { PAGINATION_CONFIG } from "../../../../config/pagination.config";
 
-export type SingleSubscription = {
-  id: string;
-  garage_name: string;
-  email: string;
-  phone_number: string;
-  address: string | null;
-  status: number; // 0 or 1
-  created_at: string;
-  approved_at: string | null;
-  vts_number: string;
-  primary_contact: string;
-};
 export type SubscriptionPlan = {
   id: string;
   name: string;
@@ -33,11 +21,6 @@ export type SubscriptionPlan = {
   updated_at: string;
 };
 
-export type IAGarageResponse = {
-  data: SingleSubscription;
-  pagination: Pagination;
-};
-
 export type Pagination = {
   page: number;
   limit: number;
@@ -46,7 +29,7 @@ export type Pagination = {
 };
 
 export type SubscriptionPlanResponseData = {
-  data: SingleSubscription[];
+  data: SubscriptionPlan[];
   pagination: Pagination;
 };
 
@@ -85,58 +68,58 @@ export const subscriptionsManagementApi = createApi({
       providesTags: ["all-subscriptions"],
     }),
 
-    // Get a garage by ID
-    // getAGarageById: builder.query<IAGarageResponse, string>({
-    //   query: (id) => ({
-    //     url: `/api/admin/garage/${id}`,
-    //     method: "GET",
-    //   }),
-    //   providesTags: ["Garages"],
-    // }),
-
-    // Update a garage
-    // updateGarage: builder.mutation<
-    //   { success?: boolean; message?: string },
-    //   { id: string; body: Partial<Garage> }
-    // >({
-    //   query: ({ id, body }) => ({
-    //     url: `/api/admin/garage/${id}/approve`,
-    //     method: "PATCH",
-    //     body,
-    //   }),
-    //   invalidatesTags: ["Garages"],
-    // }),
-
-    // Create a garage
-    createGarage: builder.mutation<
-      SingleSubscription,
-      Partial<SingleSubscription>
-    >({
-      query: (body) => ({
-        url: `/api/admin/garage`,
-        method: "POST",
-        body,
+    // Get a subscription by ID
+    getASubscription: builder.query<SubscriptionPlan, string>({
+      query: (id) => ({
+        url: `/api/admin/subscription/plans/${id}`,
+        method: "GET",
       }),
-      invalidatesTags: ["all-subscriptions"],
+      providesTags: ["all-subscriptions"],
     }),
-
-    // Delete a garage
-    // deleteGarage: builder.mutation<
-    //   { success?: boolean; message?: string },
-    //   string
-    // >({
-    //   query: (id) => ({
-    //     url: `/api/admin/garage/${id}`,
-    //     method: "DELETE",
-    //   }),
-    //   invalidatesTags: ["Garages"],
-    // }),
   }),
+
+  // Update a garage
+  // updateGarage: builder.mutation<
+  //   { success?: boolean; message?: string },
+  //   { id: string; body: Partial<Garage> }
+  // >({
+  //   query: ({ id, body }) => ({
+  //     url: `/api/admin/garage/${id}/approve`,
+  //     method: "PATCH",
+  //     body,
+  //   }),
+  //   invalidatesTags: ["Garages"],
+  // }),
+
+  // Create a garage
+  // createGarage: builder.mutation<
+  //   SingleSubscription,
+  //   Partial<SingleSubscription>
+  // >({
+  //   query: (body) => ({
+  //     url: `/api/admin/garage`,
+  //     method: "POST",
+  //     body,
+  //   }),
+  //   invalidatesTags: ["all-subscriptions"],
+  // }),
+
+  // Delete a garage
+  // deleteGarage: builder.mutation<
+  //   { success?: boolean; message?: string },
+  //   string
+  // >({
+  //   query: (id) => ({
+  //     url: `/api/admin/garage/${id}`,
+  //     method: "DELETE",
+  //   }),
+  //   invalidatesTags: ["Garages"],
+  // }),
 });
 
 export const {
   useGetAllSubscriptionsQuery,
-  //   useGetAGarageByIdQuery,
+  useGetASubscriptionQuery,
   //   useCreateGarageMutation,
   //   useUpdateGarageMutation,
   //   useDeleteGarageMutation,
