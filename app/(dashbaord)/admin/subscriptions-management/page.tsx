@@ -11,17 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
-import {
-  useGetAGarageByIdQuery,
-  useGetAllGaragesQuery,
-} from "@/rtk/api/garage/listAllGarageApi";
+import { useGetAGarageByIdQuery } from "@/rtk/api/admin/garages-management/listAllGarageApi";
+import { useGetAllSubscriptionsQuery } from "@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI";
 
 const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
 const DANGER_COLOR = "#F04438";
 
-export default function ManageGarages() {
-  const [searchTerm, setSearchTerm] = useState("");
+export default function SubscriptionsManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [openMessageModal, setOpenMessageModal] = React.useState(false);
@@ -33,22 +30,21 @@ export default function ManageGarages() {
   const [isSending, setIsSending] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
-  const garagesInfo = useGetAllGaragesQuery({
+  const allSubscriptions = useGetAllSubscriptionsQuery({
     page: currentPage,
     limit: itemsPerPage,
-    search: searchTerm,
-    status: 1,
   });
+  console.log(allSubscriptions.data, "check all subscritions");
   const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
     refetchOnMountOrArgChange: true,
   });
 
   // Pagination logic
   const totalPages = Math.ceil(
-    garagesInfo.data?.data?.garages.length / itemsPerPage
+    allSubscriptions.data?.data?.length / itemsPerPage
   );
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = garagesInfo?.data?.data?.garages?.slice(
+  const paginatedData = allSubscriptions?.data?.data?.slice(
     startIndex,
     startIndex + itemsPerPage
   );
@@ -68,9 +64,9 @@ export default function ManageGarages() {
 
   const columns = [
     {
-      key: "garage_name",
-      label: "Garage Name",
-      width: "30%",
+      key: "name",
+      label: "Subscription Name",
+      width: "15%",
     },
 
     {
@@ -165,22 +161,17 @@ export default function ManageGarages() {
       ),
     },
     {
-      key: "primary_contact",
-      label: "Primary Contact",
+      key: "price_pence",
+      label: "Price Pence",
       width: "15%",
     },
     {
-      key: "phone_number",
-      label: "Phone",
+      key: "max_vehicles",
+      label: "Max Vehicles",
       width: "15%",
     },
     {
-      key: "email",
-      label: "Email",
-      width: "15%",
-    },
-    {
-      key: "status",
+      key: "is_active",
       label: "Status",
       width: "15%",
       render: (value: string) => (
@@ -191,7 +182,7 @@ export default function ManageGarages() {
               : "bg-red-100 text-red-800 border border-red-300"
           }`}
         >
-          {value == 1 ? "Approved" : "Unpaid"}
+          {value ? "Active" : "Deactive"}
         </span>
       ),
     },
@@ -201,8 +192,8 @@ export default function ManageGarages() {
       width: "15%",
     },
     {
-      key: "approved_at",
-      label: "Approved At",
+      key: "updated_at",
+      label: "Updated At",
       width: "15%",
     },
     {
@@ -278,7 +269,7 @@ export default function ManageGarages() {
   return (
     <>
       <div className="mb-6 flex justify-between">
-        <h1 className="text-2xl font-semibold">List of All Garages</h1>
+        <h1 className="text-2xl font-semibold">List of All Subscriptions</h1>
         <Button
           variant="ghost"
           className={`justify-start bg-white hover:bg-white text-black cursor-pointer`}
@@ -297,7 +288,7 @@ export default function ManageGarages() {
         currentPage={currentPage}
         totalPages={totalPages}
         itemsPerPage={itemsPerPage}
-        totalItems={garagesInfo?.data?.data?.garages?.length}
+        totalItems={allSubscriptions?.data?.data?.length}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
         className=""

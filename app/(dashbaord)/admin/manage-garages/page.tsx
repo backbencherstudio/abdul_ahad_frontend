@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
 import { MoreVertical, Trash2, Loader2 } from "lucide-react";
@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import {
   useGetAGarageByIdQuery,
   useGetAllGaragesQuery,
-} from "@/rtk/api/garage/listAllGarageApi";
+} from "@/rtk/api/admin/garages-management/listAllGarageApi";
 
 const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
@@ -41,13 +41,10 @@ export default function ManageGarages() {
     search: searchTerm,
     status: activeTab,
   });
-  console.log(garagesInfo?.data?.data?.garages, "check api data from outside");
+
   const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
     refetchOnMountOrArgChange: true,
   });
-
-  console.log(getAGarageData, "check current garage info");
-  console.log(currentGarageId, "check current garame id");
 
   // Define tabs with counts
   const tabs = [

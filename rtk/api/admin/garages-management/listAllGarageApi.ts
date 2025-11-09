@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQuery } from "../baseApi";
-import { PAGINATION_CONFIG } from "../../../config/pagination.config";
+import { baseQuery } from "../../baseApi";
+import { PAGINATION_CONFIG } from "../../../../config/pagination.config";
 
 export type Garage = {
   id: string;
