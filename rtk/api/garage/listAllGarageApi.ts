@@ -101,7 +101,7 @@ export const garagesApi = createApi({
       { id: string; body: Partial<Garage> }
     >({
       query: ({ id, body }) => ({
-        url: `/api/admin/garage/${id}`,
+        url: `/api/admin/garage/${id}/approve`,
         method: "PATCH",
         body,
       }),

@@ -1,8 +1,8 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
-import { MoreVertical, Trash2, Loader2 } from "lucide-react";
+import { MoreVertical, Trash2, Loader2, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +21,6 @@ const BRAND_COLOR_HOVER = "#16b82e";
 const DANGER_COLOR = "#F04438";
 
 export default function ManageGarages() {
-  const [data, setData] = useState([]);
-  const [activeTab, setActiveTab] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -39,70 +37,21 @@ export default function ManageGarages() {
     page: currentPage,
     limit: itemsPerPage,
     search: searchTerm,
-    status: activeTab,
+    status: 1,
   });
-  console.log(garagesInfo?.data?.data?.garages, "check api data from outside");
   const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
     refetchOnMountOrArgChange: true,
   });
 
-  console.log(getAGarageData, "check current garage info");
-  console.log(currentGarageId, "check current garame id");
-
-  // Define tabs with counts
-  const tabs = [
-    {
-      key: "all",
-      label: "All Garages",
-      count: data.length,
-    },
-    {
-      key: "paid",
-      label: "Paid",
-      count: data.filter(
-        (garage) => garage.subscription.toLowerCase() === "paid"
-      ).length,
-    },
-    {
-      key: "unpaid",
-      label: "Unpaid",
-      count: data.filter(
-        (garage) => garage.subscription.toLowerCase() === "unpaid"
-      ).length,
-    },
-  ];
-
-  // Filter data based on active tab and search
-  const filteredData = useMemo(() => {
-    let filtered = data;
-
-    // Filter by tab
-    if (activeTab !== "all") {
-      filtered = filtered.filter(
-        (garage) => garage.subscription.toLowerCase() === activeTab
-      );
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter((garage) =>
-        Object.values(garage).some((value) =>
-          value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
-
-    return filtered;
-  }, [activeTab, searchTerm, data]);
-
   // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalPages = Math.ceil(
+    garagesInfo.data?.data?.garages.length / itemsPerPage
+  );
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = garagesInfo?.data?.data?.garages?.slice(
     startIndex,
     startIndex + itemsPerPage
   );
-  console.log(paginatedData, "chek pagination data");
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -111,11 +60,6 @@ export default function ManageGarages() {
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1); // Reset to first page when items per page changes
-  };
-
-  const handleTabChange = (tabKey: string) => {
-    setActiveTab(tabKey);
-    setCurrentPage(1); // Reset to first page when tab changes
   };
   const handleCurrentGarageId = (id) => {
     console.log("clicked", id);
@@ -333,54 +277,18 @@ export default function ManageGarages() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-6 flex justify-between">
         <h1 className="text-2xl font-semibold">List of All Garages</h1>
-      </div>
-
-      {/* Tabs and Search */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-        {/* Tabs on the left */}
-        <nav className="flex flex-wrap gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${
-                activeTab === tab.key
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Search on the right */}
-        <div className="relative w-full lg:w-auto lg:max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-          <input
-            type="text"
-            placeholder="Search garages..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full lg:w-auto pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
-          />
-        </div>
+        <Button
+          variant="ghost"
+          className={`justify-start bg-white hover:bg-white text-black cursor-pointer`}
+          onClick={() => {
+            // Add your status change logic here
+            console.log("Set to Active");
+          }}
+        >
+          <Plus /> Add Subscription
+        </Button>
       </div>
 
       <ReusableTable data={paginatedData} columns={columns} className="mt-5" />
@@ -389,7 +297,7 @@ export default function ManageGarages() {
         currentPage={currentPage}
         totalPages={totalPages}
         itemsPerPage={itemsPerPage}
-        totalItems={filteredData.length}
+        totalItems={garagesInfo?.data?.data?.garages?.length}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
         className=""
