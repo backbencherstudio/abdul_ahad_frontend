@@ -34,10 +34,20 @@ export type SubscriptionPlanResponseData = {
 };
 
 export type SubscriptionsAPIResponse = {
-  success: boolean;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
   data: SubscriptionPlan[];
 };
 
+export type TCreateSubscription = {
+  name: string;
+  price_pence: number;
+  max_vehicles: number;
+  max_bookings_per_month: number;
+  description?: string;
+};
 export const subscriptionsManagementApi = createApi({
   reducerPath: "allSubscriptionsApi",
   baseQuery,
@@ -76,50 +86,51 @@ export const subscriptionsManagementApi = createApi({
       }),
       providesTags: ["all-subscriptions"],
     }),
+    // }),
+
+    // Update a garage
+    // updateGarage: builder.mutation<
+    //   { success?: boolean; message?: string },
+    //   { id: string; body: Partial<Garage> }
+    // >({
+    //   query: ({ id, body }) => ({
+    //     url: `/api/admin/garage/${id}/approve`,
+    //     method: "PATCH",
+    //     body,
+    //   }),
+    //   invalidatesTags: ["Garages"],
+    // }),
+
+    // Create a garage
+    createASubscription: builder.mutation<
+      ICreateSubscription,
+      Partial<ICreateSubscription>
+    >({
+      query: (body) => ({
+        url: `/api/admin/subscription/plans`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["all-subscriptions"],
+    }),
+
+    // Delete a garage
+    // deleteGarage: builder.mutation<
+    //   { success?: boolean; message?: string },
+    //   string
+    // >({
+    //   query: (id) => ({
+    //     url: `/api/admin/garage/${id}`,
+    //     method: "DELETE",
+    //   }),
+    //   invalidatesTags: ["Garages"],
   }),
-
-  // Update a garage
-  // updateGarage: builder.mutation<
-  //   { success?: boolean; message?: string },
-  //   { id: string; body: Partial<Garage> }
-  // >({
-  //   query: ({ id, body }) => ({
-  //     url: `/api/admin/garage/${id}/approve`,
-  //     method: "PATCH",
-  //     body,
-  //   }),
-  //   invalidatesTags: ["Garages"],
-  // }),
-
-  // Create a garage
-  // createGarage: builder.mutation<
-  //   SingleSubscription,
-  //   Partial<SingleSubscription>
-  // >({
-  //   query: (body) => ({
-  //     url: `/api/admin/garage`,
-  //     method: "POST",
-  //     body,
-  //   }),
-  //   invalidatesTags: ["all-subscriptions"],
-  // }),
-
-  // Delete a garage
-  // deleteGarage: builder.mutation<
-  //   { success?: boolean; message?: string },
-  //   string
-  // >({
-  //   query: (id) => ({
-  //     url: `/api/admin/garage/${id}`,
-  //     method: "DELETE",
-  //   }),
-  //   invalidatesTags: ["Garages"],
-  // }),
 });
 
 export const {
   useGetAllSubscriptionsQuery,
   useGetASubscriptionQuery,
+  useCreateASubscriptionMutation,
   //   useCreateGarageMutation,
   //   useUpdateGarageMutation,
   //   useDeleteGarageMutation,

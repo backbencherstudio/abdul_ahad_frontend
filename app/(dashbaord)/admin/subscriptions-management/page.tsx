@@ -12,9 +12,25 @@ import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
 import {
+  TCreateSubscription,
+  useCreateASubscriptionMutation,
   useGetAllSubscriptionsQuery,
   useGetASubscriptionQuery,
 } from "@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { useAppDispatch, useAppSelector } from "@/rtk";
 
 const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
@@ -28,41 +44,35 @@ export default function SubscriptionsManagement() {
   const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
   const [currentSubscriptionId, setCurrentSubscriptionId] =
     React.useState<any>(null);
+  const dispatch = useAppDispatch();
 
+  const { filters, pagination } = useAppSelector(
+    (state) => state.usersManagement
+  );
   const [message, setMessage] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
   const allSubscriptions = useGetAllSubscriptionsQuery({
-    page: currentPage,
-    limit: itemsPerPage,
+    page: pagination.currentPage,
+    limit: pagination.itemsPerPage,
   });
-  console.log(allSubscriptions.data, "check all subscritions");
   const getASingleSubscription = useGetASubscriptionQuery(
     currentSubscriptionId,
     {
       refetchOnMountOrArgChange: true,
     }
   );
-  console.log(getASingleSubscription.data, "check single subscription data");
-
-  // Pagination logic
-  const totalPages = Math.ceil(
-    allSubscriptions.data?.data?.length / itemsPerPage
-  );
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = allSubscriptions?.data?.data?.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (newItemsPerPage: number) => {
-    setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset to first page when items per page changes
+  // const handleItemsPerPageChange = (newItemsPerPage: number) => {
+  //   setItemsPerPage(newItemsPerPage);
+  //   setCurrentPage(1);
+  // };
+  const handleItemsPerPageChange = (itemsPerPage: number) => {
+    dispatch(setItemsPerPage(itemsPerPage));
   };
   const handleCurrentGarageId = (id) => {
     console.log("clicked", id);
@@ -78,10 +88,10 @@ export default function SubscriptionsManagement() {
 
     {
       key: "id",
-      label: "Garage Details",
+      label: "Subscription Details",
       width: "15%",
       render: (value: string, row: any) => (
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center  justify-between gap-2">
           <DropdownMenu
             onOpenChange={(isOpen) => {
               if (isOpen) handleCurrentGarageId(value);
@@ -95,7 +105,10 @@ export default function SubscriptionsManagement() {
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-4 space-y-2">
+            <DropdownMenuContent
+              align="end"
+              className="w-64 p-4 space-y-2 max-h-[200px]"
+            >
               {getASingleSubscription?.status === "fulfilled" && (
                 <div className="space-y-3">
                   {/* Subscription Name */}
@@ -278,13 +291,17 @@ export default function SubscriptionsManagement() {
     },
     {
       key: "created_at",
-      label: "Created At",
-      width: "15%",
-    },
-    {
-      key: "updated_at",
-      label: "Updated At",
-      width: "15%",
+      label: "Created",
+      width: "16%",
+      render: (value: string) => (
+        <div className="text-sm text-gray-900">
+          {new Date(value).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </div>
+      ),
     },
     {
       key: "id",
@@ -311,7 +328,6 @@ export default function SubscriptionsManagement() {
                   variant="ghost"
                   className={`w-full justify-start bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer hover:text-green-900`}
                   onClick={() => {
-                    // Add your status change logic here
                     console.log("Set to Active");
                   }}
                 >
@@ -321,7 +337,6 @@ export default function SubscriptionsManagement() {
                   variant="ghost"
                   className={`w-full justify-start bg-red-700 hover:bg-red-800 hover:text-white cursor-pointer text-white`}
                   onClick={() => {
-                    // Add your status change logic here
                     console.log("Set to Deactive");
                   }}
                 >
@@ -356,32 +371,144 @@ export default function SubscriptionsManagement() {
     }, 1500);
   };
 
+  const [createSubscription, { isLoading }] = useCreateASubscriptionMutation();
+  const [open, setOpen] = useState(false);
+
+  const { register, handleSubmit, reset } = useForm<TCreateSubscription>();
+
+  const onSubmit = async (data: TCreateSubscription) => {
+    try {
+      const payload = {
+        name: data.name,
+        description: data.description,
+        price_pence: Number(data.price_pence), // convert pounds to pence (if required)
+        max_bookings_per_month: Number(data.max_bookings_per_month),
+        max_vehicles: Number(data.max_vehicles),
+      };
+
+      const res = await createSubscription(payload).unwrap();
+      toast.success("Subscription created successfully!");
+
+      reset();
+      setOpen(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to create subscription.");
+    }
+  };
+
   return (
     <>
       <div className="mb-6 flex justify-between">
         <h1 className="text-2xl font-semibold">List of All Subscriptions</h1>
-        <Button
-          variant="ghost"
-          className={`justify-start bg-white hover:bg-white text-black cursor-pointer`}
-          onClick={() => {
-            // Add your status change logic here
-            console.log("Set to Active");
-          }}
-        >
-          <Plus /> Add Subscription
-        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="justify-start bg-white hover:bg-white text-black cursor-pointer"
+            >
+              <Plus className="mr-1" /> Add Subscription
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent className="sm:max-w-[425px]">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <DialogHeader>
+                <DialogTitle>Add Subscription</DialogTitle>
+              </DialogHeader>
+
+              <div className="grid gap-4 mt-6">
+                <div className="grid gap-3">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    {...register("name", { required: true })}
+                    placeholder="Subscription name"
+                  />
+                </div>
+
+                <div className="grid gap-3">
+                  <Label htmlFor="price">Price</Label>
+                  <Input
+                    id="price_pence"
+                    type="number"
+                    {...register("price_pence", { required: true, min: 0 })}
+                    placeholder="Subscription price (£)"
+                  />
+                </div>
+
+                <div className="grid gap-3">
+                  <Label htmlFor="max_bookings_per_month">
+                    Max bookings per month
+                  </Label>
+                  <Input
+                    id="max_bookings_per_month"
+                    type="number"
+                    {...register("max_bookings_per_month", {
+                      required: true,
+                      min: 1,
+                    })}
+                    placeholder="Max bookings"
+                  />
+                </div>
+
+                <div className="grid gap-3">
+                  <Label htmlFor="max_vehicles">Max Vehicles</Label>
+                  <Input
+                    id="max_vehicles"
+                    type="number"
+                    {...register("max_vehicles", { required: true, min: 1 })}
+                    placeholder="Max vehicles"
+                  />
+                </div>
+
+                <div className="grid gap-3">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    {...register("description")}
+                    placeholder="Description"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-4">
+                <DialogClose asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-red-800 hover:bg-red-700 cursor-pointer text-white hover:text-white"
+                  >
+                    Cancel
+                  </Button>
+                </DialogClose>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="bg-green-600 cursor-pointer hover:bg-green-500"
+                >
+                  {isLoading ? "Creating..." : "Create"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      <ReusableTable data={paginatedData} columns={columns} className="mt-5" />
+      <ReusableTable
+        data={allSubscriptions?.data?.data || []}
+        columns={columns}
+        className="mt-5"
+      />
 
       <ReusablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        itemsPerPage={itemsPerPage}
-        totalItems={allSubscriptions?.data?.data?.length}
+        key={`pagination-${allSubscriptions?.data?.totalPages}`}
+        currentPage={allSubscriptions?.data?.page}
+        totalPages={allSubscriptions?.data?.totalPages}
+        itemsPerPage={pagination.itemsPerPage}
+        totalItems={allSubscriptions?.data?.total}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
-        className=""
       />
 
       {/* Send Message Modal */}
