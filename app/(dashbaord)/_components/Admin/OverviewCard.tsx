@@ -19,22 +19,7 @@ export default function OverviewCard() {
       </div>
     );
   }
-  const datas = [
-    {
-      title: "Total Garages",
-      value: 0,
-    },
-    {
-      title: "Total Drivers",
-      value: 0,
-    },
-    {
-      title: "Total Bookings",
-      value: 0,
-    },
-  ];
 
-  console.log(data, "check data");
   return (
     <>
       <h1 className="text-2xl font-semibold mb-5">Overview</h1>

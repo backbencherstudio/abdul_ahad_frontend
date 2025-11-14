@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
 import {
+  useApproveAGarageMutation,
   useGetAGarageByIdQuery,
   useGetAllGaragesQuery,
 } from "@/rtk/api/admin/garages-management/listAllGarageApi";
@@ -45,6 +46,9 @@ export default function ManageGarages() {
   const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
     refetchOnMountOrArgChange: true,
   });
+
+  const [approveGarage, { isLoading: isApproving }] =
+    useApproveAGarageMutation();
 
   // Define tabs with counts
   const tabs = [
@@ -99,7 +103,17 @@ export default function ManageGarages() {
     startIndex,
     startIndex + itemsPerPage
   );
-  console.log(paginatedData, "chek pagination data");
+  const handleApproveGarage = async (id: string) => {
+    try {
+      const response = await approveGarage(id).unwrap();
+
+      toast.success(response?.message || "Garage approved successfully!");
+      setOpenMessageModal(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message?.message || "Failed to approve garage");
+      setOpenMessageModal(false);
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -281,14 +295,16 @@ export default function ManageGarages() {
               <div className="space-y-2">
                 <Button
                   variant="ghost"
-                  className={`w-full justify-start bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer hover:text-green-900`}
-                  onClick={() => {
-                    // Add your status change logic here
-                    console.log("Set to Active");
-                  }}
+                  className="w-full justify-start bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer hover:text-green-900"
+                  onClick={() => handleApproveGarage(value)}
+                  disabled={isApproving}
                 >
-                  Approve
+                  {isApproving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
+                  {isApproving ? "Approving..." : "Approve"}
                 </Button>
+
                 <Button
                   variant="ghost"
                   className={`w-full justify-start bg-red-700 hover:bg-red-800 hover:text-white cursor-pointer text-white`}

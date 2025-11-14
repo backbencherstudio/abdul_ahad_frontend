@@ -95,15 +95,14 @@ export const garagesApi = createApi({
       providesTags: ["Garages"],
     }),
 
-    // Update a garage
-    updateGarage: builder.mutation<
+    // Approve a garage
+    approveAGarage: builder.mutation<
       { success?: boolean; message?: string },
       { id: string; body: Partial<Garage> }
     >({
-      query: ({ id, body }) => ({
+      query: (id) => ({
         url: `/api/admin/garage/${id}/approve`,
         method: "PATCH",
-        body,
       }),
       invalidatesTags: ["Garages"],
     }),
@@ -136,6 +135,6 @@ export const {
   useGetAllGaragesQuery,
   useGetAGarageByIdQuery,
   useCreateGarageMutation,
-  useUpdateGarageMutation,
+  useApproveAGarageMutation,
   useDeleteGarageMutation,
 } = garagesApi;
