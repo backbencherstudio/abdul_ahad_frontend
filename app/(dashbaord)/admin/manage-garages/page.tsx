@@ -395,18 +395,31 @@ export default function ManageGarages() {
           />
         </div>
       </div>
-
-      <ReusableTable data={paginatedData} columns={columns} className="mt-5" />
-
-      <ReusablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        itemsPerPage={itemsPerPage}
-        totalItems={filteredData.length}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={handleItemsPerPageChange}
-        className=""
-      />
+      {garagesInfo.isLoading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          <span className="ml-3 text-gray-600 font-medium">
+            Loading garages...
+          </span>
+        </div>
+      ) : (
+        <>
+          <ReusableTable
+            data={paginatedData}
+            columns={columns}
+            className="mt-5"
+          />
+          <ReusablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredData.length}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            className=""
+          />
+        </>
+      )}
 
       {/* Send Message Modal */}
       <CustomReusableModal
