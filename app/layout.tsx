@@ -1,3 +1,4 @@
+"use client"
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppConfig } from "@/config/app.config";
@@ -5,11 +6,12 @@ import { Inter, Inder, Nunito_Sans } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "@/context/AuthContext";
 import { ReduxProvider } from "@/rtk/ReduxProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-export const metadata: Metadata = {
-  title: AppConfig().app.name,
-  description: AppConfig().app.slogan,
-};
+// export const metadata: Metadata = {
+//   title: AppConfig().app.name,
+//   description: AppConfig().app.slogan,
+// };
 
 const inter = Inter({
   subsets: ["latin"],
@@ -35,14 +37,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const queryClient = new QueryClient()
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${inder.variable} ${nunitoSans.variable}`}>
       <body className={inter.className}>
         <ReduxProvider>
+         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <ToastContainer position="top-center" />
             {children}
           </AuthProvider>
+          </QueryClientProvider>
         </ReduxProvider>
       </body>
     </html>
