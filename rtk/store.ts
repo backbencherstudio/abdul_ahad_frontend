@@ -8,6 +8,7 @@ import roleManagementSlice from "./slices/admin/roleManagementSlice";
 import { garagesApi } from "./api/admin/garages-management/listAllGarageApi";
 import { subscriptionsManagementApi } from "./api/admin/subscriptions-management/subscriptionManagementAPI";
 import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
+import { driversApi } from "./api/admin/garages-management/allDriversList";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     [subscriptionsManagementApi.reducerPath]:
       subscriptionsManagementApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [driversApi.reducerPath]: driversApi.reducer,
     subscription: subscriptionSlice,
     usersManagement: usersManagementSlice,
     roleManagement: roleManagementSlice,
@@ -28,6 +30,7 @@ export const store = configureStore({
       usersManagementApi.middleware,
       roleManagementApi.middleware,
       garagesApi.middleware,
+      driversApi.middleware,
       subscriptionsManagementApi.middleware,
       dashboardApi.middleware
     ),
