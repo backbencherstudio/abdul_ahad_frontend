@@ -21,9 +21,6 @@ import {
 } from "@/rtk/api/admin/garages-management/allDriversList";
 
 export default function ManageDrivers() {
-  // ================================
-  // UI STATE
-  // ================================
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,9 +42,7 @@ export default function ManageDrivers() {
   const [tempStartDate, setTempStartDate] = useState<Date | null>(null);
   const [tempEndDate, setTempEndDate] = useState<Date | null>(null);
 
-  // ================================
-  // API CALL
-  // ================================
+  //   Get all drivers information
   const { data: apiData, isLoading } = useGetAllDriversQuery({
     page: currentPage,
     limit: itemsPerPage,
@@ -55,7 +50,6 @@ export default function ManageDrivers() {
     startdate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
     enddate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
   });
-  console.log(apiData, "check api data");
 
   const [deleteDriver] = useDeleteDriverMutation();
 
@@ -67,9 +61,6 @@ export default function ManageDrivers() {
     pages: 1,
   };
 
-  // ================================
-  // STATIC TABS
-  // ================================
   const tabs = [
     { key: "all", label: "All", count: driverData.length },
     { key: "send", label: "Send", count: 0 },
@@ -77,9 +68,6 @@ export default function ManageDrivers() {
     { key: "failed", label: "Failed", count: 0 },
   ];
 
-  // ================================
-  // SELECTION LOGIC
-  // ================================
   const isAllSelected =
     driverData.length > 0 &&
     driverData.every((row) => selectedIds.includes(row.id));
@@ -108,18 +96,14 @@ export default function ManageDrivers() {
     }
   }, [selectedIds, isAllSelected]);
 
-  // ================================
   // PAGINATION
-  // ================================
   const handlePageChange = (page: number) => setCurrentPage(page);
   const handleItemsPerPageChange = (limit: number) => {
     setItemsPerPage(limit);
     setCurrentPage(1);
   };
 
-  // ================================
-  // DELETE HANDLER
-  // ================================
+  // DELETE a driver handler
   const handleDeleteDriver = async () => {
     if (!selectedDriver) return;
 
@@ -371,7 +355,7 @@ export default function ManageDrivers() {
             placeholder="Search drivers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-3 py-2 w-full border rounded-lg text-sm"
+            className="pl-10 pr-3 bg-white py-2 w-full border rounded-lg text-sm"
           />
           <div className="absolute left-3 top-2.5 opacity-50">
             <svg width="18" height="18" fill="none" stroke="currentColor">
@@ -383,12 +367,21 @@ export default function ManageDrivers() {
       </div>
 
       {/* TABLE */}
-      <ReusableTable
-        data={driverData}
-        columns={columnsWithCheckbox}
-        actions={actions}
-        className="mt-5"
-      />
+      {isLoading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          <span className="ml-3 text-gray-600 font-medium">
+            Loading drivers...
+          </span>
+        </div>
+      ) : (
+        <ReusableTable
+          data={driverData}
+          columns={columnsWithCheckbox}
+          actions={actions}
+          className="mt-5"
+        />
+      )}
 
       {/* PAGINATION */}
       {driverData.length > 0 && (
@@ -407,33 +400,53 @@ export default function ManageDrivers() {
         isOpen={openDeleteModal}
         onClose={() => setOpenDeleteModal(false)}
         customHeader={
-          <div className="bg-[#EB3D4D] text-white p-4 rounded-t-lg">
+          <div className="text-black mt-4 text-center p-4 pb-0 rounded-t-lg">
             <h2 className="text-lg font-semibold">Delete Driver Account</h2>
           </div>
         }
         className="max-w-sm"
       >
-        <div className="p-6">
+        <div className="p-6 pt-0">
           <p className="text-sm text-gray-600 mb-4">
             Are you sure you want to delete this driver?
           </p>
 
           <div className="space-y-3">
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedDriver?.name || ""}
-              readOnly
-            />
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedDriver?.email || ""}
-              readOnly
-            />
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedDriver?.phone_number || ""}
-              readOnly
-            />
+            {/* Driver Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Driver Name
+              </label>
+              <input
+                className="w-full border rounded-md p-2"
+                value={selectedDriver?.name || ""}
+                readOnly
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                className="w-full border rounded-md p-2"
+                value={selectedDriver?.email || ""}
+                readOnly
+              />
+            </div>
+
+            {/* Contact Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contact Number
+              </label>
+              <input
+                className="w-full border rounded-md p-2"
+                value={selectedDriver?.phone_number || ""}
+                readOnly
+              />
+            </div>
           </div>
 
           <button
