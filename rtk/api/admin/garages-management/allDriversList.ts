@@ -25,6 +25,23 @@ export type Driver = {
   vehicle_make: string | null;
   vehicle_model: string | null;
 };
+export type TDriverDetails = {
+  id: string;
+  name: string;
+  email: string;
+  phone_number: string | null;
+  status: number;
+  created_at: string;
+  approved_at: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  zip_code: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  vehicles: any[];
+};
 
 export type Pagination = {
   page: number;
@@ -41,6 +58,10 @@ export type DriversResponseData = {
 export type DriversAPIResponse = {
   success: boolean;
   data: DriversResponseData;
+};
+export type TDriversDetailsAPIResponse = {
+  success: boolean;
+  data: TDriverDetails;
 };
 
 export const driversApi = createApi({
@@ -90,6 +111,19 @@ export const driversApi = createApi({
       providesTags: ["Drivers"],
     }),
 
+    // Get a driver details
+
+    getADriverDetails: builder.query<
+      TDriversDetailsAPIResponse,
+      { id: number }
+    >({
+      query: ({ id }) => ({
+        url: `/api/admin/driver/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Drivers"],
+    }),
+
     // DELETE DRIVER
     deleteDriver: builder.mutation<
       { success?: boolean; message?: string },
@@ -104,4 +138,8 @@ export const driversApi = createApi({
   }),
 });
 
-export const { useGetAllDriversQuery, useDeleteDriverMutation } = driversApi;
+export const {
+  useGetAllDriversQuery,
+  useGetADriverDetailsQuery,
+  useDeleteDriverMutation,
+} = driversApi;

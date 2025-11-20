@@ -6,7 +6,7 @@ import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePa
 import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
-import { Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -16,9 +16,16 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import {
+  Driver,
   useDeleteDriverMutation,
+  useGetADriverDetailsQuery,
   useGetAllDriversQuery,
 } from "@/rtk/api/admin/garages-management/allDriversList";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ManageDrivers() {
   const [activeTab, setActiveTab] = useState("all");
@@ -28,6 +35,7 @@ export default function ManageDrivers() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const selectAllCheckboxRef = React.useRef<any>(null);
+  const [currentDriverId, setCurrentDriverId] = React.useState<any>(null);
 
   // Modals
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
@@ -50,7 +58,12 @@ export default function ManageDrivers() {
     startdate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
     enddate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
   });
+  // Get a specific driver details
 
+  const { data: getADriverData, isLoading: driverDataStatus } =
+    useGetADriverDetailsQuery({
+      id: currentDriverId,
+    });
   const [deleteDriver] = useDeleteDriverMutation();
 
   const driverData = apiData?.data?.drivers ?? [];
@@ -60,7 +73,6 @@ export default function ManageDrivers() {
     total: 0,
     pages: 1,
   };
-
   const tabs = [
     { key: "all", label: "All", count: driverData.length },
     { key: "send", label: "Send", count: 0 },
@@ -96,6 +108,10 @@ export default function ManageDrivers() {
     }
   }, [selectedIds, isAllSelected]);
 
+  const handleCurrentGarageId = (id) => {
+    setCurrentDriverId(id);
+  };
+
   // PAGINATION
   const handlePageChange = (page: number) => setCurrentPage(page);
   const handleItemsPerPageChange = (limit: number) => {
@@ -118,9 +134,6 @@ export default function ManageDrivers() {
     setOpenDeleteModal(false);
   };
 
-  // ================================
-  // COLUMN DEFINITIONS (API ALIGNED)
-  // ================================
   const columns = [
     { key: "name", label: "Driver Name", width: "18%" },
     { key: "email", label: "Email", width: "20%" },
@@ -183,24 +196,119 @@ export default function ManageDrivers() {
     },
     ...columns,
   ];
-
-  // ================================
-  // ROW ACTIONS
-  // ================================
   const actions = [
     {
       label: "",
-      render: (row: any) => (
-        <Button
-          variant="ghost"
-          className="h-8 w-8 p-0 flex items-center justify-center bg-red-100 border border-red-300 text-red-600 hover:bg-red-100"
-          onClick={() => {
-            setSelectedDriver(row);
-            setOpenDeleteModal(true);
-          }}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
+      render: (row: Driver) => (
+        <>
+          {/* DELETE BUTTON */}
+          <Button
+            variant="ghost"
+            className="h-6 w-6 cursor-pointer p-0 flex items-center justify-center bg-red-100 border border-red-300 text-red-600 hover:bg-red-100"
+            onClick={() => {
+              setSelectedDriver(row);
+              setOpenDeleteModal(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+
+          {/* VIEW DETAILS DROPDOWN */}
+          <DropdownMenu
+            onOpenChange={(isOpen) => {
+              if (isOpen) setCurrentDriverId(row.id); // fetch driver details here
+            }}
+          >
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-6 w-6 cursor-pointer p-0 flex items-center justify-center bg-gray-100 border border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="w-64 sm:w-80 max-h-80 overflow-y-auto p-4 space-y-3 rounded-md shadow-lg"
+            >
+              {/* Waiting for API */}
+              {driverDataStatus === true && (
+                <div className="text-xs text-gray-500">Loading...</div>
+              )}
+
+              {/* Loaded */}
+              {getADriverData?.success === true && (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Name</p>
+                    <p className="text-sm font-medium">
+                      {getADriverData?.data?.name || "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Email</p>
+                    <p className="text-sm">
+                      {getADriverData?.data?.email || "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Phone Number</p>
+                    <p className="text-sm">
+                      {getADriverData?.data?.phone_number || "-"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Address</p>
+                    <p className="text-sm">
+                      {[
+                        getADriverData?.data?.address,
+                        getADriverData?.data?.city,
+                        getADriverData?.data?.state,
+                        getADriverData?.data?.country,
+                        getADriverData?.data?.zip_code,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "N/A"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Status</p>
+                    <p className="text-sm">
+                      {getADriverData?.data?.status === 1
+                        ? "Active"
+                        : "Inactive"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Created At</p>
+                    <p className="text-sm">
+                      {new Date(
+                        getADriverData?.data?.created_at
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Approved At</p>
+                    <p className="text-sm">
+                      {getADriverData?.data?.approved_at
+                        ? new Date(
+                            getADriverData?.data?.approved_at
+                          ).toLocaleString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
       ),
     },
   ];
