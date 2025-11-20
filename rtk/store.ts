@@ -8,7 +8,7 @@ import roleManagementSlice from "./slices/admin/roleManagementSlice";
 import { garagesApi } from "./api/admin/garages-management/listAllGarageApi";
 import { subscriptionsManagementApi } from "./api/admin/subscriptions-management/subscriptionManagementAPI";
 import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
-import { driversApi } from "./api/admin/garages-management/allDriversList";
+import { driversApi } from "./api/admin/drivers-management/allDriversList";
 
 export const store = configureStore({
   reducer: {
