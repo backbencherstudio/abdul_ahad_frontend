@@ -20,7 +20,7 @@ import {
   useDeleteDriverMutation,
   useGetADriverDetailsQuery,
   useGetAllDriversQuery,
-} from "@/rtk/api/admin/garages-management/allDriversList";
+} from "@/rtk/api/admin/drivers-management/allDriversList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -150,11 +150,10 @@ export default function ManageDrivers() {
       render: (value: any) => value || "—",
     },
     {
-      key: "last_mot_date",
-      label: "MOT Date",
+      key: "country",
+      label: "Country",
       width: "15%",
-      render: (value: any) =>
-        value ? format(new Date(value), "dd/MM/yyyy") : "—",
+      render: (value: any) => (value ? value : "—"),
     },
     {
       key: "status",
