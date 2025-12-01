@@ -12,6 +12,8 @@ import { driversApi } from "./api/admin/drivers-management/allDriversList";
 import { garageAvailabilityApi } from "./api/garage/api";
 import { profileApi } from "./api/garage/profileApis";
 import { apiClient } from "./api/garage/api";
+import { pricingApi } from "./api/garage/pricingApis";
+import pricingReducer from "./slices/garage/pricingSlice";
 
 export const store = configureStore({
   reducer: {
@@ -25,9 +27,11 @@ export const store = configureStore({
     [driversApi.reducerPath]: driversApi.reducer,
     [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
+    [pricingApi.reducerPath]: pricingApi.reducer,
     subscription: subscriptionSlice,
     usersManagement: usersManagementSlice,
     roleManagement: roleManagementSlice,
+    pricing: pricingReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -39,7 +43,8 @@ export const store = configureStore({
       subscriptionsManagementApi.middleware,
       dashboardApi.middleware,
       garageAvailabilityApi.middleware,
-      profileApi.middleware
+      profileApi.middleware,
+      pricingApi.middleware
     ),
 });
 

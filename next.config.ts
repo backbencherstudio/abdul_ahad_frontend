@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
         port: "4080",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "adapter-sperm-personalized-graduate.trycloudflare.com",
+        pathname: "/**",
+      },
     ],
   },
 };
