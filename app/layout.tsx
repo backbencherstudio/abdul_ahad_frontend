@@ -45,7 +45,7 @@ export default function RootLayout({
          <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <ToastContainer position="top-center" />
-            {children}
+            <>{children}</>
           </AuthProvider>
           </QueryClientProvider>
         </ReduxProvider>

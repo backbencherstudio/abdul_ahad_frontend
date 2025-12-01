@@ -86,7 +86,9 @@ export default function ReusableTable({
                     <tbody className="bg-white divide-y divide-gray-200">
                         {tableData?.map((row, index) => (
                             <tr
-                                key={index}
+
+
+                            key={row.id ?? row._id ?? `row-${index}`}
                                 className={`capitalize ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
                                 onClick={() => onRowClick?.(row)}
                             >
