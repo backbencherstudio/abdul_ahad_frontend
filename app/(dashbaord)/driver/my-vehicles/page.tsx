@@ -1,18 +1,36 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Plus, X, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import ConfirmationModal from '@/components/reusable/ConfirmationModal'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { useDispatch, useSelector } from 'react-redux'
 import { useGetVehiclesQuery, useDeleteVehicleMutation, useAddVehicleMutation } from '@/rtk/api/driver/vehiclesApis'
 import { getBrandLogo } from '@/helper/vehicle.helper'
+import {
+    openAddModal,
+    closeAddModal,
+    openDetailsModal,
+    closeDetailsModal,
+    setImageError,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    selectIsModalOpen,
+    selectIsDetailsModalOpen,
+    selectSelectedVehicle,
+    selectImageErrors,
+    selectDeleteConfirmOpen,
+    selectVehicleToDelete,
+} from '@/rtk/slices/driver/vehiclesSlice'
+import type { AppDispatch } from '@/rtk/store'
 
 // ========================= TYPES =========================
 interface ApiVehicle {
@@ -56,12 +74,15 @@ const REGISTRATION_PATTERN = /^[A-Z0-9\s]{2,8}$/i
 
 export default function MyVehicles() {
     const router = useRouter()
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
-    const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
-    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
-    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-    const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null)
+    const dispatch = useDispatch<AppDispatch>()
+    
+    // Redux state
+    const isModalOpen = useSelector(selectIsModalOpen)
+    const isDetailsModalOpen = useSelector(selectIsDetailsModalOpen)
+    const selectedVehicle = useSelector(selectSelectedVehicle)
+    const imageErrors = useSelector(selectImageErrors)
+    const deleteConfirmOpen = useSelector(selectDeleteConfirmOpen)
+    const vehicleToDelete = useSelector(selectVehicleToDelete)
 
     // API Hooks
     const { data: vehiclesResponse, isLoading: isLoadingVehicles, refetch } = useGetVehiclesQuery()
@@ -72,7 +93,7 @@ export default function MyVehicles() {
 
     // Handle image error
     const handleImageError = (vehicleId: string) => {
-        setImageErrors(prev => ({ ...prev, [vehicleId]: true }))
+        dispatch(setImageError(vehicleId))
     }
 
     // ========================= UTILITIES =========================
@@ -167,24 +188,21 @@ export default function MyVehicles() {
     }
 
     const handleCloseModal = () => {
-        setIsModalOpen(false)
+        dispatch(closeAddModal())
         reset()
     }
 
     const handleVehicleClick = (vehicle: Vehicle) => {
-        setSelectedVehicle(vehicle)
-        setIsDetailsModalOpen(true)
+        dispatch(openDetailsModal(vehicle))
     }
 
     const handleCloseDetailsModal = () => {
-        setIsDetailsModalOpen(false)
-        setSelectedVehicle(null)
+        dispatch(closeDetailsModal())
     }
 
     const handleDeleteClick = (vehicleId: string, event: React.MouseEvent) => {
         event.stopPropagation()
-        setVehicleToDelete(vehicleId)
-        setDeleteConfirmOpen(true)
+        dispatch(openDeleteConfirm(vehicleId))
     }
 
     const handleDeleteConfirm = async () => {
@@ -193,8 +211,7 @@ export default function MyVehicles() {
         try {
             await deleteVehicle(vehicleToDelete).unwrap()
             toast.success('Vehicle removed successfully!')
-            setDeleteConfirmOpen(false)
-            setVehicleToDelete(null)
+            dispatch(closeDeleteConfirm())
             refetch() // Refresh the list
         } catch (error: any) {
             toast.error(error?.data?.message || 'Failed to delete vehicle. Please try again.')
@@ -203,8 +220,7 @@ export default function MyVehicles() {
     }
 
     const handleDeleteCancel = () => {
-        setDeleteConfirmOpen(false)
-        setVehicleToDelete(null)
+        dispatch(closeDeleteConfirm())
     }
 
     const handleMotReports = () => {
@@ -224,78 +240,95 @@ export default function MyVehicles() {
             {/* Vehicles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 bg-[#F8FAFB] p-4 rounded-[16px]">
                 {isLoadingVehicles ? (
-                    <div className="col-span-full text-center py-8">
-                        <p className="text-gray-600">Loading vehicles...</p>
-                    </div>
+                    // Shimmer loading skeleton
+                    <>
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <div
+                                key={`skeleton-${index}`}
+                                className="bg-[#F8FAFB] rounded-lg p-6 border border-[#B8EFBF]"
+                            >
+                                {/* Skeleton Image */}
+                                <div className="flex justify-center mb-4">
+                                    <Skeleton className="w-[100px] h-[100px] rounded-lg" />
+                                </div>
+                                {/* Skeleton Registration Number */}
+                                <div className="text-center mb-4">
+                                    <Skeleton className="h-6 w-24 mx-auto rounded" />
+                                </div>
+                            </div>
+                        ))}
+                    </>
                 ) : vehicles.length === 0 ? (
                     <div className="col-span-full text-center py-8">
                         <p className="text-gray-600">No vehicles found. Add your first vehicle!</p>
                     </div>
                 ) : (
-                    vehicles.map((vehicle) => (
-                    <div
-                        key={vehicle.id}
-                        className="bg-[#F8FAFB] relative rounded-lg p-6 border border-[#B8EFBF] cursor-pointer hover:shadow-md transition-all duration-200 group"
-                        onClick={() => handleVehicleClick(vehicle)}
-                    >
-                        {/* Delete Button - Shows on hover */}
-                        <button
-                            onClick={(e) => handleDeleteClick(vehicle.id, e)}
-                            disabled={isDeleting}
-                            className="absolute cursor-pointer top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Remove Vehicle"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
+                    <>
+                        {vehicles.map((vehicle) => (
+                            <div
+                                key={vehicle.id}
+                                className="bg-[#F8FAFB] relative rounded-lg p-6 border border-[#B8EFBF] cursor-pointer hover:shadow-md transition-all duration-200 group"
+                                onClick={() => handleVehicleClick(vehicle)}
+                            >
+                                {/* Delete Button - Shows on hover */}
+                                <button
+                                    onClick={(e) => handleDeleteClick(vehicle.id, e)}
+                                    disabled={isDeleting}
+                                    className="absolute cursor-pointer top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Remove Vehicle"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
 
-                        {/* Vehicle Image or Brand Name */}
-                        <div className="flex justify-center mb-4">
-                            <div className="rounded-lg flex items-center justify-center min-h-[100px]">
-                                {imageErrors[vehicle.id] || !isValidImageUrl(vehicle.image) ? (
-                                    <div className="flex flex-col items-center justify-center">
-                                        <div className="w-14 h-14 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
-                                            <span className="text-white text-xl font-bold">
-                                                {vehicle.make.charAt(0).toUpperCase()}
-                                            </span>
-                                        </div>
-                                        <span className="text-gray-700 font-semibold text-sm text-center px-2">
-                                            {vehicle.make}
-                                        </span>
+                                {/* Vehicle Image or Brand Name */}
+                                <div className="flex justify-center mb-4">
+                                    <div className="rounded-lg flex items-center justify-center min-h-[100px]">
+                                        {imageErrors[vehicle.id] || !isValidImageUrl(vehicle.image) ? (
+                                            <div className="flex flex-col items-center justify-center">
+                                                <div className="w-14 h-14 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
+                                                    <span className="text-white text-xl font-bold">
+                                                        {vehicle.make.charAt(0).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                                <span className="text-gray-700 font-semibold text-sm text-center px-2">
+                                                    {vehicle.make}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <Image
+                                                src={vehicle.image}
+                                                alt={`${vehicle.make} ${vehicle.model}`}
+                                                width={100}
+                                                height={100}
+                                                className="object-contain w-full h-full"
+                                                onError={() => handleImageError(vehicle.id)}
+                                            />
+                                        )}
                                     </div>
-                                ) : (
-                                    <Image
-                                        src={vehicle.image}
-                                        alt={`${vehicle.make} ${vehicle.model}`}
-                                        width={100}
-                                        height={100}
-                                        className="object-contain w-full h-full"
-                                        onError={() => handleImageError(vehicle.id)}
-                                    />
-                                )}
-                            </div>
-                        </div>
+                                </div>
 
-                        {/* Registration Number */}
-                        <div className="text-center mb-4">
-                            <div className="bg-black text-white px-3 py-1 rounded inline-block text-sm font-bold">
-                                {vehicle.registrationNumber}
+                                {/* Registration Number */}
+                                <div className="text-center mb-4">
+                                    <div className="bg-black text-white px-3 py-1 rounded inline-block text-sm font-bold">
+                                        {vehicle.registrationNumber}
+                                    </div>
+                                </div>
                             </div>
+                        ))}
+
+                        {/* Add Vehicle Card - Only show when not loading */}
+                        <div
+                            className={`bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[${BRAND_COLOR}] hover:bg-green-50 transition-colors`}
+                            onClick={() => dispatch(openAddModal())}
+                        >
+                            <div className={`w-12 h-12 bg-[${BRAND_COLOR}] rounded-full flex items-center justify-center mb-4`}>
+                                <Plus className="w-6 h-6 text-white" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900 mb-2">Add Vehicle</h3>
+                            <p className="text-gray-500 text-center text-sm">Click to add a new vehicle to your collection</p>
                         </div>
-                    </div>
-                    ))
+                    </>
                 )}
-
-                {/* Add Vehicle Card */}
-                <div
-                    className={`bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-[${BRAND_COLOR}] hover:bg-green-50 transition-colors`}
-                    onClick={() => setIsModalOpen(true)}
-                >
-                    <div className={`w-12 h-12 bg-[${BRAND_COLOR}] rounded-full flex items-center justify-center mb-4`}>
-                        <Plus className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Add Vehicle</h3>
-                    <p className="text-gray-500 text-center text-sm">Click to add a new vehicle to your collection</p>
-                </div>
             </div>
 
             {/* Add Vehicle Modal */}

@@ -189,25 +189,7 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({ selected, onSelect,
     )
 }
 
-interface Garage {
-    id: number
-    name: string
-    address: string
-    phone: string
-    email: string
-    vstNumber: string
-    postcode: string
-    motFee: string
-    restestFee: string
-    location: string
-    services: string[]
-    openingHours: Array<{
-        day: string
-        open: string
-        close: string
-    }>
-    image: string
-}
+import { GarageData } from '@/rtk/slices/driver/bookMyMotSlice'
 
 interface BookingFormData {
     name: string
@@ -221,7 +203,7 @@ interface BookingFormData {
 interface BookingModalProps {
     isOpen: boolean
     onClose: () => void
-    garage: Garage | null
+    garage: GarageData | null
 }
 
 export default function BookingModal({ isOpen, onClose, garage }: BookingModalProps) {
@@ -296,7 +278,7 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                     </div>
 
                     {/* Form Content */}
-                    <form onSubmit={handleBookingSubmit} className="p-6 overflow-hidden shadow-lg overflow-y-auto max-h-[90vh] lg:max-h-[85vh] md:max-h-[80vh] sm:max-h-[75vh] max-h-[70vh]">
+                    <form onSubmit={handleBookingSubmit} className="p-6 overflow-hidden shadow-lg overflow-y-auto max-h-[90vh] lg:max-h-[85vh] md:max-h-[80vh] sm:max-h-[75vh]">
                         <div className="space-y-4">
                             {/* Name Field */}
                             <div>
@@ -495,7 +477,7 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                                 </div>
                                 <div>
                                     <span className="text-gray-400">Garage: </span>
-                                    <span className="text-white">{garage?.name}</span>
+                                    <span className="text-white">{garage?.garage_name}</span>
                                 </div>
                                 {submittedBooking.additionalServices && (
                                     <div>
