@@ -14,6 +14,7 @@ import { profileApi } from "./api/garage/profileApis";
 import { apiClient } from "./api/garage/api";
 import { pricingApi } from "./api/garage/pricingApis";
 import pricingReducer from "./slices/garage/pricingSlice";
+import { vehiclesApis } from "./api/driver/vehiclesApis";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [pricingApi.reducerPath]: pricingApi.reducer,
+    [vehiclesApis.reducerPath]: vehiclesApis.reducer,
     subscription: subscriptionSlice,
     usersManagement: usersManagementSlice,
     roleManagement: roleManagementSlice,
@@ -44,7 +46,8 @@ export const store = configureStore({
       dashboardApi.middleware,
       garageAvailabilityApi.middleware,
       profileApi.middleware,
-      pricingApi.middleware
+      pricingApi.middleware,
+      vehiclesApis.middleware
     ),
 });
 

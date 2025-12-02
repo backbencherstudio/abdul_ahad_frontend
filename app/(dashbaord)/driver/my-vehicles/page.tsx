@@ -8,12 +8,34 @@ import { Label } from '@/components/ui/label'
 import { Plus, X, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
+import ConfirmationModal from '@/components/reusable/ConfirmationModal'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { useGetVehiclesQuery, useDeleteVehicleMutation, useAddVehicleMutation } from '@/rtk/api/driver/vehiclesApis'
+import { getBrandLogo } from '@/helper/vehicle.helper'
 
 // ========================= TYPES =========================
+interface ApiVehicle {
+    id: string
+    created_at: string
+    updated_at: string
+    user_id: string
+    registration_number: string
+    make: string
+    model: string
+    color: string
+    fuel_type: string
+    year_of_manufacture: number
+    engine_capacity: number
+    co2_emissions: number
+    mot_expiry_date: string
+    dvla_data: string
+    mot_data: string
+    mot_reports: any[]
+}
+
 interface Vehicle {
-    id: number
+    id: string
     registrationNumber: string
     expiryDate: string
     roadTax: string
@@ -24,7 +46,7 @@ interface Vehicle {
 }
 
 interface AddVehicleForm {
-    registrationNumber: string
+    registration_number: string
 }
 
 // ========================= CONSTANTS =========================
@@ -34,41 +56,57 @@ const REGISTRATION_PATTERN = /^[A-Z0-9\s]{2,8}$/i
 
 export default function MyVehicles() {
     const router = useRouter()
-    const [vehicles, setVehicles] = useState<Vehicle[]>([
-        {
-            id: 1,
-            registrationNumber: "LS51DMV",
-            expiryDate: "2025-01-01",
-            roadTax: "2025-01-01",
-            make: "Ford",
-            model: "Focus",
-            year: 2020,
-            image: "https://i.ibb.co/PGwBJx13/pngegg-2-1.png"
-        }
-    ])
-
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+    const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null)
+
+    // API Hooks
+    const { data: vehiclesResponse, isLoading: isLoadingVehicles, refetch } = useGetVehiclesQuery()
+    const [deleteVehicle, { isLoading: isDeleting }] = useDeleteVehicleMutation()
+    const [addVehicle, { isLoading: isAdding }] = useAddVehicleMutation()
 
     const { register, handleSubmit, formState: { errors }, reset } = useForm<AddVehicleForm>()
 
-    // ========================= UTILITIES =========================
-    const searchVehicle = async (registrationNumber: string): Promise<Vehicle | null> => {
-        try {
-            const response = await fetch('/data/vehicle.json')
-            if (!response.ok) throw new Error('Failed to fetch vehicle data')
+    // Handle image error
+    const handleImageError = (vehicleId: string) => {
+        setImageErrors(prev => ({ ...prev, [vehicleId]: true }))
+    }
 
-            const vehicleData: Vehicle[] = await response.json()
-            return vehicleData.find(vehicle =>
-                vehicle.registrationNumber.toLowerCase() === registrationNumber.toLowerCase()
-            ) || null
-        } catch (error) {
-            console.error('Error fetching vehicle data:', error)
-            return null
+    // ========================= UTILITIES =========================
+    // Check if image URL is valid (not a placeholder)
+    const isValidImageUrl = (url: string): boolean => {
+        if (!url || url.includes('example') || url === '') return false
+        return true
+    }
+
+    // Transform API vehicle data to component format
+    const transformVehicle = (apiVehicle: ApiVehicle): Vehicle => {
+        let roadTax = 'N/A'
+        try {
+            const dvlaData = JSON.parse(apiVehicle.dvla_data || '{}')
+            roadTax = dvlaData.taxDueDate || apiVehicle.mot_expiry_date || 'N/A'
+        } catch (e) {
+            roadTax = apiVehicle.mot_expiry_date || 'N/A'
+        }
+
+        const imageUrl = getBrandLogo(apiVehicle.make)
+        
+        return {
+            id: apiVehicle.id,
+            registrationNumber: apiVehicle.registration_number,
+            expiryDate: apiVehicle.mot_expiry_date || '',
+            roadTax: roadTax,
+            make: apiVehicle.make,
+            model: apiVehicle.model,
+            year: apiVehicle.year_of_manufacture,
+            image: imageUrl
         }
     }
+
+    const vehicles: Vehicle[] = vehiclesResponse?.data?.map(transformVehicle) || []
 
     const formatDate = (dateString: string): string => {
         return new Date(dateString).toLocaleDateString('en-GB', {
@@ -80,11 +118,10 @@ export default function MyVehicles() {
 
     // ========================= EVENT HANDLERS =========================
     const onSubmit = async (data: AddVehicleForm) => {
-        setIsLoading(true)
-
         try {
+            // Check if vehicle already exists
             const existingVehicle = vehicles.find(v =>
-                v.registrationNumber.toLowerCase() === data.registrationNumber.toLowerCase()
+                v.registrationNumber.toLowerCase() === data.registration_number.toLowerCase()
             )
 
             if (existingVehicle) {
@@ -92,21 +129,40 @@ export default function MyVehicles() {
                 return
             }
 
-            const foundVehicle = await searchVehicle(data.registrationNumber)
-
-            if (foundVehicle) {
-                const newVehicle = { ...foundVehicle, id: vehicles.length + 1 }
-                setVehicles(prev => [...prev, newVehicle])
-                toast.success('Vehicle added successfully!')
+            // Add vehicle via API
+            const response = await addVehicle({ registration_number: data.registration_number }).unwrap()
+            
+            // Check if response has success message
+            if (response?.success) {
+                toast.success(response?.message || 'Vehicle added successfully!')
                 handleCloseModal()
+                refetch() // Refresh the list
             } else {
-                toast.error('Vehicle not found! Please check the registration number.')
+                // If success is false, show error message
+                const errorMessage = response?.message?.message || response?.message || 'Failed to add vehicle. Please try again.'
+                toast.error(errorMessage)
             }
-        } catch (error) {
-            toast.error('Something went wrong. Please try again.')
+        } catch (error: any) {
+            // Handle API error response
+            let errorMessage = 'Something went wrong. Please try again.'
+            
+            if (error?.data) {
+                // Check for nested message structure
+                if (error.data?.message?.message) {
+                    errorMessage = error.data.message.message
+                } else if (error.data?.message) {
+                    errorMessage = typeof error.data.message === 'string' 
+                        ? error.data.message 
+                        : error.data.message.message || 'Failed to add vehicle'
+                } else if (error.data?.error) {
+                    errorMessage = error.data.error
+                }
+            } else if (error?.message) {
+                errorMessage = error.message
+            }
+            
+            toast.error(errorMessage)
             console.error('Error adding vehicle:', error)
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -125,10 +181,30 @@ export default function MyVehicles() {
         setSelectedVehicle(null)
     }
 
-    const removeVehicle = (vehicleId: number, event: React.MouseEvent) => {
+    const handleDeleteClick = (vehicleId: string, event: React.MouseEvent) => {
         event.stopPropagation()
-        setVehicles(prev => prev.filter(v => v.id !== vehicleId))
-        toast.success('Vehicle removed successfully!')
+        setVehicleToDelete(vehicleId)
+        setDeleteConfirmOpen(true)
+    }
+
+    const handleDeleteConfirm = async () => {
+        if (!vehicleToDelete) return
+
+        try {
+            await deleteVehicle(vehicleToDelete).unwrap()
+            toast.success('Vehicle removed successfully!')
+            setDeleteConfirmOpen(false)
+            setVehicleToDelete(null)
+            refetch() // Refresh the list
+        } catch (error: any) {
+            toast.error(error?.data?.message || 'Failed to delete vehicle. Please try again.')
+            console.error('Error deleting vehicle:', error)
+        }
+    }
+
+    const handleDeleteCancel = () => {
+        setDeleteConfirmOpen(false)
+        setVehicleToDelete(null)
     }
 
     const handleMotReports = () => {
@@ -147,7 +223,16 @@ export default function MyVehicles() {
 
             {/* Vehicles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 bg-[#F8FAFB] p-4 rounded-[16px]">
-                {vehicles.map((vehicle) => (
+                {isLoadingVehicles ? (
+                    <div className="col-span-full text-center py-8">
+                        <p className="text-gray-600">Loading vehicles...</p>
+                    </div>
+                ) : vehicles.length === 0 ? (
+                    <div className="col-span-full text-center py-8">
+                        <p className="text-gray-600">No vehicles found. Add your first vehicle!</p>
+                    </div>
+                ) : (
+                    vehicles.map((vehicle) => (
                     <div
                         key={vehicle.id}
                         className="bg-[#F8FAFB] relative rounded-lg p-6 border border-[#B8EFBF] cursor-pointer hover:shadow-md transition-all duration-200 group"
@@ -155,23 +240,38 @@ export default function MyVehicles() {
                     >
                         {/* Delete Button - Shows on hover */}
                         <button
-                            onClick={(e) => removeVehicle(vehicle.id, e)}
-                            className="absolute cursor-pointer top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                            onClick={(e) => handleDeleteClick(vehicle.id, e)}
+                            disabled={isDeleting}
+                            className="absolute cursor-pointer top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Remove Vehicle"
                         >
                             <Trash2 className="w-4 h-4" />
                         </button>
 
-                        {/* Vehicle Image */}
+                        {/* Vehicle Image or Brand Name */}
                         <div className="flex justify-center mb-4">
-                            <div className=" rounded-lg flex items-center justify-center">
-                                <Image
-                                    src={vehicle.image}
-                                    alt={`${vehicle.make} ${vehicle.model}`}
-                                    width={100}
-                                    height={100}
-                                    className="object-contain w-full h-full"
-                                />
+                            <div className="rounded-lg flex items-center justify-center min-h-[100px]">
+                                {imageErrors[vehicle.id] || !isValidImageUrl(vehicle.image) ? (
+                                    <div className="flex flex-col items-center justify-center">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
+                                            <span className="text-white text-xl font-bold">
+                                                {vehicle.make.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                        <span className="text-gray-700 font-semibold text-sm text-center px-2">
+                                            {vehicle.make}
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <Image
+                                        src={vehicle.image}
+                                        alt={`${vehicle.make} ${vehicle.model}`}
+                                        width={100}
+                                        height={100}
+                                        className="object-contain w-full h-full"
+                                        onError={() => handleImageError(vehicle.id)}
+                                    />
+                                )}
                             </div>
                         </div>
 
@@ -182,7 +282,8 @@ export default function MyVehicles() {
                             </div>
                         </div>
                     </div>
-                ))}
+                    ))
+                )}
 
                 {/* Add Vehicle Card */}
                 <div
@@ -216,15 +317,15 @@ export default function MyVehicles() {
                         <div className="space-y-4">
                             {/* Registration Number Input */}
                             <div className="space-y-2">
-                                <Label htmlFor="registrationNumber" className="text-sm font-medium text-gray-700">
+                                <Label htmlFor="registration_number" className="text-sm font-medium text-gray-700">
                                     Registration Number
                                 </Label>
                                 <Input
-                                    id="registrationNumber"
+                                    id="registration_number"
                                     type="text"
                                     placeholder="XXXXXXX"
                                     className={`w-full py-3 text-base border-gray-300 focus:border-[${BRAND_COLOR}] focus:ring-[${BRAND_COLOR}] rounded-md`}
-                                    {...register('registrationNumber', {
+                                    {...register('registration_number', {
                                         required: 'Registration number is required',
                                         pattern: {
                                             value: REGISTRATION_PATTERN,
@@ -232,18 +333,18 @@ export default function MyVehicles() {
                                         }
                                     })}
                                 />
-                                {errors.registrationNumber && (
-                                    <p className="text-red-500 text-sm">{errors.registrationNumber.message}</p>
+                                {errors.registration_number && (
+                                    <p className="text-red-500 text-sm">{errors.registration_number.message}</p>
                                 )}
                             </div>
 
                             {/* Add Vehicle Button */}
                             <Button
                                 type="submit"
-                                disabled={isLoading}
+                                disabled={isAdding}
                                 className={`w-full bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white font-medium py-3 text-base rounded-md transition-all duration-200 cursor-pointer disabled:bg-[${BRAND_COLOR}]/70 disabled:cursor-not-allowed`}
                             >
-                                {isLoading ? 'Adding Vehicle...' : 'Add Vehicle'}
+                                {isAdding ? 'Adding Vehicle...' : 'Add Vehicle'}
                             </Button>
                         </div>
                     </form>
@@ -302,6 +403,19 @@ export default function MyVehicles() {
                     </div>
                 )}
             </CustomReusableModal>
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmationModal
+                open={deleteConfirmOpen}
+                onClose={handleDeleteCancel}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Vehicle"
+                description={`Are you sure you want to delete this vehicle? This action cannot be undone.`}
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+                isLoading={isDeleting}
+            />
         </div>
     )
 }
