@@ -38,6 +38,68 @@ export interface SearchResponse {
     search_postcode: string;
 }
 
+// Garage Services Response interfaces
+export interface GarageServiceGarage {
+    id: string;
+    garage_name: string;
+    address: string | null;
+    zip_code: string;
+    vts_number: string;
+    primary_contact: string;
+    phone_number: string;
+}
+
+export interface ScheduleRestriction {
+    type: string;
+    end_time: string;
+    start_time: string;
+    day_of_week: number[];
+    description: string;
+}
+
+export interface DailyHoursInterval {
+    end_time: string;
+    start_time: string;
+}
+
+export interface DailyHours {
+    is_closed?: boolean;
+    intervals?: DailyHoursInterval[];
+    slot_duration?: number;
+}
+
+export interface Schedule {
+    id: string;
+    start_time: string;
+    end_time: string;
+    slot_duration: number;
+    restrictions: ScheduleRestriction[];
+    daily_hours: {
+        [key: string]: DailyHours;
+    };
+    is_active: boolean;
+}
+
+export interface Service {
+    id: string;
+    name: string;
+    type: string;
+    price: number;
+}
+
+export interface Additional {
+    id: string;
+    name: string;
+    type: string;
+}
+
+export interface GarageServicesResponse {
+    garage: GarageServiceGarage;
+    services: Service[];
+    additionals: Additional[];
+    schedule: Schedule;
+}
+
 // search vehicles and garages pass in body registrationNumber and postcode
 export const bookMyMotApi = createApi({
     reducerPath: "bookMyMotApi",
@@ -55,7 +117,16 @@ export const bookMyMotApi = createApi({
             }),
             providesTags: ["BookMyMot"],
         }),
+
+        // garage details 
+        getGarageServices: builder.query<GarageServicesResponse, string>({
+            query: (id) => ({
+                url: `/api/vehicles/garages/${id}/services`,
+                method: "GET",
+            }),
+            providesTags: ["BookMyMot"],
+        }),
     }),
 });
 
-export const { useSearchVehiclesAndGaragesQuery } = bookMyMotApi;
+export const { useSearchVehiclesAndGaragesQuery, useGetGarageServicesQuery } = bookMyMotApi;
