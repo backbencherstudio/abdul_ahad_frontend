@@ -33,6 +33,7 @@ function DetailsContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const garageId = searchParams.get('id')
+    const vehicleId = searchParams.get('vehicle_id')
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
 
     // Fetch garage services using RTK Query
@@ -42,6 +43,7 @@ function DetailsContent() {
             skip: !garageId, // Skip query if no garageId
         }
     )
+
 
     useEffect(() => {
         if (!garageId) {
@@ -54,18 +56,18 @@ function DetailsContent() {
     useEffect(() => {
         if (error) {
             let errorMessage = 'Failed to load garage details'
-            
+
             if ('data' in error && error.data) {
                 const errorData = error.data as any
                 if (errorData?.message?.message) {
                     errorMessage = errorData.message.message
                 } else if (errorData?.message) {
-                    errorMessage = typeof errorData.message === 'string' 
-                        ? errorData.message 
+                    errorMessage = typeof errorData.message === 'string'
+                        ? errorData.message
                         : errorData.message.message || errorMessage
                 }
             }
-            
+
             toast.error(errorMessage)
             router.push('/driver/book-my-mot')
         }
@@ -161,7 +163,7 @@ function DetailsContent() {
                                         <div className="flex items-center text-gray-700 text-sm sm:text-base py-2 sm:py-3">
                                             <div className="w-5 h-5 mr-3 flex items-center justify-center flex-shrink-0">
                                                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M22.7 19.5l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l1.8-1.8c.5-.4.5-1.1.1-1.4z"/>
+                                                    <path d="M22.7 19.5l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l1.8-1.8c.5-.4.5-1.1.1-1.4z" />
                                                 </svg>
                                             </div>
                                             <span>{additional.name}</span>
@@ -193,7 +195,7 @@ function DetailsContent() {
                                             {[0, 1, 2, 3, 4, 5, 6].map((dayNum) => {
                                                 const dayName = getDayName(dayNum)
                                                 const dayHours = schedule.daily_hours[dayNum.toString()]
-                                                
+
                                                 if (dayHours?.is_closed) {
                                                     return (
                                                         <tr key={dayNum} className="border-t border-gray-200">
@@ -202,7 +204,7 @@ function DetailsContent() {
                                                         </tr>
                                                     )
                                                 }
-                                                
+
                                                 if (dayHours?.intervals && dayHours.intervals.length > 0) {
                                                     return dayHours.intervals.map((interval, idx) => (
                                                         <tr key={`${dayNum}-${idx}`} className="border-t border-gray-200">
@@ -225,7 +227,7 @@ function DetailsContent() {
                                                         </tr>
                                                     ))
                                                 }
-                                                
+
                                                 return (
                                                     <tr key={dayNum} className="border-t border-gray-200">
                                                         <td className="py-2 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap">{dayName}</td>
@@ -237,7 +239,7 @@ function DetailsContent() {
                                     </table>
                                 </div>
                             </div>
-                            
+
                             {/* Restrictions */}
                             {schedule.restrictions && schedule.restrictions.length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-gray-200">
@@ -247,7 +249,7 @@ function DetailsContent() {
                                             <div key={index} className="text-xs sm:text-sm text-gray-600 bg-white p-2 rounded">
                                                 <div className="font-medium">{restriction.type}: {restriction.description}</div>
                                                 <div className="text-gray-500">
-                                                    {getDayName(restriction.day_of_week[0])} - {getDayName(restriction.day_of_week[restriction.day_of_week.length - 1])}: 
+                                                    {getDayName(restriction.day_of_week[0])} - {getDayName(restriction.day_of_week[restriction.day_of_week.length - 1])}:
                                                     {formatTime(restriction.start_time)} - {formatTime(restriction.end_time)}
                                                 </div>
                                             </div>

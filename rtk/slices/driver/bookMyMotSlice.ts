@@ -43,6 +43,25 @@ interface BookMyMotState {
         registrationNumber: string;
         postcode: string;
     } | null;
+    selectedSlot: {
+        slot_id: string;
+        garage_id: string;
+        vehicle_id: string;
+        date: string;
+        start_time: string;
+        end_time: string;
+    } | null;
+    myBookings: {
+        bookings: any[];
+        pagination: {
+            total_count: number;
+            total_pages: number;
+            current_page: number;
+            limit: number;
+            has_next: boolean;
+            has_prev: boolean;
+        } | null;
+    } | null;
 }
 
 const initialState: BookMyMotState = {
@@ -53,6 +72,8 @@ const initialState: BookMyMotState = {
     isLoading: false,
     error: null,
     searchParams: null,
+    selectedSlot: null,
+    myBookings: null,
 };
 
 const bookMyMotSlice = createSlice({
@@ -91,6 +112,37 @@ const bookMyMotSlice = createSlice({
             state.error = null;
             state.searchParams = null;
         },
+        // Set selected slot
+        setSelectedSlot(
+            state,
+            action: PayloadAction<{
+                slot_id: string;
+                garage_id: string;
+                vehicle_id: string;
+                date: string;
+                start_time: string;
+                end_time: string;
+            } | null>
+        ) {
+            state.selectedSlot = action.payload;
+        },
+        // Set my bookings
+        setMyBookings(
+            state,
+            action: PayloadAction<{
+                bookings: any[];
+                pagination: {
+                    total_count: number;
+                    total_pages: number;
+                    current_page: number;
+                    limit: number;
+                    has_next: boolean;
+                    has_prev: boolean;
+                } | null;
+            } | null>
+        ) {
+            state.myBookings = action.payload;
+        },
         // Reset all state
         resetBookMyMotState() {
             return initialState;
@@ -104,6 +156,8 @@ export const {
     setError,
     setSearchParams,
     clearSearchResults,
+    setSelectedSlot,
+    setMyBookings,
     resetBookMyMotState,
 } = bookMyMotSlice.actions;
 
@@ -115,6 +169,8 @@ export const selectSearchPostcode = (state: RootState) => state.bookMyMot.search
 export const selectIsLoading = (state: RootState) => state.bookMyMot.isLoading;
 export const selectError = (state: RootState) => state.bookMyMot.error;
 export const selectSearchParams = (state: RootState) => state.bookMyMot.searchParams;
+export const selectSelectedSlot = (state: RootState) => state.bookMyMot.selectedSlot;
+export const selectMyBookings = (state: RootState) => state.bookMyMot.myBookings;
 export const selectBookMyMotState = (state: RootState) => state.bookMyMot;
 
 export default bookMyMotSlice.reducer;

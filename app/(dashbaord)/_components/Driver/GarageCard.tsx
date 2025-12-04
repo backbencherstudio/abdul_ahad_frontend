@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { useSelector } from 'react-redux'
 import BookingModal from './BookingModal'
-import { GarageData } from '@/rtk/slices/driver/bookMyMotSlice'
+import { GarageData, selectVehicle } from '@/rtk/slices/driver/bookMyMotSlice'
 
 interface GarageCardProps {
     foundGarages: GarageData[]
@@ -11,14 +12,30 @@ interface GarageCardProps {
 
 export default function GarageCard({ foundGarages }: GarageCardProps) {
     const router = useRouter()
+    const vehicle = useSelector(selectVehicle)
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
     const [selectedGarage, setSelectedGarage] = useState<GarageData | null>(null)
 
     const handleMoreDetails = (garageId: string) => {
-        router.push(`/driver/book-my-mot/details?id=${garageId}`)
+        // Pass both garage_id and vehicle_id to details page
+        const params = new URLSearchParams()
+        params.set('id', garageId)
+        if (vehicle?.vehicle_id) {
+            params.set('vehicle_id', vehicle.vehicle_id)
+        }
+        router.push(`/driver/book-my-mot/details?${params.toString()}`)
     }
 
     const handleBookNow = (garage: GarageData) => {
+        // Update URL with garage_id and vehicle_id params (without navigation)
+        const params = new URLSearchParams(window.location.search)
+        params.set('garage_id', garage.id)
+        if (vehicle?.vehicle_id) {
+            params.set('vehicle_id', vehicle.vehicle_id)
+        }
+        // Update URL without page reload
+        window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`)
+        
         setSelectedGarage(garage)
         setIsBookingModalOpen(true)
     }

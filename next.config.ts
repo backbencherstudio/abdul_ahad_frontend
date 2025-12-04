@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "adapter-sperm-personalized-graduate.trycloudflare.com",
+        hostname: "supreme-needed-licenses-tender.trycloudflare.com",
         pathname: "/**",
       },
     ],
