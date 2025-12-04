@@ -33,7 +33,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "supreme-needed-licenses-tender.trycloudflare.com",
+        hostname: "baseball-digit-system-livestock.trycloudflare.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "briefs-mem-aspect-chief.trycloudflare.com",
         pathname: "/**",
       },
     ],

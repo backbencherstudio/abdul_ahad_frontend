@@ -1,5 +1,6 @@
 "use client"
-import { useState, useEffect } from "react"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -16,7 +17,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { apiClient } from "../../../../../../rtk/api/garage/api"
+import { useAppDispatch } from "@/rtk/hooks"
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query"
+import type { SerializedError } from "@reduxjs/toolkit"
+import {
+  type ApiResponse,
+  garageAvailabilityApi,
+  useBulkSlotOperationMutation,
+  useDeleteSlotMutation,
+  useGetSlotDetailsQuery,
+  useRemoveAllManualSlotsMutation,
+} from "../../../../../../rtk/api/garage/api"
 import ModifySlotModal from "./modify-slot-modal"
 import BulkModifyModal from "./bulk-modify-modal"
 
@@ -64,7 +75,6 @@ interface ManageSlotsModalProps {
   onSuccess: () => void
 }
 
-// Shape expected by ModifySlotModal
 interface SelectedSlotForModify {
   id: string
   start_time: string
@@ -73,110 +83,192 @@ interface SelectedSlotForModify {
   source: "DATABASE" | "TEMPLATE"
 }
 
+const recalcSummary = (slots: Slot[]): SlotData["summary"] => {
+  const byStatus = {
+    available: 0,
+    booked: 0,
+    blocked: 0,
+    breaks: 0,
+    modified: 0,
+    holiday: 0,
+    dual_status: 0,
+  }
+  const bySource = {
+    template: 0,
+    database: 0,
+  }
+  let modifications = 0
+
+  slots.forEach((slot) => {
+    const statuses = slot.status || []
+
+    if (statuses.includes("BOOKED")) {
+      byStatus.booked += 1
+    } else if (statuses.includes("BLOCKED")) {
+      byStatus.blocked += 1
+    } else if (statuses.includes("BREAK")) {
+      byStatus.breaks += 1
+    } else if (statuses.includes("HOLIDAY")) {
+      byStatus.holiday += 1
+    } else if (statuses.includes("MODIFIED")) {
+      byStatus.modified += 1
+    } else {
+      byStatus.available += 1
+    }
+
+    if (statuses.length > 1) {
+      byStatus.dual_status += 1
+    }
+
+    if (slot.source === "TEMPLATE") {
+      bySource.template += 1
+    } else {
+      bySource.database += 1
+    }
+
+    if (slot.modification_reason || slot.modification_type) {
+      modifications += 1
+    }
+  })
+
+  return {
+    total_slots: slots.length,
+    by_status: byStatus,
+    by_source: bySource,
+    modifications,
+  }
+}
+
+const slotsMatch = (slot: Slot, identifier: { id?: string; time: string }) => {
+  if (slot.id && identifier.id) {
+    return slot.id === identifier.id
+  }
+  return slot.time === identifier.time
+}
+
+const getQueryErrorMessage = (error: FetchBaseQueryError | SerializedError | undefined): string => {
+  if (!error) return ""
+
+  if ("status" in error) {
+    const data = (error as FetchBaseQueryError).data as { message?: unknown }
+    return normalizeApiMessage(data?.message, "Failed to load slots. Please try again.")
+  }
+
+  return (error as SerializedError).message || "Something went wrong. Please try again."
+}
+
+const getMutationErrorMessage = (error: unknown): string => {
+  if (!error) return "Operation failed. Please try again."
+  if (typeof error === "string") return error
+  if (error instanceof Error) return error.message
+  if (typeof error === "object" && error !== null) {
+    const data = (error as { data?: { message?: unknown }; message?: unknown }).data
+    if (data?.message) return normalizeApiMessage(data.message, "Operation failed. Please try again.")
+
+    const directMessage = (error as { message?: unknown }).message
+    if (directMessage) return normalizeApiMessage(directMessage, "Operation failed. Please try again.")
+  }
+  return "Operation failed. Please try again."
+}
+
+const normalizeApiMessage = (raw: unknown, fallback: string): string => {
+  if (!raw) return fallback
+  if (typeof raw === "string") return raw
+  if (typeof raw === "object" && raw !== null && "message" in raw && typeof (raw as { message?: string }).message === "string") {
+    return (raw as { message?: string }).message as string
+  }
+  return fallback
+}
+
 /**
- * Manage Slots Modal
- *
- * Main slot management interface for a specific date. Provides comprehensive
- * slot operations including modify, block, unblock, delete individual slots,
- * and bulk operations for all manual slots.
- *
- * Features:
- * - View all slots for selected date via API
- * - Individual slot operations (modify, block, unblock, delete)
- * - Bulk operations (remove all manual slots)
- * - Real-time slot status updates
- * - Booking protection (cannot modify booked slots)
- * - Template vs manual slot distinction
+ * Manage Slots Modal with Redux-backed cache updates to prevent full reloads.
  */
 export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: ManageSlotsModalProps) {
-  // Slot data state
-  const [slotData, setSlotData] = useState<SlotData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const dispatch = useAppDispatch()
   const { toast } = useToast()
+  const [actionError, setActionError] = useState("")
 
-  // Modal state
   const [showModifyModal, setShowModifyModal] = useState(false)
   const [showBulkModal, setShowBulkModal] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlotForModify | null>(null)
   const [showConfirmRemove, setShowConfirmRemove] = useState(false)
-  const [manualSlotsCount, setManualSlotsCount] = useState(0)
-  const [bookedSlotsCount, setBookedSlotsCount] = useState(0)
   const [showConfirmClear, setShowConfirmClear] = useState(false)
   const [slotToClear, setSlotToClear] = useState<Slot | null>(null)
 
-  /**
-   * Load slots for the selected date
-   * Calls the actual API endpoint to get slot data
-   */
-  const loadSlots = async () => {
-    try {
-      setLoading(true)
-      setError("")
+  const {
+    data: slotResponse,
+    isLoading: isSlotsLoading,
+    isFetching: isSlotsFetching,
+    error: slotQueryError,
+    refetch: refetchSlots,
+  } = useGetSlotDetailsQuery(date, { skip: !isOpen })
 
-      const response = await apiClient.getSlotDetails(date)
+  const slotData = slotResponse?.success ? (slotResponse.data as SlotData) : null
+  const responseError =
+    slotResponse && !slotResponse.success
+      ? normalizeApiMessage(slotResponse.message, "Failed to load slots")
+      : ""
+  const fetchErrorMessage = getQueryErrorMessage(slotQueryError as FetchBaseQueryError | SerializedError | undefined)
+  const displayError = actionError || responseError || fetchErrorMessage
 
-      if (response.success && response.data) {
-        setSlotData(response.data)
-      } else {
-        setError(response.message || "Failed to load slots")
-      }
-    } catch (error) {
-      console.error("Error loading slots:", error)
-      setError("Failed to load slots. Please try again.")
-    } finally {
-      setLoading(false)
-    }
+  const [bulkSlotOperation, { isLoading: isBulkLoading }] = useBulkSlotOperationMutation()
+  const [deleteSlotMutation, { isLoading: isDeleteLoading }] = useDeleteSlotMutation()
+  const [removeManualSlotsMutation, { isLoading: isRemoveManualLoading }] = useRemoveAllManualSlotsMutation()
+
+  const actionLoading = isBulkLoading || isDeleteLoading || isRemoveManualLoading
+
+  const updateSlotsCache = (updateFn: (draft: ApiResponse<SlotData>) => void) => {
+    dispatch(
+      garageAvailabilityApi.util.updateQueryData("getSlotDetails", date, (draft: ApiResponse<SlotData>) => {
+        if (!draft.data) return
+        updateFn(draft)
+        draft.data.summary = recalcSummary(draft.data.slots)
+      }),
+    )
   }
 
-  /**
-   * Handle individual slot deletion
-   */
-  const handleDeleteSlot = async (slotId: string) => {
-    if (!slotId) {
-      setError("Cannot delete template slots - no ID available")
+  const handleDeleteSlot = async (slot: Slot) => {
+    if (!slot.id) {
+      setActionError("Cannot delete template slots - no ID available")
       return
     }
 
-    const slot = slotData?.slots.find((s) => s.id === slotId)
-    if (!slot) return
-
     if (slot.status.includes("BOOKED")) {
-      setError("Cannot delete booked slots")
+      setActionError("Cannot delete booked slots")
       return
     }
 
     try {
-      setLoading(true)
-      setError("")
-
-      const response = await apiClient.deleteSlot(slotId)
+      setActionError("")
+      const response = await deleteSlotMutation(slot.id).unwrap()
 
       if (response.success) {
-        await loadSlots() // Refresh slots (keep modal open)
+        updateSlotsCache((draft) => {
+          if (!draft.data) return
+          draft.data.slots = draft.data.slots.filter((s) => !slotsMatch(s, slot))
+        })
+
         const [s, e] = slot.time.split("-")
         toast({ title: "Cleared slot", description: `${formatTime(s)} - ${formatTime(e)} cleared successfully.` })
+        onSuccess()
       } else {
-        setError(response.message || "Failed to delete slot")
-        toast({ title: "Failed to clear slot", description: response.message || "Please try again.", variant: "destructive" })
+        const message = normalizeApiMessage(response.message, "Failed to delete slot")
+        setActionError(message)
+        toast({ title: "Failed to clear slot", description: message, variant: "destructive" })
       }
     } catch (error) {
-      console.error(" Error deleting slot:", error)
-      setError("Failed to delete slot. Please try again.")
-      toast({ title: "Error", description: "Failed to clear slot. Please try again.", variant: "destructive" })
+      const message = getMutationErrorMessage(error)
+      setActionError(message)
+      toast({ title: "Error", description: message, variant: "destructive" })
     } finally {
-      setLoading(false)
       setShowConfirmClear(false)
       setSlotToClear(null)
     }
   }
 
-  /**
-   * Handle slot blocking/unblocking
-   */
   const handleToggleBlock = async (slot: Slot) => {
     if (slot.status.includes("BOOKED")) {
-      setError("Cannot modify booked slots")
+      setActionError("Cannot modify booked slots")
       return
     }
 
@@ -185,75 +277,107 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     const action = isBlocked ? "UNBLOCK" : "BLOCK"
 
     try {
-      setLoading(true)
-      setError("")
+      setActionError("")
 
-      const response = await apiClient.bulkSlotOperation({
+      const response = await bulkSlotOperation({
         start_date: date,
         end_date: date,
         start_time: startTime,
         end_time: endTime,
-        action: action,
+        action,
         reason: `${action.toLowerCase()} slot via manage slots modal`,
-      })
+      }).unwrap()
 
       if (response.success) {
-        await loadSlots() // Refresh slots (keep modal open)
+        updateSlotsCache((draft) => {
+          const target = draft.data?.slots.find((s) => slotsMatch(s, slot))
+          if (!target) return
+
+          if (action === "BLOCK") {
+            target.status = ["BLOCKED"]
+            target.description = slot.description || "Manually blocked slot"
+          } else {
+            const cleanedStatus = target.status.filter((status) => status !== "BLOCKED")
+            target.status = cleanedStatus.length > 0 ? cleanedStatus : ["AVAILABLE"]
+          }
+        })
+
+        const successMessage = normalizeApiMessage(
+          (response as { message?: unknown }).message,
+          `Successfully ${action === "BLOCK" ? "blocked" : "unblocked"} slot`,
+        )
+        toast({
+          title: action === "BLOCK" ? "Slot blocked" : "Slot unblocked",
+          description: successMessage,
+        })
       } else {
-        setError(response.message || `Failed to ${action.toLowerCase()} slot`)
+        const message = normalizeApiMessage(
+          response.message,
+          `Failed to ${action.toLowerCase()} slot`,
+        )
+        setActionError(message)
+        toast({
+          title: `Cannot ${action.toLowerCase()} slot`,
+          description: message,
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error(` Error ${action.toLowerCase()}ing slot:`, error)
-      setError(`Failed to ${action.toLowerCase()} slot. Please try again.`)
-    } finally {
-      setLoading(false)
+      const message = getMutationErrorMessage(error)
+      setActionError(message)
+      toast({
+        title: `Failed to ${action.toLowerCase()} slot`,
+        description: message,
+        variant: "destructive",
+      })
     }
   }
 
-  /**
-   * Handle remove all manual slots
-   */
   const handleRemoveAllManual = async () => {
     if (!slotData) return
 
     const manualSlots = slotData.slots.filter((slot) => slot.source === "DATABASE" && !slot.status.includes("BOOKED"))
 
     if (manualSlots.length === 0) {
-      setError("No manual slots to remove")
+      setActionError("No manual slots to remove")
       toast({ title: "Nothing to remove", description: "No removable manual slots for this date." })
       setShowConfirmRemove(false)
       return
     }
 
     try {
-      setLoading(true)
-      setError("")
+      setActionError("")
 
-      const response = await apiClient.removeAllManualSlots(date)
+      const response = await removeManualSlotsMutation(date).unwrap()
 
       if (response.success) {
-        await loadSlots() // Refresh slots (keep modal open)
+        updateSlotsCache((draft) => {
+          if (!draft.data) return
+          draft.data.slots = draft.data.slots.filter(
+            (slot) => !(slot.source === "DATABASE" && !slot.status.includes("BOOKED")),
+          )
+        })
         toast({
           title: "Removed manual slots",
           description: `${manualSlots.length} manual slots removed for ${new Date(date).toLocaleDateString()}.`,
         })
+        onSuccess()
       } else {
-        setError(response.message || "Failed to remove manual slots")
-        toast({ title: "Failed to remove manual slots", description: response.message || "Please try again.", variant: "destructive" })
+        const message = normalizeApiMessage(response.message, "Failed to remove manual slots")
+        setActionError(message)
+        toast({ title: "Failed to remove manual slots", description: message, variant: "destructive" })
       }
     } catch (error) {
       console.error(" Error removing manual slots:", error)
-      setError("Failed to remove manual slots. Please try again.")
-      toast({ title: "Error", description: "Failed to remove manual slots. Please try again.", variant: "destructive" })
+      const message = getMutationErrorMessage(error)
+      setActionError(message)
+      toast({ title: "Error", description: message, variant: "destructive" })
     } finally {
-      setLoading(false)
       setShowConfirmRemove(false)
     }
   }
 
-  /**
-   * Format time to display format
-   */
   const formatTime = (time: string): string => {
     const [hours, minutes] = time.split(":").map(Number)
     const period = hours >= 12 ? "PM" : "AM"
@@ -261,9 +385,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     return `${displayHours}:${minutes.toString().padStart(2, "0")}${period}`
   }
 
-  /**
-   * Get status badge variant
-   */
   const getStatusBadge = (status: string[]) => {
     const primaryStatus = status[0]
     switch (primaryStatus) {
@@ -298,9 +419,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     }
   }
 
-  /**
-   * Get source badge
-   */
   const getSourceBadge = (source: string) => {
     return source === "TEMPLATE" ? (
       <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
@@ -313,19 +431,17 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     )
   }
 
-  // Load slots when modal opens
-  useEffect(() => {
-    if (isOpen && date) {
-      loadSlots()
-    }
-  }, [isOpen, date])
-
   if (!isOpen) return null
+
+  const manualSlots =
+    slotData?.slots.filter((slot) => slot.source === "DATABASE" && !slot.status.includes("BOOKED")) || []
+  const manualSlotsCount = manualSlots.length
+  const bookedSlotsCount = slotData?.slots.filter((slot) => slot.status.includes("BOOKED")).length || 0
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 ">
+        <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-4">
           <Card className="border-0 shadow-none">
             <CardHeader className="border-b bg-gray-50">
               <div className="flex items-center justify-between">
@@ -339,48 +455,46 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                   {slotData && (
                     <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                       <span>
-                        Working Hours: {formatTime(slotData.working_hours.start)} -{" "}
-                        {formatTime(slotData.working_hours.end)}
+                        Working Hours: {formatTime(slotData.working_hours.start)} - {formatTime(slotData.working_hours.end)}
                       </span>
                       <span>Total Slots: {slotData.summary.total_slots}</span>
                       <span>Modifications: {slotData.summary.modifications}</span>
                     </div>
                   )}
+                  {isSlotsFetching && !isSlotsLoading && (
+                    <p className="text-xs text-blue-600 mt-2">Refreshing slots…</p>
+                  )}
                 </div>
-                <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>
+                <Button variant="ghost" size="sm" onClick={onClose} disabled={actionLoading}>
                   <X className="w-4 h-4" />
                 </Button>
               </div>
             </CardHeader>
 
             <CardContent className="p-6">
-              {/* Error Display */}
-              {error && (
+              {displayError && (
                 <Alert variant="destructive" className="mb-6">
                   <AlertTriangle className="w-4 h-4" />
-                  <AlertDescription>{error}</AlertDescription>
+                  <AlertDescription>{displayError}</AlertDescription>
                 </Alert>
               )}
 
-              {/* Loading State */}
-              {loading && (
+              {isSlotsLoading && (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
                   <p className="text-gray-600">Loading slots...</p>
                 </div>
               )}
 
-              {/* Slots List */}
-              {!loading && slotData && (
+              {!isSlotsLoading && slotData && (
                 <div className="space-y-6">
-                  {/* Bulk Actions */}
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                       <h3 className="font-medium text-gray-900">Bulk Operations</h3>
                       <p className="text-sm text-gray-600">Perform operations on multiple slots</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setShowBulkModal(true)} disabled={loading}>
+                      <Button variant="outline" size="sm" onClick={() => setShowBulkModal(true)} disabled={actionLoading}>
                         Bulk Modify
                       </Button>
                       <Button
@@ -388,22 +502,15 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                         size="sm"
                         onClick={() => {
                           if (!slotData) return
-                          const manualSlots = slotData.slots.filter(
-                            (slot) => slot.source === "DATABASE" && !slot.status.includes("BOOKED"),
-                          )
-                          const bookedSlots = slotData.slots.filter((slot) => slot.status.includes("BOOKED"))
-                          setManualSlotsCount(manualSlots.length)
-                          setBookedSlotsCount(bookedSlots.length)
                           setShowConfirmRemove(true)
                         }}
-                        disabled={loading}
+                        disabled={actionLoading}
                       >
                         Remove All Manual
                       </Button>
                     </div>
                   </div>
 
-                  {/* Individual Slots */}
                   <div className="space-y-3">
                     <h3 className="font-medium text-gray-900">Individual Slots</h3>
 
@@ -437,12 +544,11 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                               </div>
 
                               <div className="flex items-center gap-2">
-                                {/* Modify Button */}
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
-                                    const [startTime, endTime] = slot.time.split("-")
+                                    const [start, end] = slot.time.split("-")
                                     const status: "AVAILABLE" | "BOOKED" | "BLOCKED" = slot.status.includes("BOOKED")
                                       ? "BOOKED"
                                       : slot.status.includes("BLOCKED")
@@ -450,14 +556,14 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                         : "AVAILABLE"
                                     setSelectedSlot({
                                       id: slot.id as string,
-                                      start_time: startTime,
-                                      end_time: endTime,
+                                      start_time: start,
+                                      end_time: end,
                                       status,
                                       source: slot.source,
                                     })
                                     setShowModifyModal(true)
                                   }}
-                                  disabled={slot.status.includes("BOOKED") || !slot.id || loading}
+                                  disabled={slot.status.includes("BOOKED") || !slot.id || actionLoading}
                                   title={
                                     slot.status.includes("BOOKED")
                                       ? "Cannot modify booked slots"
@@ -469,12 +575,15 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                   <Edit className="w-4 h-4" />
                                 </Button>
 
-                                {/* Block/Unblock Button */}
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleToggleBlock(slot)}
-                                  disabled={slot.status.includes("BOOKED") || slot.status.includes("BREAK") || loading}
+                                  disabled={
+                                    slot.status.includes("BOOKED") ||
+                                    slot.status.includes("BREAK") ||
+                                    actionLoading
+                                  }
                                   title={
                                     slot.status.includes("BOOKED")
                                       ? "Cannot modify booked slots"
@@ -492,7 +601,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                   )}
                                 </Button>
 
-                                {/* Clear Button */}
                                 <Button
                                   variant="destructive"
                                   size="sm"
@@ -502,7 +610,10 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                     setShowConfirmClear(true)
                                   }}
                                   disabled={
-                                    slot.status.includes("BOOKED") || slot.source === "TEMPLATE" || !slot.id || loading
+                                    slot.status.includes("BOOKED") ||
+                                    slot.source === "TEMPLATE" ||
+                                    !slot.id ||
+                                    actionLoading
                                   }
                                   title={
                                     slot.status.includes("BOOKED")
@@ -524,9 +635,8 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                 </div>
               )}
 
-              {/* Close Button */}
               <div className="flex justify-end pt-6 border-t mt-6">
-                <Button variant="outline" onClick={onClose} disabled={loading}>
+                <Button variant="outline" onClick={onClose} disabled={actionLoading}>
                   Close
                 </Button>
               </div>
@@ -535,7 +645,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
         </div>
       </div>
 
-      {/* Modify Slot Modal */}
       {showModifyModal && selectedSlot && (
         <ModifySlotModal
           isOpen={showModifyModal}
@@ -548,13 +657,12 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
           onSuccess={() => {
             setShowModifyModal(false)
             setSelectedSlot(null)
-            loadSlots()
+            refetchSlots()
             onSuccess()
           }}
         />
       )}
 
-      {/* Bulk Modify Modal */}
       {showBulkModal && (
         <BulkModifyModal
           isOpen={showBulkModal}
@@ -562,13 +670,12 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
           date={date}
           onSuccess={() => {
             setShowBulkModal(false)
-            loadSlots()
+            refetchSlots()
             onSuccess()
           }}
         />
       )}
 
-      {/* Confirm Remove All Manual */}
       <AlertDialog open={showConfirmRemove} onOpenChange={setShowConfirmRemove}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -582,15 +689,14 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveAllManual} disabled={loading}>
-              {loading ? "Removing..." : "Yes, remove all"}
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveAllManual} disabled={actionLoading}>
+              {actionLoading ? "Removing..." : "Yes, remove all"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm Clear Single Slot */}
       <AlertDialog open={showConfirmClear} onOpenChange={setShowConfirmClear}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -605,12 +711,12 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => slotToClear?.id && handleDeleteSlot(slotToClear.id)}
-              disabled={loading}
+              onClick={() => slotToClear && handleDeleteSlot(slotToClear)}
+              disabled={actionLoading}
             >
-              {loading ? "Clearing..." : "Yes, clear"}
+              {actionLoading ? "Clearing..." : "Yes, clear"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

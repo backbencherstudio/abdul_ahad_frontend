@@ -4,13 +4,39 @@ import { baseQuery } from "../baseApi";
 
 /**
  * API Response interface for consistent response handling
+ * Note: backend sometimes returns `message` as an object, so we allow that here
+ * and normalize it before exposing to the UI via ApiClient.
  */
 export interface ApiResponse<T = any> {
   success: boolean;
-  message?: string;
+  message?: string | {
+    message?: string;
+    error?: string;
+    statusCode?: number;
+    [key: string]: unknown;
+  };
   data?: T;
   error?: string;
 }
+
+/**
+ * Normalize API `message` field to a plain string
+ */
+const normalizeApiMessage = (
+  raw: ApiResponse["message"],
+  fallback: string
+): string => {
+  if (raw == null) return fallback;
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object" && "message" in raw && typeof raw.message === "string") {
+    return raw.message;
+  }
+  try {
+    return JSON.stringify(raw);
+  } catch {
+    return fallback;
+  }
+};
 
 /**
  * Schedule configuration interface for default routine setup
@@ -246,7 +272,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to get schedule");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Operation failed");
+    }
+    return data;
   }
 
   async createSchedule(config: ScheduleConfig): Promise<ApiResponse> {
@@ -260,7 +290,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to create schedule");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to create schedule");
+    }
+    return data;
   }
 
   async updateSchedule(config: ScheduleConfig): Promise<ApiResponse> {
@@ -274,7 +308,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to update schedule");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to update schedule");
+    }
+    return data;
   }
 
   async getCalendarView(
@@ -296,7 +334,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to get calendar view");
     }
-    return (result.data as ApiResponse<CalendarViewData>) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse<CalendarViewData>) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to get calendar view");
+    }
+    return data;
   }
 
   async modifySlotTime(request: SlotModifyRequest): Promise<ApiResponse> {
@@ -310,7 +352,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to modify slot time");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to modify slot time");
+    }
+    return data;
   }
 
   async deleteSlot(slotId: string): Promise<ApiResponse> {
@@ -324,7 +370,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to delete slot");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to delete slot");
+    }
+    return data;
   }
 
   async removeAllManualSlots(date: string): Promise<ApiResponse> {
@@ -338,7 +388,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to remove manual slots");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to remove manual slots");
+    }
+    return data;
   }
 
   async getSlotDetails(date: string): Promise<ApiResponse> {
@@ -352,7 +406,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to get slot details");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to get slot details");
+    }
+    return data;
   }
 
   async bulkSlotOperation(
@@ -368,7 +426,11 @@ class ApiClient {
       const error = result.error as any;
       throw new Error(error.data?.message || error.message || "Failed to perform bulk operation");
     }
-    return (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    const data = (result.data as ApiResponse) || { success: false, message: "No data returned" };
+    if (data.message && typeof data.message !== "string") {
+      data.message = normalizeApiMessage(data.message, "Failed to perform bulk operation");
+    }
+    return data;
   }
 }
 

@@ -14,6 +14,7 @@ interface DefaultRoutineModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  initialConfig?: ScheduleConfig
 }
 
 interface Restriction {
@@ -39,7 +40,7 @@ interface Restriction {
  * - Form validation and error handling
  * - API integration for schedule creation
  */
-export default function DefaultRoutineModal({ isOpen, onClose, onSuccess }: DefaultRoutineModalProps) {
+export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initialConfig }: DefaultRoutineModalProps) {
   // Basic schedule configuration
   const [startTime, setStartTime] = useState("08:00")
   const [endTime, setEndTime] = useState("18:00")
