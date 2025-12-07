@@ -112,12 +112,11 @@ export const driversApi = createApi({
     }),
 
     // Get a driver details
-
     getADriverDetails: builder.query<
       TDriversDetailsAPIResponse,
-      { id: number }
+      string
     >({
-      query: ({ id }) => ({
+      query: (id) => ({
         url: `/api/admin/driver/${id}`,
         method: "GET",
       }),
@@ -135,6 +134,30 @@ export const driversApi = createApi({
       }),
       invalidatesTags: ["Drivers"],
     }),
+
+    // approve a driver /api/admin/driver/cmih358fx0001gn1qaoqihj6y/approve
+    approveADriver: builder.mutation<
+      { success?: boolean; message?: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/api/admin/driver/${id}/approve`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Drivers"],
+    }),
+
+    // reject a driver /api/admin/driver/:id/reject
+    rejectADriver: builder.mutation<
+      { success?: boolean; message?: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/api/admin/driver/${id}/reject`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Drivers"],
+    }),
   }),
 });
 
@@ -142,4 +165,6 @@ export const {
   useGetAllDriversQuery,
   useGetADriverDetailsQuery,
   useDeleteDriverMutation,
+  useApproveADriverMutation,
+  useRejectADriverMutation,
 } = driversApi;

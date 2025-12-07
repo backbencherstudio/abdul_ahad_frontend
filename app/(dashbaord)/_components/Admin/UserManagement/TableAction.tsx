@@ -29,6 +29,7 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
     const [assignRole, { isLoading: assigning }] = useAssignRoleToUserMutation()
     const [removeRole, { isLoading: removing }] = useRemoveRoleFromUserMutation()
     const [confirmOpen, setConfirmOpen] = React.useState(false)
+    const [dropdownOpen, setDropdownOpen] = React.useState(false)
     const isSuperAdmin = Array.isArray(row.roles) && row.roles.some((r: any) => r.name === 'super_admin')
     const isAdminAccount = String(row?.type) === 'ADMIN'
     const isBanned = !row?.approved_at
@@ -68,15 +69,36 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
         }
     }
     return (
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="bg-gray-100 cursor-pointer text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors">
+                <button 
+                    className="bg-gray-100 cursor-pointer text-gray-600 hover:bg-gray-200 p-2 rounded-full transition-colors"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                    }}
+                >
                     <MoreVertical className="w-4 h-4" />
                 </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent 
+                align="end" 
+                className="w-48"
+                onCloseAutoFocus={(e) => {
+                    e.preventDefault();
+                }}
+                onEscapeKeyDown={() => {
+                    setDropdownOpen(false);
+                }}
+            >
                 <DropdownMenuItem
-                    onClick={() => router.push(`/admin/users-management/${row.id}`)}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDropdownOpen(false);
+                        setTimeout(() => {
+                            router.push(`/admin/users-management/${row.id}`);
+                        }, 150);
+                    }}
                     className="cursor-pointer"
                 >
                     <Eye className="w-4 h-4 mr-2" />
@@ -86,7 +108,14 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
                 {!isSuperAdmin && (
                     <DropdownMenuItem
                         className="cursor-pointer"
-                        onClick={() => onEditClick?.(row.id)}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDropdownOpen(false);
+                            setTimeout(() => {
+                                onEditClick?.(row.id);
+                            }, 150);
+                        }}
                     >
                         <Pencil className="w-4 h-4 mr-2" />
                         Edit User
@@ -97,7 +126,14 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
 
                 {!isSuperAdmin && (
                     <DropdownMenuItem
-                        onSelect={(e) => { e.preventDefault(); setConfirmOpen(true); }}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDropdownOpen(false);
+                            setTimeout(() => {
+                                setConfirmOpen(true);
+                            }, 150);
+                        }}
                         className={`cursor-pointer ${row.approved_at ? 'text-red-600' : 'text-green-600'}`}
                     >
                         {row.approved_at ? (
@@ -137,7 +173,14 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
                                         <Button
                                             className="!h-7 px-3 bg-emerald-600 hover:bg-emerald-700 !text-sm cursor-pointer"
                                             disabled={assigning}
-                                            onClick={(e) => { e.preventDefault(); setConfirmAssignOpen(true) }}
+                                            onClick={(e) => { 
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setDropdownOpen(false);
+                                                setTimeout(() => {
+                                                    setConfirmAssignOpen(true);
+                                                }, 150);
+                                            }}
                                         >
                                             Save
                                         </Button>
@@ -162,9 +205,11 @@ export default function TableAction({ row, onEditClick }: TableActionProps) {
                                     <DropdownMenuItem
                                         key={r.id}
                                         disabled={r.name === 'super_admin' || removing}
-                                        onSelect={async (e) => {
-                                            e.preventDefault()
-                                            if (r.name === 'super_admin') return
+                                        onClick={async (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            if (r.name === 'super_admin') return;
+                                            setDropdownOpen(false);
                                             try {
                                                 const res = await removeRole({ id: row.id, role_id: r.id }).unwrap()
                                                 if ((res as any)?.success === false) {

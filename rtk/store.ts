@@ -21,6 +21,8 @@ import { vehiclesApis } from "./api/driver/vehiclesApis";
 import vehiclesReducer from "./slices/driver/vehiclesSlice";
 import { bookMyMotApi } from "./api/driver/bookMyMotApi";
 import bookMyMotReducer from "./slices/driver/bookMyMotSlice";
+import { bookingManagementApi } from "./api/admin/booking-management/bookingManagementApis";
+import bookingManagementSlice from "./slices/admin/bookingManagementSlice";
 
 export const store = configureStore({
   reducer: {
@@ -40,12 +42,14 @@ export const store = configureStore({
     [driverContactApis.reducerPath]: driverContactApis.reducer,
     [vehiclesApis.reducerPath]: vehiclesApis.reducer,
     [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
+    [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
     subscription: subscriptionSlice,
     usersManagement: usersManagementSlice,
     roleManagement: roleManagementSlice,
     pricing: pricingReducer,
     vehicles: vehiclesReducer,
     bookMyMot: bookMyMotReducer,
+    bookingManagement: bookingManagementSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -63,7 +67,8 @@ export const store = configureStore({
       contactApis.middleware,
       driverContactApis.middleware,
       vehiclesApis.middleware,
-      bookMyMotApi.middleware
+      bookMyMotApi.middleware,
+      bookingManagementApi.middleware
     ),
 });
 
