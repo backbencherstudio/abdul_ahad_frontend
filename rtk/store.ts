@@ -13,6 +13,7 @@ import { garageAvailabilityApi } from "./api/garage/api";
 import { profileApi } from "./api/garage/profileApis";
 import { apiClient } from "./api/garage/api";
 import { pricingApi } from "./api/garage/pricingApis";
+import { bookingsApi } from "./api/garage/bookingsApis";
 import pricingReducer from "./slices/garage/pricingSlice";
 import { vehiclesApis } from "./api/driver/vehiclesApis";
 import vehiclesReducer from "./slices/driver/vehiclesSlice";
@@ -32,6 +33,7 @@ export const store = configureStore({
     [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [pricingApi.reducerPath]: pricingApi.reducer,
+    [bookingsApi.reducerPath]: bookingsApi.reducer,
     [vehiclesApis.reducerPath]: vehiclesApis.reducer,
     [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
     subscription: subscriptionSlice,
@@ -53,6 +55,7 @@ export const store = configureStore({
       garageAvailabilityApi.middleware,
       profileApi.middleware,
       pricingApi.middleware,
+      bookingsApi.middleware,
       vehiclesApis.middleware,
       bookMyMotApi.middleware
     ),

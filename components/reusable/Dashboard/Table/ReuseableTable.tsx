@@ -1,4 +1,12 @@
 import React from 'react'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
 
 interface TableColumn {
     key: string
@@ -60,51 +68,49 @@ export default function ReusableTable({
     }
 
     return (
-        <div className={` ${className}`}>
+        <div className={className}>
             {/* Table */}
             <div className="overflow-x-auto rounded-t-lg border border-gray-300">
-                <table className="max-w-full divide-y divide-gray-200 w-full ">
-                    <thead className="bg-gray-50">
-                        <tr>
+                <Table>
+                    <TableHeader className="bg-gray-50">
+                        <TableRow>
                             {columns.map((column) => (
-                                <th
+                                <TableHead
                                     key={column.key}
                                     scope="col"
                                     style={{ width: column.width }}
                                     className="px-6 py-3 whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider overflow-hidden"
                                 >
                                     {column.label}
-                                </th>
+                                </TableHead>
                             ))}
                             {actions && actions.length > 0 && (
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <TableHead scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
-                                </th>
+                                </TableHead>
                             )}
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="bg-white">
                         {tableData?.map((row, index) => (
-                            <tr
-
-
-                            key={row.id ?? row._id ?? `row-${index}`}
-                                className={`capitalize ${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                            <TableRow
+                                key={row.id ?? row._id ?? `row-${index}`}
+                                className={`capitalize ${onRowClick ? 'cursor-pointer' : ''}`}
                                 onClick={() => onRowClick?.(row)}
                             >
                                 {columns.map((column) => (
-                                    <td 
-                                        key={column.key} 
+                                    <TableCell
+                                        key={column.key}
                                         style={{ width: column.width }}
                                         className="px-6 py-4 text-sm text-gray-900 overflow-hidden"
                                     >
                                         <div className="truncate">
                                             {renderCellContent(column, row)}
                                         </div>
-                                    </td>
+                                    </TableCell>
                                 ))}
                                 {actions && actions.length > 0 && (
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2">
                                             {actions.map((action, actionIndex) => (
                                                 action.render ? (
@@ -132,12 +138,12 @@ export default function ReusableTable({
                                                 )
                                             ))}
                                         </div>
-                                    </td>
+                                    </TableCell>
                                 )}
-                            </tr>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
 
             {/* Empty state */}

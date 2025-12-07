@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "briefs-mem-aspect-chief.trycloudflare.com",
+        hostname: "varieties-richardson-honolulu-livecam.trycloudflare.com",
         pathname: "/**",
       },
     ],
