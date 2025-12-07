@@ -23,6 +23,7 @@ import { bookMyMotApi } from "./api/driver/bookMyMotApi";
 import bookMyMotReducer from "./slices/driver/bookMyMotSlice";
 import { bookingManagementApi } from "./api/admin/booking-management/bookingManagementApis";
 import bookingManagementSlice from "./slices/admin/bookingManagementSlice";
+import { subscriptionsMeApi } from "./api/garage/subscriptionsMeApis";
 
 export const store = configureStore({
   reducer: {
@@ -43,6 +44,7 @@ export const store = configureStore({
     [vehiclesApis.reducerPath]: vehiclesApis.reducer,
     [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
     [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
+    [subscriptionsMeApi.reducerPath]: subscriptionsMeApi.reducer,
     subscription: subscriptionSlice,
     usersManagement: usersManagementSlice,
     roleManagement: roleManagementSlice,
@@ -68,7 +70,8 @@ export const store = configureStore({
       driverContactApis.middleware,
       vehiclesApis.middleware,
       bookMyMotApi.middleware,
-      bookingManagementApi.middleware
+      bookingManagementApi.middleware,
+      subscriptionsMeApi.middleware
     ),
 });
 
