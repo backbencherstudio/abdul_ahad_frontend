@@ -15,6 +15,7 @@ import { apiClient } from "./api/garage/api";
 import { pricingApi } from "./api/garage/pricingApis";
 import { bookingsApi } from "./api/garage/bookingsApis";
 import { contactApis } from "./api/garage/contactApis";
+import { driverContactApis } from "./api/driver/contactusApi";
 import pricingReducer from "./slices/garage/pricingSlice";
 import { vehiclesApis } from "./api/driver/vehiclesApis";
 import vehiclesReducer from "./slices/driver/vehiclesSlice";
@@ -36,6 +37,7 @@ export const store = configureStore({
     [pricingApi.reducerPath]: pricingApi.reducer,
     [bookingsApi.reducerPath]: bookingsApi.reducer,
     [contactApis.reducerPath]: contactApis.reducer,
+    [driverContactApis.reducerPath]: driverContactApis.reducer,
     [vehiclesApis.reducerPath]: vehiclesApis.reducer,
     [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
     subscription: subscriptionSlice,
@@ -59,6 +61,7 @@ export const store = configureStore({
       pricingApi.middleware,
       bookingsApi.middleware,
       contactApis.middleware,
+      driverContactApis.middleware,
       vehiclesApis.middleware,
       bookMyMotApi.middleware
     ),

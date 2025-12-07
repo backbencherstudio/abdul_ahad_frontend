@@ -145,10 +145,6 @@ export default function MyBookings() {
             }
         },
         {
-            key: 'time',
-            label: 'Time',
-        },
-        {
             key: 'totalAmount',
             label: 'Total',
             render: (value: number) => `£${value?.toFixed(2) || '0.00'}`
