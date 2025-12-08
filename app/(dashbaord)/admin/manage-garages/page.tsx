@@ -23,7 +23,7 @@ const DANGER_COLOR = "#F04438";
 
 export default function ManageGarages() {
   const [data, setData] = useState([]);
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -40,7 +40,7 @@ export default function ManageGarages() {
     page: currentPage,
     limit: itemsPerPage,
     search: searchTerm,
-    status: activeTab,
+    status: activeTab !== "all" ? activeTab : undefined,
   });
 
   const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
@@ -258,7 +258,7 @@ export default function ManageGarages() {
               : "bg-red-100 text-red-800 border border-red-300"
           }`}
         >
-          {value == 1 ? "Approved" : "Unpaid"}
+          {value == "1" ? "Approved" : "Unpaid"}
         </span>
       ),
     },

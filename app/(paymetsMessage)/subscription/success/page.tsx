@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import axiosClient from "@/helper/axisoClients";
-export default function SubscriptionSuccessPage() {
+
+function SubscriptionSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = useMemo(() => searchParams.get("session_id"), [searchParams]);
@@ -204,4 +205,26 @@ export default function SubscriptionSuccessPage() {
   );
 }
 
+export default function SubscriptionSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-gradient-to-b from-emerald-50 to-white dark:from-slate-950 dark:to-slate-950">
+          <div className="max-w-2xl w-full">
+            <Card className="overflow-hidden pb-4">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-2 text-muted-foreground justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <SubscriptionSuccessContent />
+    </Suspense>
+  );
+}
 

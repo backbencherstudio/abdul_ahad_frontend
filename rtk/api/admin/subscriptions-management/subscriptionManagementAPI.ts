@@ -101,10 +101,10 @@ export const subscriptionsManagementApi = createApi({
     //   invalidatesTags: ["Garages"],
     // }),
 
-    // Create a garage
+    // Create a subscription
     createASubscription: builder.mutation<
-      ICreateSubscription,
-      Partial<ICreateSubscription>
+      SubscriptionPlan,
+      Partial<TCreateSubscription>
     >({
       query: (body) => ({
         url: `/api/admin/subscription/plans`,

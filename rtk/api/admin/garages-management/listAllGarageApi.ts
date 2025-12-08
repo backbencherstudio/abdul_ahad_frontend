@@ -98,7 +98,7 @@ export const garagesApi = createApi({
     // Approve a garage
     approveAGarage: builder.mutation<
       { success?: boolean; message?: string },
-      { id: string; body: Partial<Garage> }
+      string
     >({
       query: (id) => ({
         url: `/api/admin/garage/${id}/approve`,

@@ -30,15 +30,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
-import { useAppDispatch, useAppSelector } from "@/rtk";
+import { useAppDispatch, useAppSelector, setItemsPerPage, setCurrentPage } from "@/rtk";
 
 const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
 const DANGER_COLOR = "#F04438";
 
 export default function SubscriptionsManagement() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [openMessageModal, setOpenMessageModal] = React.useState(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
@@ -64,13 +62,9 @@ export default function SubscriptionsManagement() {
     }
   );
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    dispatch(setCurrentPage(page));
   };
 
-  // const handleItemsPerPageChange = (newItemsPerPage: number) => {
-  //   setItemsPerPage(newItemsPerPage);
-  //   setCurrentPage(1);
-  // };
   const handleItemsPerPageChange = (itemsPerPage: number) => {
     dispatch(setItemsPerPage(itemsPerPage));
   };
