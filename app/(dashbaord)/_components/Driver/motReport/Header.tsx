@@ -1,4 +1,4 @@
-import { TabType, TABS } from '../../../../driver/mot-reports/_types'
+import { TabType, TABS } from '@/app/(dashbaord)/driver/mot-reports/_types'
 
 interface HeaderProps {
     showTabs?: boolean

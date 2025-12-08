@@ -1,4 +1,4 @@
-import { TabType } from '../../../../driver/mot-reports/_types'
+import { TabType } from '@/app/(dashbaord)/driver/mot-reports/_types'
 
 interface NoReportsMessageProps {
     activeTab: TabType
