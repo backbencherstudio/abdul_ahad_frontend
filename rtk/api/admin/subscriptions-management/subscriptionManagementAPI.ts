@@ -79,7 +79,7 @@ export const subscriptionsManagementApi = createApi({
     }),
 
     // Get a subscription by ID
-    getASubscription: builder.query<SubscriptionPlan, string>({
+    getASubscription: builder.query<SubscriptionPlan, string | undefined>({
       query: (id) => ({
         url: `/api/admin/subscription/plans/${id}`,
         method: "GET",

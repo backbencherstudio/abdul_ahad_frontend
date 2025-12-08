@@ -5,9 +5,11 @@ interface GarageProfileCardProps {
     address?: string;
     postcode?: string;
     contact?: string;
+    phoneNumber?: string;
     email?: string;
     vtsNumber?: string;
     price?: string;
+    avatarUrl?: string | null;
     onMoreDetails?: () => void;
     onBookMOT?: () => void;
 }
@@ -16,6 +18,7 @@ interface GarageDetailsProps {
     address: string;
     postcode: string;
     contact: string;
+    phoneNumber: string;
     email: string;
     vtsNumber: string;
 }
@@ -30,15 +33,29 @@ interface ActionButtonsProps {
 interface GarageImageProps {
     className?: string;
     iconSize?: 'sm' | 'md' | 'lg';
+    imageUrl?: string | null;
 }
 
 // Reusable Components
-const GarageImage: React.FC<GarageImageProps> = ({ className, iconSize = 'md' }) => {
+const GarageImage: React.FC<GarageImageProps> = ({ className, iconSize = 'md', imageUrl }) => {
     const iconSizes = {
         sm: 'w-8 h-8',
         md: 'w-10 h-10',
         lg: 'w-12 h-12'
     };
+
+    if (imageUrl) {
+        return (
+            <div className={`rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden ${className}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                    src={imageUrl}
+                    alt="Garage avatar"
+                    className="w-full h-full object-cover"
+                />
+            </div>
+        );
+    }
 
     return (
         <div className={`border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 ${className}`}>
@@ -52,11 +69,12 @@ const GarageImage: React.FC<GarageImageProps> = ({ className, iconSize = 'md' })
     );
 };
 
-const GarageDetails: React.FC<GarageDetailsProps> = ({ address, postcode, contact, email, vtsNumber }) => {
+const GarageDetails: React.FC<GarageDetailsProps> = ({ address, postcode, contact, phoneNumber, email, vtsNumber }) => {
     const details = [
         { label: 'Address', value: address },
         { label: 'Postcode', value: postcode },
         { label: 'Contact', value: contact },
+        { label: 'Phone', value: phoneNumber },
         { label: 'Email', value: email },
         { label: 'VTS Number', value: vtsNumber }
     ];
@@ -110,14 +128,16 @@ export default function GarageProfileCard({
     address = "xxxxxxxxxxx",
     postcode = "xxxxxxxxxxx",
     contact = "xxxxxxxxxxx",
+    phoneNumber = "xxxxxxxxxxx",
     email = "xxxxxxxxxxx",
     vtsNumber = "xxxxxxxxxxx",
     price = "00.00",
+    avatarUrl = null,
     onMoreDetails,
     onBookMOT
 }: GarageProfileCardProps) {
 
-    const garageDetailsProps = { address, postcode, contact, email, vtsNumber };
+    const garageDetailsProps = { address, postcode, contact, phoneNumber, email, vtsNumber };
     const actionButtonsProps = { onMoreDetails, onBookMOT };
 
     return (
@@ -131,7 +151,7 @@ export default function GarageProfileCard({
                     <PriceDisplay price={price} className="text-xl" />
                 </div>
 
-                <GarageImage className="w-full h-32" iconSize="md" />
+                <GarageImage className="w-full h-32" iconSize="md" imageUrl={avatarUrl || undefined} />
                 <GarageDetails {...garageDetailsProps} />
                 <ActionButtons {...actionButtonsProps} buttonSize="lg" />
             </div>
@@ -139,7 +159,7 @@ export default function GarageProfileCard({
             {/* Tablet Layout */}
             <div className="hidden sm:flex lg:hidden gap-5 p-5 min-h-[200px]">
                 <div className="flex-shrink-0">
-                    <GarageImage className="w-40 h-full" iconSize="lg" />
+                    <GarageImage className="w-40 h-full" iconSize="lg" imageUrl={avatarUrl || undefined} />
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center">
@@ -158,8 +178,10 @@ export default function GarageProfileCard({
             {/* Desktop Layout */}
             <div className="hidden lg:flex gap-6 p-6 min-h-[200px]">
                 <div className="flex-shrink-0 relative cursor-pointer">
-                    <GarageImage className="w-40 h-full" iconSize="lg" />
-                    <h1 className='text-center text-gray-500 text-sm absolute bottom-8 font-semibold left-1/2 -translate-x-1/2 -translate-y-1/2'>Preview</h1>
+                    <GarageImage className="w-40 h-full" iconSize="lg" imageUrl={avatarUrl || undefined} />
+                    {!avatarUrl && (
+                        <h1 className='text-center text-gray-500 text-sm absolute bottom-8 font-semibold left-1/2 -translate-x-1/2 -translate-y-1/2'>Preview</h1>
+                    )}
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center">

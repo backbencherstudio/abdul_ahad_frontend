@@ -9,6 +9,21 @@ import { garagesApi } from "./api/admin/garages-management/listAllGarageApi";
 import { subscriptionsManagementApi } from "./api/admin/subscriptions-management/subscriptionManagementAPI";
 import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
 import { driversApi } from "./api/admin/drivers-management/allDriversList";
+import { garageAvailabilityApi } from "./api/garage/api";
+import { profileApi } from "./api/garage/profileApis";
+import { apiClient } from "./api/garage/api";
+import { pricingApi } from "./api/garage/pricingApis";
+import { bookingsApi } from "./api/garage/bookingsApis";
+import { contactApis } from "./api/garage/contactApis";
+import { driverContactApis } from "./api/driver/contactusApi";
+import pricingReducer from "./slices/garage/pricingSlice";
+import { vehiclesApis } from "./api/driver/vehiclesApis";
+import vehiclesReducer from "./slices/driver/vehiclesSlice";
+import { bookMyMotApi } from "./api/driver/bookMyMotApi";
+import bookMyMotReducer from "./slices/driver/bookMyMotSlice";
+import { bookingManagementApi } from "./api/admin/booking-management/bookingManagementApis";
+import bookingManagementSlice from "./slices/admin/bookingManagementSlice";
+import { subscriptionsMeApi } from "./api/garage/subscriptionsMeApis";
 
 export const store = configureStore({
   reducer: {
@@ -20,9 +35,23 @@ export const store = configureStore({
       subscriptionsManagementApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [driversApi.reducerPath]: driversApi.reducer,
+    [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
+    [profileApi.reducerPath]: profileApi.reducer,
+    [pricingApi.reducerPath]: pricingApi.reducer,
+    [bookingsApi.reducerPath]: bookingsApi.reducer,
+    [contactApis.reducerPath]: contactApis.reducer,
+    [driverContactApis.reducerPath]: driverContactApis.reducer,
+    [vehiclesApis.reducerPath]: vehiclesApis.reducer,
+    [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
+    [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
+    [subscriptionsMeApi.reducerPath]: subscriptionsMeApi.reducer,
     subscription: subscriptionSlice,
     usersManagement: usersManagementSlice,
     roleManagement: roleManagementSlice,
+    pricing: pricingReducer,
+    vehicles: vehiclesReducer,
+    bookMyMot: bookMyMotReducer,
+    bookingManagement: bookingManagementSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -32,9 +61,22 @@ export const store = configureStore({
       garagesApi.middleware,
       driversApi.middleware,
       subscriptionsManagementApi.middleware,
-      dashboardApi.middleware
+      dashboardApi.middleware,
+      garageAvailabilityApi.middleware,
+      profileApi.middleware,
+      pricingApi.middleware,
+      bookingsApi.middleware,
+      contactApis.middleware,
+      driverContactApis.middleware,
+      vehiclesApis.middleware,
+      bookMyMotApi.middleware,
+      bookingManagementApi.middleware,
+      subscriptionsMeApi.middleware
     ),
 });
+
+// Initialize apiClient with store
+apiClient.setStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

@@ -33,6 +33,7 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useGetCurrentSubscriptionQuery } from "@/rtk/api/garage/subscriptionsMeApis";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -43,6 +44,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const { user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Fetch current subscription for garage users
+  const {
+    data: subscriptionData,
+    isLoading: isLoadingSubscription,
+  } = useGetCurrentSubscriptionQuery(undefined, {
+    skip: !user?.type || user.type.toLowerCase() !== "garage",
+    refetchOnMountOrArgChange: true,
+  });
 
   const menuItems = [
     // Driver
@@ -183,6 +193,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
     toast.success("Logout successful");
   };
 
+  const handleActivateAccount = () => {
+    router.push("/garage/subscription");
+    toast.success("Redirecting to subscription page");
+  };
+
   return (
     <div className="w-72 h-screen bg-white flex flex-col">
       {/* Header */}
@@ -240,8 +255,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Bottom Section - Always at bottom */}
       <div className="mt-auto">
-        {/* role based alert */}
-        {user?.type && user.type.toLowerCase() === "garage" && (
+        {/* role based alert - only show when no subscription exists */}
+        {user?.type && 
+         user.type.toLowerCase() === "garage" && 
+         !isLoadingSubscription && 
+         (!subscriptionData?.success || !subscriptionData?.data) && (
           <div className="p-2">
             <div
               className="bg-red-500 text-white px-6 py-6 rounded-lg space-y-2"
@@ -255,7 +273,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 bookings, please proceed to the payment page.
               </p>
 
-              <button className="bg-white text-red-500 px-2 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors duration-200 w-full cursor-pointer font-Inter text-sm">
+              <button onClick={handleActivateAccount} className="bg-white text-red-500 px-2 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors duration-200 w-full cursor-pointer font-Inter text-sm">
                 Activate Account
               </button>
             </div>

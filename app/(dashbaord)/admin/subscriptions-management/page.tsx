@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
 import { MoreVertical, Trash2, Loader2, Plus } from "lucide-react";
@@ -30,7 +30,16 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
+<<<<<<< HEAD
 import { useAppDispatch, useAppSelector, setItemsPerPage, setCurrentPage } from "@/rtk";
+=======
+import { useAppDispatch, useAppSelector } from "@/rtk";
+import {
+  setCurrentPage as setUsersCurrentPage,
+  setItemsPerPage as setUsersItemsPerPage,
+  setPagination as setUsersPagination,
+} from "@/rtk/slices/admin/usersManagentSlice";
+>>>>>>> 68a9196ef0fdb6226045e9facb151bdd09da05ad
 
 const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
@@ -56,17 +65,35 @@ export default function SubscriptionsManagement() {
     limit: pagination.itemsPerPage,
   });
   const getASingleSubscription = useGetASubscriptionQuery(
-    currentSubscriptionId,
+    currentSubscriptionId || undefined,
     {
       refetchOnMountOrArgChange: true,
+      skip: !currentSubscriptionId,
     }
   );
+
+  // Update Redux pagination state when API data changes
+  useEffect(() => {
+    if (allSubscriptions?.data) {
+      dispatch(
+        setUsersPagination({
+          totalItems: allSubscriptions.data.total || 0,
+          totalPages: allSubscriptions.data.totalPages || 1,
+        })
+      );
+    }
+  }, [allSubscriptions?.data, dispatch]);
+
   const handlePageChange = (page: number) => {
+<<<<<<< HEAD
     dispatch(setCurrentPage(page));
+=======
+    dispatch(setUsersCurrentPage(page));
+>>>>>>> 68a9196ef0fdb6226045e9facb151bdd09da05ad
   };
 
   const handleItemsPerPageChange = (itemsPerPage: number) => {
-    dispatch(setItemsPerPage(itemsPerPage));
+    dispatch(setUsersItemsPerPage(itemsPerPage));
   };
   const handleCurrentGarageId = (id) => {
     console.log("clicked", id);
@@ -81,14 +108,14 @@ export default function SubscriptionsManagement() {
     },
 
     {
-      key: "id",
+      key: "subscription_details",
       label: "Subscription Details",
       width: "15%",
       render: (value: string, row: any) => (
         <div className="flex items-center  justify-between gap-2">
           <DropdownMenu
             onOpenChange={(isOpen) => {
-              if (isOpen) handleCurrentGarageId(value);
+              if (isOpen) handleCurrentGarageId(row.id);
             }}
           >
             <DropdownMenuTrigger asChild>
@@ -298,14 +325,14 @@ export default function SubscriptionsManagement() {
       ),
     },
     {
-      key: "id",
+      key: "actions",
       label: "Actions",
       width: "15%",
       render: (value: string, row: any) => (
         <div className="flex items-center justify-between gap-2">
           <DropdownMenu
             onOpenChange={(isOpen) => {
-              if (isOpen) handleCurrentGarageId(value);
+              if (isOpen) handleCurrentGarageId(row.id);
             }}
           >
             <DropdownMenuTrigger asChild>
@@ -497,10 +524,10 @@ export default function SubscriptionsManagement() {
 
       <ReusablePagination
         key={`pagination-${allSubscriptions?.data?.totalPages}`}
-        currentPage={allSubscriptions?.data?.page}
-        totalPages={allSubscriptions?.data?.totalPages}
+        currentPage={pagination.currentPage}
+        totalPages={allSubscriptions?.data?.totalPages || 1}
         itemsPerPage={pagination.itemsPerPage}
-        totalItems={allSubscriptions?.data?.total}
+        totalItems={allSubscriptions?.data?.total || 0}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
       />

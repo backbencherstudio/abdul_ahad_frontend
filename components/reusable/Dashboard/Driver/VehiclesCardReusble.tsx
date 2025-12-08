@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react'
+import React, { memo, useMemo, useState } from 'react'
 import Image from 'next/image'
 
 interface MotReport {
@@ -22,9 +22,15 @@ interface VehiclesCardReusbleProps {
     selectedRegistration?: string | null
 }
 
+// Check if image URL is valid
+const isValidImageUrl = (url: string): boolean => {
+    if (!url || url.includes('example') || url === '') return false
+    return true
+}
+
 // Skeleton cards to show while data is loading
 const SkeletonCard = memo(() => (
-    <div className="bg-[#F8FAFB] rounded-lg p-6 border border-[#B8EFBF] flex-shrink-0 w-80 animate-pulse">
+    <div className="bg-[#F8FAFB] rounded-lg p-6 border border-[#B8EFBF] animate-pulse">
         {/* Skeleton Image */}
         <div className="flex justify-center mb-4">
             <div className="w-[100px] h-[100px] bg-gray-200 rounded-lg"></div>
@@ -45,34 +51,47 @@ const VehicleCard = memo(({
     isSelected: boolean
     onVehicleClick?: (vehicle: MotReport) => void
 }) => {
-    console.log('VehicleCard render:', vehicle.vehicleReg, 'isSelected:', isSelected)
+    const [imageError, setImageError] = useState(false)
+
+    const handleImageError = () => {
+        setImageError(true)
+    }
 
     return (
         <div
-            className={` rounded-lg p-6 border cursor-pointer transition-all duration-300 ease-in-out transform  hover:shadow-md flex-shrink-0 w-80 ${isSelected
-                ? 'bg-[#DDF7E0] border-[#19CA32] shadow-md'
-                : 'bg-[#F8FAFB] border-[#B8EFBF] hover:bg-[#DDF7E0]'
-                }`}
+            className={`bg-[#F8FAFB] rounded-lg p-6 border border-[#B8EFBF] cursor-pointer hover:shadow-md transition-all duration-200 group ${isSelected ? 'ring-2 ring-[#19CA32]' : ''}`}
             onClick={() => onVehicleClick?.(vehicle)}
         >
-            {/* Vehicle Image */}
+            {/* Vehicle Image or Brand Name */}
             <div className="flex justify-center mb-4">
-                <div className="rounded-lg flex items-center justify-center transition-transform duration-200">
-                    <Image
-                        src={vehicle.vehicleImage || ''}
-                        alt={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`}
-                        width={100}
-                        height={100}
-                        className="object-contain w-full h-full transition-all duration-200"
-                        priority={isSelected}
-                    />
+                <div className="rounded-lg flex items-center justify-center min-h-[100px]">
+                    {imageError || !isValidImageUrl(vehicle.vehicleImage || '') ? (
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="w-14 h-14 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
+                                <span className="text-white text-xl font-bold">
+                                    {vehicle.vehicleMake?.charAt(0).toUpperCase() || 'V'}
+                                </span>
+                            </div>
+                            <span className="text-gray-700 font-semibold text-sm text-center px-2">
+                                {vehicle.vehicleMake || 'Vehicle'}
+                            </span>
+                        </div>
+                    ) : (
+                        <Image
+                            src={vehicle.vehicleImage || ''}
+                            alt={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`}
+                            width={100}
+                            height={100}
+                            className="object-contain w-full h-full"
+                            onError={handleImageError}
+                        />
+                    )}
                 </div>
             </div>
 
             {/* Registration Number */}
             <div className="text-center mb-4">
-                <div className={`text-white px-3 py-1 rounded inline-block text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-[#19CA32] shadow-md' : 'bg-black'
-                    }`}>
+                <div className="bg-black text-white px-3 py-1 rounded inline-block text-sm font-bold">
                     {vehicle.vehicleReg}
                 </div>
             </div>
@@ -85,13 +104,12 @@ const VehiclesCardReusble = memo(({
     onVehicleClick,
     selectedRegistration
 }: VehiclesCardReusbleProps) => {
-    console.log('VehiclesCardReusble render - Reports count:', motReports.length, 'Selected:', selectedRegistration)
-
     // Memoize the cards to prevent unnecessary re-renders
     const vehicleCards = useMemo(() => {
         if (motReports.length === 0) {
             return (
                 <>
+                    <SkeletonCard />
                     <SkeletonCard />
                     <SkeletonCard />
                     <SkeletonCard />
@@ -115,11 +133,9 @@ const VehiclesCardReusble = memo(({
     }, [motReports, selectedRegistration, onVehicleClick])
 
     return (
-        <div className="bg-white rounded-md shadow-sm p-4">
-            <div className="overflow-x-auto">
-                <div className="flex gap-4 min-w-max p-2">
-                    {vehicleCards}
-                </div>
+        <div className="bg-white rounded-md shadow-sm p-4 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {vehicleCards}
             </div>
         </div>
     )

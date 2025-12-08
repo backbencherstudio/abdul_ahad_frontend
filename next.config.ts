@@ -25,6 +25,22 @@ const nextConfig: NextConfig = {
         port: "5000",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "192.168.7.60",
+        port: "4080",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "baseball-digit-system-livestock.trycloudflare.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "varieties-richardson-honolulu-livecam.trycloudflare.com",
+        pathname: "/**",
+      },
     ],
   },
 };

@@ -1,19 +1,124 @@
 'use client'
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
 import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination'
-import bookingsData from '@/public/data/MyBooking.json'
+import { useGetMyBookingsQuery } from '@/rtk/api/driver/bookMyMotApi'
+import { useDebounce } from '@/hooks/useDebounce'
+import { format } from 'date-fns'
+import { setMyBookings, selectMyBookings } from '@/rtk/slices/driver/bookMyMotSlice'
+
+// Booking data interface based on API response
+interface BookingData {
+    id: string
+    garage_name?: string
+    garageName?: string
+    location?: string
+    address?: string
+    email?: string
+    phone?: string
+    phone_number?: string
+    bookingDate?: string
+    date?: string
+    slot_date?: string
+    time?: string
+    start_time?: string
+    end_time?: string
+    totalAmount?: number
+    amount?: number
+    price?: number
+    status: string
+    vehicle_id?: string
+    vehicle_registration?: string
+    registration_number?: string
+    [key: string]: any
+}
 
 export default function MyBookings() {
+    const dispatch = useDispatch()
+    const myBookingsFromSlice = useSelector(selectMyBookings)
     const [activeTab, setActiveTab] = useState('all')
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
+
+    // Debounce search term
+    const debouncedSearch = useDebounce(searchTerm, 500)
+
+    // Determine status for API call - API expects 'all', 'pending', 'accepted', or 'rejected'
+    const statusForApi = activeTab
+
+    // Fetch bookings from API
+    const { data: bookingsResponse, isLoading, error, refetch } = useGetMyBookingsQuery({
+        search: debouncedSearch,
+        status: statusForApi,
+        page: currentPage,
+        limit: itemsPerPage
+    })
+
+    // Store bookings in Redux slice when data is fetched
+    useEffect(() => {
+        if (bookingsResponse) {
+            const responseData = (bookingsResponse as any)?.data || bookingsResponse
+            if (responseData?.bookings) {
+                dispatch(setMyBookings({
+                    bookings: responseData.bookings,
+                    pagination: responseData.pagination || null
+                }))
+            }
+        }
+    }, [bookingsResponse, dispatch])
+
+    // Get response data - use API response or fallback to slice
+    const responseData = useMemo(() => {
+        if (bookingsResponse) {
+            // API response is wrapped in ApiResponse: { success, data: { bookings: [], pagination: {}, filters: {} } }
+            return (bookingsResponse as any)?.data || bookingsResponse
+        }
+        // Fallback to Redux slice data
+        if (myBookingsFromSlice) {
+            return {
+                bookings: myBookingsFromSlice.bookings,
+                pagination: myBookingsFromSlice.pagination
+            }
+        }
+        return null
+    }, [bookingsResponse, myBookingsFromSlice])
+
+    // Transform API data to table format
+    const bookingsData: BookingData[] = useMemo(() => {
+        if (!responseData) return []
+        
+        // API response structure: { bookings: [], pagination: {}, filters: {} }
+        const bookings = responseData?.bookings || []
+
+        return bookings.map((booking: any) => ({
+            id: booking.order_id || booking.id || '',
+            garageName: booking.garage_name || 'N/A',
+            location: booking.location || 'N/A',
+            email: booking.email || 'N/A',
+            phone: booking.phone_number || booking.phone || 'N/A',
+            bookingDate: booking.booking_date || '',
+            time: booking.time || booking.start_time || 'N/A',
+            totalAmount: parseFloat(booking.total_amount || booking.amount || 0),
+            status: booking.status?.toLowerCase() || 'pending',
+            vehicle_registration: booking.vehicle_registration || 'N/A'
+        }))
+    }, [responseData])
+
+    // Get total count from pagination object
+    const totalCount = responseData?.pagination?.total_count || 0
+    const totalPages = responseData?.pagination?.total_pages || Math.ceil(totalCount / itemsPerPage)
+
     // Define table columns
     const columns = [
         {
             key: 'garageName',
             label: 'Garage Name',
+        },
+        {
+            key: 'vehicle_registration',
+            label: 'Vehicle Registration',
         },
         {
             key: 'location',
@@ -31,73 +136,77 @@ export default function MyBookings() {
             key: 'bookingDate',
             label: 'Booking Date',
             render: (value: string) => {
-                return new Date(value).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                })
+                if (!value) return 'N/A'
+                try {
+                    return format(new Date(value), 'MM/dd/yyyy')
+                } catch {
+                    return value
+                }
             }
         },
         {
             key: 'totalAmount',
             label: 'Total',
-            render: (value: number) => `$${value.toFixed(2)}`
+            render: (value: number) => `£${value?.toFixed(2) || '0.00'}`
         },
         {
             key: 'status',
             label: 'Status',
+            render: (value: string) => {
+                const status = value?.toLowerCase() || 'pending'
+                const statusColors: Record<string, string> = {
+                    pending: 'bg-yellow-100 text-yellow-800',
+                    accepted: 'bg-green-100 text-green-800',
+                    rejected: 'bg-red-100 text-red-800'
+                }
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </span>
+                )
+            }
         }
     ]
 
     // Define tabs with counts
+    // Note: API might not provide individual status counts, so we calculate from data
+    const statusCounts = useMemo(() => {
+        const allBookings = responseData?.bookings || []
+        return {
+            all: totalCount,
+            pending: allBookings.filter((b: any) => b.status?.toLowerCase() === 'pending').length,
+            accepted: allBookings.filter((b: any) => b.status?.toLowerCase() === 'accepted').length,
+            rejected: allBookings.filter((b: any) => b.status?.toLowerCase() === 'rejected').length
+        }
+    }, [responseData, totalCount])
+
     const tabs = [
         {
             key: 'all',
             label: 'All Order',
-            count: bookingsData.length
+            count: totalCount
         },
         {
             key: 'pending',
             label: 'Pending',
-            count: bookingsData.filter(booking => booking.status.toLowerCase() === 'pending').length
+            count: statusCounts.pending
         },
         {
             key: 'accepted',
             label: 'Accepted',
-            count: bookingsData.filter(booking => booking.status.toLowerCase() === 'accepted').length
+            count: statusCounts.accepted
         },
         {
             key: 'rejected',
             label: 'Rejected',
-            count: bookingsData.filter(booking => booking.status.toLowerCase() === 'rejected').length
+            count: statusCounts.rejected
         }
     ]
 
-    // Filter data based on active tab and search
-    const filteredData = useMemo(() => {
-        let filtered = bookingsData
-
-        // Filter by tab
-        if (activeTab !== 'all') {
-            filtered = filtered.filter(booking => booking.status.toLowerCase() === activeTab)
-        }
-
-        // Filter by search term
-        if (searchTerm) {
-            filtered = filtered.filter(booking =>
-                Object.values(booking).some(value =>
-                    value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-                )
-            )
-        }
-
-        return filtered
-    }, [activeTab, searchTerm])
-
-    // Pagination logic
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage)
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
+    // Reset to first page when search or tab changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [debouncedSearch, activeTab])
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page)
@@ -105,36 +214,32 @@ export default function MyBookings() {
 
     const handleItemsPerPageChange = (newItemsPerPage: number) => {
         setItemsPerPage(newItemsPerPage)
-        setCurrentPage(1) // Reset to first page when items per page changes
+        setCurrentPage(1)
     }
 
     const handleTabChange = (tabKey: string) => {
         setActiveTab(tabKey)
+        setCurrentPage(1)
     }
 
-    // Define actions (optional)
-    // const actions = [
-    //     {
-    //         label: 'View',
-    //         onClick: (row: any) => {
-    //             console.log('View booking:', row)
-
-    //         },
-    //         variant: 'primary' as const
-    //     },
-    //     {
-    //         label: 'Edit',
-    //         onClick: (row: any) => {
-    //             console.log('Edit booking:', row)
-
-    //         },
-    //         variant: 'warning' as const
-    //     }
-    // ]
-
     const handleRowClick = (row: any) => {
-        console.log('Row clicked:', row)
         // Add your row click logic here
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-96">
+                <div className="text-lg text-gray-600">Loading bookings...</div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center min-h-96">
+                <div className="text-lg text-red-600">Failed to load bookings. Please try again.</div>
+            </div>
+        )
     }
 
     return (
@@ -151,13 +256,18 @@ export default function MyBookings() {
                         <button
                             key={tab.key}
                             onClick={() => handleTabChange(tab.key)}
-                            className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${activeTab === tab.key
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                }`}
+                            className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${
+                                activeTab === tab.key
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            }`}
                         >
                             {tab.label}
-
+                            {tab.count > 0 && (
+                                <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">
+                                    {tab.count}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -179,23 +289,33 @@ export default function MyBookings() {
                 </div>
             </div>
 
-            <ReusableTable
-                data={paginatedData}
-                columns={columns}
-                // actions={actions}
-                onRowClick={handleRowClick}
-                className=""
-            />
+            {bookingsData.length === 0 ? (
+                <div className="flex justify-center items-center min-h-96">
+                    <div className="text-center">
+                        <p className="text-lg text-gray-600 mb-2">No bookings found</p>
+                        <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+                    </div>
+                </div>
+            ) : (
+                <>
+                    <ReusableTable
+                        data={bookingsData}
+                        columns={columns}
+                        onRowClick={handleRowClick}
+                        className=""
+                    />
 
-            <ReusablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredData.length}
-                onPageChange={handlePageChange}
-                onItemsPerPageChange={handleItemsPerPageChange}
-                className=""
-            />
+                    <ReusablePagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        itemsPerPage={itemsPerPage}
+                        totalItems={totalCount}
+                        onPageChange={handlePageChange}
+                        onItemsPerPageChange={handleItemsPerPageChange}
+                        className=""
+                    />
+                </>
+            )}
         </div>
     )
 }
