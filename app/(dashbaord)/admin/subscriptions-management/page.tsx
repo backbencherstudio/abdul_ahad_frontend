@@ -1,21 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
-import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
-import { MoreVertical, Trash2, Loader2, Plus } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Plus, Package, ShoppingCart, FileText, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
 import {
   TCreateSubscription,
   useCreateASubscriptionMutation,
   useGetAllSubscriptionsQuery,
-  useGetASubscriptionQuery,
 } from "@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI";
 import {
   Dialog,
@@ -30,358 +22,51 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
-import { useAppDispatch, useAppSelector } from "@/rtk";
-import {
-  setCurrentPage as setUsersCurrentPage,
-  setItemsPerPage as setUsersItemsPerPage,
-  setPagination as setUsersPagination,
-} from "@/rtk/slices/admin/usersManagentSlice";
-
-const BRAND_COLOR = "#19CA32";
-const BRAND_COLOR_HOVER = "#16b82e";
-const DANGER_COLOR = "#F04438";
 
 export default function SubscriptionsManagement() {
-  const [openMessageModal, setOpenMessageModal] = React.useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
-  const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
-  const [currentSubscriptionId, setCurrentSubscriptionId] =
-    React.useState<any>(null);
-  const dispatch = useAppDispatch();
+  const router = useRouter();
 
-  const { filters, pagination } = useAppSelector(
-    (state) => state.usersManagement
-  );
-  const [message, setMessage] = React.useState("");
-  const [isSending, setIsSending] = React.useState(false);
-  const [isDeleting, setIsDeleting] = React.useState(false);
-
+  // Fetch all subscriptions without pagination (using a high limit)
   const allSubscriptions = useGetAllSubscriptionsQuery({
-    page: pagination.currentPage,
-    limit: pagination.itemsPerPage,
+    page: 1,
+    limit: 1000, // High limit to get all subscriptions
   });
-  const getASingleSubscription = useGetASubscriptionQuery(
-    currentSubscriptionId || undefined,
-    {
-      refetchOnMountOrArgChange: true,
-      skip: !currentSubscriptionId,
-    }
-  );
 
-  // Update Redux pagination state when API data changes
-  useEffect(() => {
-    if (allSubscriptions?.data) {
-      dispatch(
-        setUsersPagination({
-          totalItems: allSubscriptions.data.total || 0,
-          totalPages: allSubscriptions.data.totalPages || 1,
-        })
-      );
-    }
-  }, [allSubscriptions?.data, dispatch]);
-
-  const handlePageChange = (page: number) => {
-    dispatch(setUsersCurrentPage(page));
+  const handleViewDetails = (id: string) => {
+    router.push(`/admin/subscriptions-management/${id}`);
   };
 
-  const handleItemsPerPageChange = (itemsPerPage: number) => {
-    dispatch(setUsersItemsPerPage(itemsPerPage));
-  };
-  const handleCurrentGarageId = (id) => {
-    console.log("clicked", id);
-    setCurrentSubscriptionId(id);
+  // Format price from pence to pounds
+  const formatPrice = (pence: number) => {
+    return `£${(pence / 100).toFixed(2)}`;
   };
 
-  const columns = [
-    {
-      key: "name",
-      label: "Subscription Name",
-      width: "15%",
-    },
+  // Get features list for a subscription
+  const getFeatures = (subscription: any) => {
+    const features = [
+      {
+        icon: Package,
+        text: "Unlimited opportunity to receive MOT bookings — 24/7",
+      },
+      {
+        icon: ShoppingCart,
+        text: "Boost Your Garage's Visibility.",
+      },
+      {
+        icon: FileText,
+        text: "Opportunity to upsell and offer extra services!",
+      },
+      {
+        icon: TrendingUp,
+        text: "No Contract. No commission.",
+      },
+      {
+        icon: Package,
+        text: "Simple set up.",
+      },
+    ];
 
-    {
-      key: "subscription_details",
-      label: "Subscription Details",
-      width: "15%",
-      render: (value: string, row: any) => (
-        <div className="flex items-center  justify-between gap-2">
-          <DropdownMenu
-            onOpenChange={(isOpen) => {
-              if (isOpen) handleCurrentGarageId(row.id);
-            }}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-64 p-4 space-y-2 max-h-[200px]"
-            >
-              {getASingleSubscription?.status === "fulfilled" && (
-                <div className="space-y-3">
-                  {/* Subscription Name */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Subscription Name
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.name || "-"}
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Description
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.description || "-"}
-                    </div>
-                  </div>
-
-                  {/* Price Formatted */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Price</div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.price_formatted || "-"}
-                    </div>
-                  </div>
-
-                  {/* Price Pence */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Price (pence)
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.price_pence || "-"}
-                    </div>
-                  </div>
-
-                  {/* Currency */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Currency</div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.currency || "-"}
-                    </div>
-                  </div>
-
-                  {/* Max Bookings */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Max Bookings / Month
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.max_bookings_per_month ||
-                        "-"}
-                    </div>
-                  </div>
-
-                  {/* Max Vehicles */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Max Vehicles
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.max_vehicles || "-"}
-                    </div>
-                  </div>
-
-                  {/* Priority Support */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Priority Support
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.priority_support
-                        ? "Yes"
-                        : "No"}
-                    </div>
-                  </div>
-
-                  {/* Advanced Analytics */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Advanced Analytics
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.advanced_analytics
-                        ? "Yes"
-                        : "No"}
-                    </div>
-                  </div>
-
-                  {/* Custom Branding */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Custom Branding
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.custom_branding
-                        ? "Yes"
-                        : "No"}
-                    </div>
-                  </div>
-
-                  {/* Is Active */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Active Status
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data?.is_active
-                        ? "Active"
-                        : "Inactive"}
-                    </div>
-                  </div>
-
-                  {/* Active Subscriptions Count */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
-                      Active Subscriptions Count
-                    </div>
-                    <div className="font-medium text-sm">
-                      {getASingleSubscription.data
-                        ?.active_subscriptions_count ?? "-"}
-                    </div>
-                  </div>
-
-                  {/* Created At */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Created At</div>
-                    <div className="font-medium text-sm">
-                      {new Date(
-                        getASingleSubscription.data?.created_at
-                      ).toLocaleString() || "-"}
-                    </div>
-                  </div>
-
-                  {/* Updated At */}
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Updated At</div>
-                    <div className="font-medium text-sm">
-                      {new Date(
-                        getASingleSubscription.data?.updated_at
-                      ).toLocaleString() || "-"}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-    {
-      key: "price_pence",
-      label: "Price Pence",
-      width: "15%",
-    },
-    {
-      key: "max_vehicles",
-      label: "Max Vehicles",
-      width: "15%",
-    },
-    {
-      key: "is_active",
-      label: "Status",
-      width: "15%",
-      render: (value: string) => (
-        <span
-          className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${
-            value == "1"
-              ? "bg-green-100 text-green-800 border border-green-300"
-              : "bg-red-100 text-red-800 border border-red-300"
-          }`}
-        >
-          {value ? "Active" : "Deactive"}
-        </span>
-      ),
-    },
-    {
-      key: "created_at",
-      label: "Created",
-      width: "16%",
-      render: (value: string) => (
-        <div className="text-sm text-gray-900">
-          {new Date(value).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </div>
-      ),
-    },
-    {
-      key: "actions",
-      label: "Actions",
-      width: "15%",
-      render: (value: string, row: any) => (
-        <div className="flex items-center justify-between gap-2">
-          <DropdownMenu
-            onOpenChange={(isOpen) => {
-              if (isOpen) handleCurrentGarageId(row.id);
-            }}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className=" space-y-2">
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer hover:text-green-900`}
-                  onClick={() => {
-                    console.log("Set to Active");
-                  }}
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start bg-red-700 hover:bg-red-800 hover:text-white cursor-pointer text-white`}
-                  onClick={() => {
-                    console.log("Set to Deactive");
-                  }}
-                >
-                  Decline
-                </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-  ];
-
-  // Send Message Handler
-  const handleSendMessage = () => {
-    setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      setOpenMessageModal(false);
-      setMessage("");
-      toast.success("Message sent successfully!");
-    }, 1500);
-  };
-
-  // Delete Garage Handler
-  const handleDeleteGarage = () => {
-    setIsDeleting(true);
-    setTimeout(() => {
-      setIsDeleting(false);
-      setOpenDeleteModal(false);
-      toast.success("Garage deleted successfully!");
-    }, 1500);
+    return features;
   };
 
   const [createSubscription, { isLoading }] = useCreateASubscriptionMutation();
@@ -508,124 +193,104 @@ export default function SubscriptionsManagement() {
         </Dialog>
       </div>
 
-      <ReusableTable
-        data={allSubscriptions?.data?.data || []}
-        columns={columns}
-        className="mt-5"
-      />
-
-      <ReusablePagination
-        key={`pagination-${allSubscriptions?.data?.totalPages}`}
-        currentPage={pagination.currentPage}
-        totalPages={allSubscriptions?.data?.totalPages || 1}
-        itemsPerPage={pagination.itemsPerPage}
-        totalItems={allSubscriptions?.data?.total || 0}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={handleItemsPerPageChange}
-      />
-
-      {/* Send Message Modal */}
-      <CustomReusableModal
-        isOpen={openMessageModal}
-        onClose={() => setOpenMessageModal(false)}
-        title="Send Message"
-        showHeader={false}
-        className="max-w-sm border-green-600"
-      >
-        <div className="bg-white rounded-lg overflow-hidden">
-          {/* Header */}
-          <div
-            className={`bg-[${BRAND_COLOR}] text-white p-4 flex items-center justify-between`}
-          >
-            <h2 className="text-lg font-semibold">Send Message</h2>
+      {/* Subscription Cards Grid */}
+      <div className="mt-5">
+        {allSubscriptions.isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
           </div>
-          {/* Content */}
-          <div className="p-6">
-            <textarea
-              className="w-full border rounded-md p-2 mb-4"
-              placeholder="Input Message"
-              rows={4}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={isSending}
-            />
-            <button
-              className={`w-full bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
-              onClick={handleSendMessage}
-              disabled={isSending}
-            >
-              {isSending ? (
-                <Loader2 className="animate-spin w-5 h-5 mr-2" />
-              ) : null}
-              {isSending ? "Sending..." : "Send"}
-            </button>
+        ) : allSubscriptions?.data?.data?.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No subscriptions found. Create your first subscription!
           </div>
-        </div>
-      </CustomReusableModal>
+        ) : (
+          <div className="flex justify-center">
+            <div className="">
+            {allSubscriptions?.data?.data?.map((subscription: any) => {
+              const features = getFeatures(subscription);
+              const price = formatPrice(subscription.price_pence);
+              
+              return (
+                <div
+                  key={subscription.id}
+                  className="bg-white rounded-lg border-2 border-green-200 p-6 shadow-sm hover:shadow-md transition-shadow w-full max-w-md"
+                >
+                  {/* Title */}
+                  <h2 className="text-2xl font-bold text-black mb-2">
+                    {subscription.name}
+                  </h2>
 
-      {/* Delete Garage Account Modal */}
-      <CustomReusableModal
-        isOpen={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        title="Delete Garage Account"
-        showHeader={false}
-        className="max-w-sm border-red-600"
-      >
-        <div className="bg-white rounded-lg overflow-hidden">
-          {/* Header */}
-          <div
-            className={`bg-[${DANGER_COLOR}] text-white p-4 flex items-center justify-between`}
-          >
-            <h2 className="text-lg font-semibold">Delete Garage Account</h2>
-          </div>
-          {/* Content */}
-          <div className="p-6 space-y-3">
-            {/* lebel name */}
-            <div className="text-sm font-medium text-gray-700">Garage Name</div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.name || ""}
-              readOnly
-              placeholder="Garage Name"
-            />
-            <div className="text-sm font-medium text-gray-700">
-              Vehicle Number
+                  {/* Description */}
+                  {subscription.description && (
+                    <p className="text-sm text-gray-700 mb-6">
+                      {subscription.description}
+                    </p>
+                  )}
+
+                  {/* Membership Section */}
+                  <div className="mb-6">
+                    <div className="text-sm font-semibold text-black mb-2">
+                      Membership
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-4xl font-bold text-black">
+                        {subscription.price_formatted || price.split('.')[0]}
+                      </span>
+                      <span className="text-lg text-black">/month</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {subscription.price_formatted || price} billed automatically every month on the sign-up date (unless cancelled)
+                    </p>
+                  </div>
+
+                  {/* Details Button */}
+                  <Button
+                    onClick={() => handleViewDetails(subscription.id)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md mb-6"
+                  >
+                    Details
+                  </Button>
+
+                  {/* Features Section */}
+                  <div>
+                    <div className="text-sm font-semibold text-black mb-3">
+                      Features
+                    </div>
+                    <div className="space-y-3">
+                      {features.map((feature, index) => {
+                        const IconComponent = feature.icon;
+                        return (
+                          <div key={index} className="flex items-start gap-3">
+                            <IconComponent className="h-5 w-5 text-black mt-0.5 flex-shrink-0 stroke-1" />
+                            <span className="text-sm text-black">
+                              {feature.text}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <span
+                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium ${
+                        subscription.is_active
+                          ? "bg-green-100 text-green-800 border border-green-300"
+                          : "bg-red-100 text-red-800 border border-red-300"
+                      }`}
+                    >
+                      {subscription.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
             </div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.vts || ""}
-              readOnly
-              placeholder="VTS"
-            />
-            <div className="text-sm font-medium text-gray-700">Email</div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.email || ""}
-              readOnly
-              placeholder="Email"
-            />
-            <div className="text-sm font-medium text-gray-700">
-              Contact Number
-            </div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.phone || ""}
-              readOnly
-              placeholder="Contact Number"
-            />
-            <button
-              className={`w-full bg-[${DANGER_COLOR}] hover:bg-red-700 text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
-              onClick={handleDeleteGarage}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="animate-spin w-5 h-5 mr-2" />
-              ) : null}
-              {isDeleting ? "Deleting..." : "Delete"}
-            </button>
           </div>
-        </div>
-      </CustomReusableModal>
+        )}
+      </div>
+
     </>
   );
 }
