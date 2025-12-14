@@ -41,7 +41,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -194,6 +194,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   ];
 
   const handleLogout = () => {
+    logout(); // Clear auth state
     router.push("/");
     toast.success("Logout successful");
   };
