@@ -4,24 +4,16 @@ import { useAuth } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { useGetCurrentSubscriptionQuery } from '@/rtk'
-import { Loader2 } from 'lucide-react'
+import LoadingSpinner from '@/components/reusable/LoadingSpinner'
 
 interface SubscriptionProtectionProps {
   children: React.ReactNode
 }
 
 export const SubscriptionProtection: React.FC<SubscriptionProtectionProps> = ({ children }) => {
-  const { user } = useAuth()
+  const { user, isLoading: isAuthLoading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  
-  // Fetch subscription data for garage users
-  const {
-    data: subscriptionData,
-    isLoading: isLoadingSubscription,
-  } = useGetCurrentSubscriptionQuery(undefined, {
-    skip: !user?.type || user.type.toLowerCase() !== "garage",
-  })
 
   // Protected routes that require active subscription
   const protectedRoutes = [
@@ -30,17 +22,27 @@ export const SubscriptionProtection: React.FC<SubscriptionProtectionProps> = ({ 
     '/garage/bookings',
   ]
 
+  // Check if current route is protected
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  const isGarageUser = user?.type?.toLowerCase() === 'garage'
+
+  // Fetch subscription data for garage users only on protected routes
+  const {
+    data: subscriptionData,
+    isLoading: isLoadingSubscription,
+  } = useGetCurrentSubscriptionQuery(undefined, {
+    skip: !isGarageUser || !isProtectedRoute || isAuthLoading,
+  })
+
   useEffect(() => {
-    // Only check for garage users
-    if (user?.type?.toLowerCase() !== 'garage') {
+    // Wait for auth to complete first
+    if (isAuthLoading) {
       return
     }
 
-    // Check if current route is protected
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-    
-    if (!isProtectedRoute) {
-      return // Not a protected route, allow access
+    // Only check for garage users on protected routes
+    if (!isGarageUser || !isProtectedRoute) {
+      return
     }
 
     // Wait for subscription data to load
@@ -56,39 +58,28 @@ export const SubscriptionProtection: React.FC<SubscriptionProtectionProps> = ({ 
     if (!hasActiveSubscription) {
       router.push('/garage/subscription')
     }
-  }, [user, pathname, subscriptionData, isLoadingSubscription, router])
+  }, [user, pathname, subscriptionData, isLoadingSubscription, router, isAuthLoading, isGarageUser, isProtectedRoute])
 
-  // Show loading while checking subscription (only for garage users on protected routes)
+  // Show loading only if auth is done and we're checking subscription
+  // Don't show if auth is still loading (let RouteProtection handle that)
   if (
-    user?.type?.toLowerCase() === 'garage' &&
-    protectedRoutes.some(route => pathname.startsWith(route)) &&
+    !isAuthLoading &&
+    isGarageUser &&
+    isProtectedRoute &&
     isLoadingSubscription
   ) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#19CA32]" />
-          <div className="text-lg text-gray-600">Checking subscription...</div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading..." />
   }
 
   // Show loading while redirecting (only for garage users on protected routes without active subscription)
   if (
-    user?.type?.toLowerCase() === 'garage' &&
-    protectedRoutes.some(route => pathname.startsWith(route)) &&
+    !isAuthLoading &&
+    isGarageUser &&
+    isProtectedRoute &&
     !isLoadingSubscription &&
     subscriptionData?.data?.status !== 'ACTIVE'
   ) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#19CA32]" />
-          <div className="text-lg text-gray-600">Redirecting to subscription page...</div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading..." />
   }
 
   return <>{children}</>
