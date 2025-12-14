@@ -33,7 +33,7 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetCurrentSubscriptionQuery } from "@/rtk/api/garage/subscriptionsMeApis";
+import { useGetCurrentSubscriptionQuery } from "@/rtk";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -51,7 +51,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
     isLoading: isLoadingSubscription,
   } = useGetCurrentSubscriptionQuery(undefined, {
     skip: !user?.type || user.type.toLowerCase() !== "garage",
-    refetchOnMountOrArgChange: true,
   });
 
   const menuItems = [
@@ -201,7 +200,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
   const handleActivateAccount = () => {
     router.push("/garage/subscription");
-    toast.success("Redirecting to subscription page");
+
   };
 
   return (
@@ -261,11 +260,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Bottom Section - Always at bottom */}
       <div className="mt-auto">
-        {/* role based alert - only show when no subscription exists */}
+        {/* role based alert - hide only when status is ACTIVE, show for all other cases */}
         {user?.type && 
          user.type.toLowerCase() === "garage" && 
          !isLoadingSubscription && 
-         (!subscriptionData?.success || !subscriptionData?.data) && (
+         (!subscriptionData?.success || 
+          !subscriptionData?.data || 
+          subscriptionData?.data?.status !== "ACTIVE") && (
           <div className="p-2">
             <div
               className="bg-red-500 text-white px-6 py-6 rounded-lg space-y-2"

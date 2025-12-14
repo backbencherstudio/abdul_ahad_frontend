@@ -1,7 +1,7 @@
 'use client'
 import { Check, FileText, Package, ShoppingCart, Star, TrendingUp } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
-import { useGetSubscriptionPlansQuery, useCheckoutSubscriptionMutation, useGetCurrentSubscriptionQuery, useAppDispatch, useAppSelector, setCheckoutLoading, setSelectedPlan } from '../../../../rtk'
+import { useGetSubscriptionPlansQuery, useCheckoutSubscriptionMutation, useGetCurrentSubscriptionQuery, useAppDispatch, useAppSelector, setCheckoutLoading, setSelectedPlan, subscriptionApi } from '../../../../rtk'
 import { PAGINATION_CONFIG } from '../../../../config/pagination.config'
 import CustomReusableModal from '../../../../components/reusable/Dashboard/Modal/CustomReusableModal'
 import SubscriptionDetails from '../../_components/Garage/Subscription/SubscriptionDetails'
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify'
 export default function SubscriptionPage() {
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
     const [showDetailsModal, setShowDetailsModal] = useState(false)
+    const [isCheckoutInProgress, setIsCheckoutInProgress] = useState(false)
 
 
     // Fetch subscription plans
@@ -25,54 +26,23 @@ export default function SubscriptionPage() {
         data: currentSubscriptionData,
         isLoading: isLoadingCurrent,
         refetch: refetchCurrentSubscription
-    } = useGetCurrentSubscriptionQuery(undefined, {
-        refetchOnFocus: true,
-        refetchOnReconnect: true,
-        refetchOnMountOrArgChange: true
-    })
+    } = useGetCurrentSubscriptionQuery()
     const [checkoutSubscription] = useCheckoutSubscriptionMutation()
 
 
     const dispatch = useAppDispatch()
-
-    const pollingRef = useRef<NodeJS.Timeout | null>(null)
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
     const handleSelectPlan = async (plan: any) => {
         setLoadingPlanId(plan.id)
         dispatch(setSelectedPlan(plan))
         dispatch(setCheckoutLoading(true))
+        setIsCheckoutInProgress(true)
+        
         try {
             const result = await checkoutSubscription({ plan_id: plan.id }).unwrap()
             if (result.success && result.data.checkout_url) {
                 window.open(result.data.checkout_url, '_blank')
-
-                // Begin short-lived polling to detect subscription activation after checkout
-                const startTime = Date.now()
-                if (pollingRef.current) clearInterval(pollingRef.current)
-                pollingRef.current = setInterval(async () => {
-                    try {
-                        const refetchResult = await refetchCurrentSubscription()
-                        const updated = (refetchResult as any)?.data?.data
-                        if (updated?.status === 'ACTIVE' && updated?.plan?.id === plan.id) {
-                            setLoadingPlanId(null)
-                            dispatch(setCheckoutLoading(false))
-                            dispatch(setSelectedPlan(null))
-                            if (pollingRef.current) {
-                                clearInterval(pollingRef.current)
-                                pollingRef.current = null
-                            }
-                        }
-                    } catch (e) {
-                        // swallow
-                    } finally {
-                        // Stop polling after 2 minutes max
-                        if (Date.now() - startTime > 120000 && pollingRef.current) {
-                            clearInterval(pollingRef.current)
-                            pollingRef.current = null
-                            dispatch(setCheckoutLoading(false))
-                        }
-                    }
-                }, 2000)
             }
         } catch (error) {
             const err: any = error
@@ -85,27 +55,65 @@ export default function SubscriptionPage() {
             }
             setLoadingPlanId(null)
             dispatch(setCheckoutLoading(false))
+            setIsCheckoutInProgress(false)
         }
     }
 
 
+    // Smart polling - only when checkout is in progress
     useEffect(() => {
-        const onFocus = () => {
-            refetchCurrentSubscription().then((res: any) => {
-                const updated = res?.data?.data
+        if (!isCheckoutInProgress) return
+
+        const checkSubscriptionStatus = async () => {
+            try {
+                // Invalidate cache to get fresh data
+                dispatch(subscriptionApi.util.invalidateTags(['Subscription', 'SubscriptionsMe']))
+                
+                const result = await refetchCurrentSubscription()
+                const updated = (result as any)?.data?.data
+                
                 if (updated?.status === 'ACTIVE') {
+                    // Payment successful!
                     setLoadingPlanId(null)
                     dispatch(setCheckoutLoading(false))
                     dispatch(setSelectedPlan(null))
+                    setIsCheckoutInProgress(false)
+                    
+                    // Stop polling
+                    if (pollingIntervalRef.current) {
+                        clearInterval(pollingIntervalRef.current)
+                        pollingIntervalRef.current = null
+                    }
+                    
+                    toast.success('Subscription activated successfully!')
                 }
-            })
+            } catch (error) {
+                // Silent error handling
+                console.error('Polling error:', error)
+            }
         }
-        window.addEventListener('focus', onFocus)
+
+        // Start polling every 5 seconds when checkout is in progress
+        pollingIntervalRef.current = setInterval(checkSubscriptionStatus, 5000)
+
+        // Stop polling after 5 minutes max
+        const timeoutId = setTimeout(() => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current)
+                pollingIntervalRef.current = null
+                setIsCheckoutInProgress(false)
+                setLoadingPlanId(null)
+                dispatch(setCheckoutLoading(false))
+            }
+        }, 300000) // 5 minutes
+
         return () => {
-            window.removeEventListener('focus', onFocus)
-            if (pollingRef.current) clearInterval(pollingRef.current)
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current)
+            }
+            clearTimeout(timeoutId)
         }
-    }, [refetchCurrentSubscription, dispatch])
+    }, [isCheckoutInProgress, dispatch, refetchCurrentSubscription])
 
 
     if (isLoading || isLoadingCurrent) {

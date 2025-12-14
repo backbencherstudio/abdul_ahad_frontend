@@ -35,6 +35,7 @@ export const subscriptionsMeApi = createApi({
         getCurrentSubscription: builder.query<CurrentSubscriptionResponse, void>({
             query: () => "/api/garage-dashboard/subscription/me",
             providesTags: ["SubscriptionsMe"],
+            keepUnusedDataFor: 300, // Keep cache for 5 minutes
         }),
     }),
 });
