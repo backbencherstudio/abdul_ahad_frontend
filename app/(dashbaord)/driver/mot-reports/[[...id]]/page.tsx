@@ -134,6 +134,7 @@ export default function MotReports() {
                             motReports={motReports}
                             onVehicleClick={handleVehicleClick}
                             selectedRegistration={selectedVehicleReg}
+                            isLoading={isLoadingVehicles}
                         />
                     </div>
 
