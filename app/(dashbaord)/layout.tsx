@@ -1,5 +1,6 @@
 import DashboardLayout from '@/components/reusable/Dashboard/MainLayout/DashboardLayout'
 import { RouteProtection } from '@/lib/routeProtection'
+import { SubscriptionProtection } from '@/lib/subscriptionProtection'
 
 export default function DashboardLayoutWrapper({
     children,
@@ -8,7 +9,9 @@ export default function DashboardLayoutWrapper({
 }) {
     return (
         <RouteProtection>
-            <DashboardLayout>{children}</DashboardLayout>
+            <SubscriptionProtection>
+                <DashboardLayout>{children}</DashboardLayout>
+            </SubscriptionProtection>
         </RouteProtection>
     )
 }
