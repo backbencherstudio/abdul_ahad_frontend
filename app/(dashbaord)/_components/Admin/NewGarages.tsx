@@ -220,14 +220,13 @@ export default function NewGarages() {
         </Link>
       </div>
 
-      {garagesInfo.isLoading ? (
-        <div className="flex justify-center items-center py-16">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <span className="ml-3 text-gray-600 font-medium">Loading garages...</span>
-        </div>
-      ) : (
-        <ReusableTable data={garagesData} columns={columns} className="mt-4" />
-      )}
+      <ReusableTable
+        data={garagesData}
+        columns={columns}
+        className="mt-4"
+        isLoading={garagesInfo.isLoading}
+        skeletonRows={5}
+      />
 
       <CustomReusableModal
         isOpen={confirmModal.isOpen}

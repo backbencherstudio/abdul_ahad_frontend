@@ -436,20 +436,15 @@ export default function ManageBookings() {
             </div>
 
             {/* Table */}
-            {isLoading ? (
-                <div className="flex justify-center items-center py-16">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-                    <span className="ml-3 text-gray-600 font-medium">
-                        Loading bookings...
-                    </span>
-                </div>
-            ) : (
-                <>
-                    <ReusableTable
-                        data={bookings}
-                        columns={columns}
-                        className="mt-5"
-                    />
+            <>
+                <ReusableTable
+                    data={bookings}
+                    columns={columns}
+                    className="mt-5"
+                    isLoading={isLoading}
+                    skeletonRows={pagination.itemsPerPage}
+                />
+                {!isLoading && (
                     <ReusablePagination
                         currentPage={pagination.currentPage}
                         totalPages={totalPages}
@@ -459,8 +454,8 @@ export default function ManageBookings() {
                         onItemsPerPageChange={handleItemsPerPageChange}
                         className=""
                     />
-                </>
-            )}
+                )}
+            </>
 
             {/* Status Update Confirmation Modal */}
             <CustomReusableModal
