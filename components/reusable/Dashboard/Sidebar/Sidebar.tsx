@@ -158,6 +158,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
     },
     {
       icon: Truck,
+      label: "Vehicles Management",
+      href: "/admin/manage-drivers",
+      role: "admin",
+    },
+    {
+      icon: Users,
       label: "Drivers Management",
       href: "/admin/manage-drivers",
       role: "admin",
