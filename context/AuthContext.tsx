@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { loginApi, AuthMeApi } from '@/apis/auth/authApis'
+import { resetReduxStore } from '@/lib/resetReduxStore'
 
 // Types
 interface User {
@@ -136,6 +137,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Logout
   const logout = (): void => {
+    // Reset all Redux state and RTK Query cache
+    resetReduxStore()
+    
+    // Clear token and user state
     localStorage.removeItem('token')
     setUser(null)
   }

@@ -15,3 +15,4 @@ export {
   setItemsPerPage as setRoleItemsPerPage,
 } from "./slices/admin/roleManagementSlice";
 export * from "./slices/garage/pricingSlice";
+export { logout, login } from "./slices/authSlice";

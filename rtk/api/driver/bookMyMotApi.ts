@@ -128,6 +128,7 @@ export const bookMyMotApi = createApi({
                 },
             }),
             providesTags: ["BookMyMot"],
+            keepUnusedDataFor: 0, 
         }),
 
         // garage details 
@@ -188,6 +189,7 @@ export const bookMyMotApi = createApi({
                 return response
             },
             providesTags: ["BookMyMot"],
+            // casg
             keepUnusedDataFor: 0,
         }),
     }),

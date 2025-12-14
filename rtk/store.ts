@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { subscriptionApi } from "./api/admin/garages-management/subscriptionApis";
 import { usersManagementApi } from "./api/admin/usersManagentApis";
 import { roleManagementApi } from "./api/admin/roleManagementApis";
@@ -27,38 +27,52 @@ import { bookingManagementApi } from "./api/admin/booking-management/bookingMana
 import bookingManagementSlice from "./slices/admin/bookingManagementSlice";
 import { subscriptionsMeApi } from "./api/garage/subscriptionsMeApis";
 import { invoicesApi } from "./api/garage/invoiceApis";
+import authReducer from "./slices/authSlice";
+
+// Combine all reducers
+const appReducer = combineReducers({
+  auth: authReducer,
+  [subscriptionApi.reducerPath]: subscriptionApi.reducer,
+  [usersManagementApi.reducerPath]: usersManagementApi.reducer,
+  [roleManagementApi.reducerPath]: roleManagementApi.reducer,
+  [garagesApi.reducerPath]: garagesApi.reducer,
+  [subscriptionsManagementApi.reducerPath]:
+    subscriptionsManagementApi.reducer,
+  [dashboardApi.reducerPath]: dashboardApi.reducer,
+  [vehiclesApi.reducerPath]: vehiclesApi.reducer,
+  [driversApi.reducerPath]: driversApi.reducer,
+  [reminderApis.reducerPath]: reminderApis.reducer,
+  [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
+  [profileApi.reducerPath]: profileApi.reducer,
+  [pricingApi.reducerPath]: pricingApi.reducer,
+  [bookingsApi.reducerPath]: bookingsApi.reducer,
+  [contactApis.reducerPath]: contactApis.reducer,
+  [driverContactApis.reducerPath]: driverContactApis.reducer,
+  [vehiclesApis.reducerPath]: vehiclesApis.reducer,
+  [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
+  [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
+  [subscriptionsMeApi.reducerPath]: subscriptionsMeApi.reducer,
+  [invoicesApi.reducerPath]: invoicesApi.reducer,
+  subscription: subscriptionSlice,
+  usersManagement: usersManagementSlice,
+  roleManagement: roleManagementSlice,
+  pricing: pricingReducer,
+  vehicles: vehiclesReducer,
+  bookMyMot: bookMyMotReducer,
+  bookingManagement: bookingManagementSlice,
+});
+
+// Root reducer that resets entire store on logout
+const rootReducer = (state: ReturnType<typeof appReducer> | undefined, action: any) => {
+  // Reset entire store when logout action is dispatched
+  if (action.type === "auth/logout") {
+    state = undefined;
+  }
+  return appReducer(state, action);
+};
 
 export const store = configureStore({
-  reducer: {
-    [subscriptionApi.reducerPath]: subscriptionApi.reducer,
-    [usersManagementApi.reducerPath]: usersManagementApi.reducer,
-    [roleManagementApi.reducerPath]: roleManagementApi.reducer,
-    [garagesApi.reducerPath]: garagesApi.reducer,
-    [subscriptionsManagementApi.reducerPath]:
-      subscriptionsManagementApi.reducer,
-    [dashboardApi.reducerPath]: dashboardApi.reducer,
-    [vehiclesApi.reducerPath]: vehiclesApi.reducer,
-    [driversApi.reducerPath]: driversApi.reducer,
-    [reminderApis.reducerPath]: reminderApis.reducer,
-    [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
-    [profileApi.reducerPath]: profileApi.reducer,
-    [pricingApi.reducerPath]: pricingApi.reducer,
-    [bookingsApi.reducerPath]: bookingsApi.reducer,
-    [contactApis.reducerPath]: contactApis.reducer,
-    [driverContactApis.reducerPath]: driverContactApis.reducer,
-    [vehiclesApis.reducerPath]: vehiclesApis.reducer,
-    [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
-    [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
-    [subscriptionsMeApi.reducerPath]: subscriptionsMeApi.reducer,
-    [invoicesApi.reducerPath]: invoicesApi.reducer,
-    subscription: subscriptionSlice,
-    usersManagement: usersManagementSlice,
-    roleManagement: roleManagementSlice,
-    pricing: pricingReducer,
-    vehicles: vehiclesReducer,
-    bookMyMot: bookMyMotReducer,
-    bookingManagement: bookingManagementSlice,
-  },
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       subscriptionApi.middleware,
