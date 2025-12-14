@@ -6,9 +6,10 @@ import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 // import InvoicePageDesign from '../../_components/Garage/InvoicePageDesign' // Modal not needed
 // import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal' // Modal not needed
-import { useGetInvoicesQuery } from '@/rtk'
+import { useGetInvoicesQuery, useDownloadInvoiceMutation } from '@/rtk'
 import { toast } from 'react-toastify'
 import { useDebounce } from '@/hooks/useDebounce'
+import { Loader2 } from 'lucide-react'
 
 export default function Invoices() {
     const [searchTerm, setSearchTerm] = useState('')
@@ -31,6 +32,9 @@ export default function Invoices() {
         limit: itemsPerPage,
         search: debouncedSearch
     })
+
+    // Download invoice mutation
+    const [downloadInvoice, { isLoading: isDownloading }] = useDownloadInvoiceMutation()
 
     // Define table columns
     const columns = [
@@ -85,24 +89,32 @@ export default function Invoices() {
         setCurrentPage(1)
     }
 
-    const handleDownload = (invoice: any) => {
-        // Just open PDF in new tab - no modal needed
-        if (invoice.pdf_url) {
-            window.open(invoice.pdf_url, '_blank')
-        } else {
-            toast.error('PDF not available for this invoice')
-        }
+    const handleDownload = async (invoice: any) => {
+        try {
+            // Call download API
+            const result = await downloadInvoice(invoice.id).unwrap()
 
-        // Modal commented out - not needed anymore
-        // const mappedInvoice = {
-        //     invoice_id: invoice.invoice_number,
-        //     membership_period: invoice.membership_period,
-        //     issue_date: invoice.issue_date,
-        //     invoice_amount: parseFloat(invoice.amount),
-        //     invoice_status: invoice.status
-        // }
-        // setSelectedInvoice(mappedInvoice)
-        // setIsModalOpen(true)
+            // Get PDF URL from response
+            const pdfUrl = result?.data?.pdf_url
+
+            if (pdfUrl) {
+                // Create a temporary anchor element to trigger download
+                const link = document.createElement('a')
+                link.href = pdfUrl
+                link.download = `invoice-${result?.data?.invoice_number || invoice.invoice_number}.pdf`
+                link.target = '_blank'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+
+                toast.success('Invoice downloaded successfully')
+            } else {
+                toast.error('PDF URL not found in response')
+            }
+        } catch (error: any) {
+            const errorMessage = error?.data?.message || error?.message || 'Failed to download invoice'
+            toast.error(errorMessage)
+        }
     }
 
     // Define actions with download button
@@ -115,9 +127,19 @@ export default function Invoices() {
                     size="sm"
                     className="flex cursor-pointer items-center gap-2 text-red-600 hover:text-red-800"
                     onClick={() => handleDownload(row)}
+                    disabled={isDownloading}
                 >
-                    <Download className="h-4 w-4" />
-                    <span>Download PDF</span>
+                    {isDownloading ? (
+                        <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Downloading...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Download className="h-4 w-4" />
+                            <span>Download PDF</span>
+                        </>
+                    )}
                 </Button>
             )
         }

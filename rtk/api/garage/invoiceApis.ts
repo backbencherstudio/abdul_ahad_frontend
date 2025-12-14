@@ -27,6 +27,12 @@ export interface Invoice {
     pdf_url: string;
 }
 
+export interface InvoiceResponse {
+    success: boolean;
+    message: string;
+    data: Invoice;
+}
+
 
 export const invoicesApi = createApi({
     reducerPath: "invoicesApi",
@@ -42,9 +48,32 @@ export const invoicesApi = createApi({
                 return `/api/garage-dashboard/invoices?${params.toString()}`;
             },
             providesTags: ["Invoices"],
-            keepUnusedDataFor: 0, // 5 minutes cache
+            keepUnusedDataFor: 0, 
+        }),
+        // get invoice by id api/garage-dashboard/invoices/cmj5b8qyy0007kgq4h2i45equ
+        getInvoiceById: builder.query<InvoiceResponse, string>({
+            query: (id) => `/api/garage-dashboard/invoices/${id}`,
+            providesTags: ["Invoices"],
+            keepUnusedDataFor: 0,
+        }),
+
+        // /api/garage-dashboard/invoices/cmj5b8qyy0007kgq4h2i45equ/download
+        downloadInvoice: builder.mutation<{
+            success: boolean;
+            message: string;
+            data: {
+                pdf_url: string;
+                invoice_id: string;
+                invoice_number: string;
+            };
+        }, string>({
+            query: (id) => ({
+                url: `/api/garage-dashboard/invoices/${id}/download`,
+                method: "POST",
+            }),
+            invalidatesTags: ["Invoices"],
         }),
     }),
 });
 
-export const { useGetInvoicesQuery } = invoicesApi;
+export const { useGetInvoicesQuery, useGetInvoiceByIdQuery, useDownloadInvoiceMutation } = invoicesApi;

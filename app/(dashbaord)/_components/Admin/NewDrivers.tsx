@@ -22,7 +22,7 @@ export default function NewDrivers() {
             email: driver.email || '',
             phone: driver.phone_number || 'N/A',
             VehicleNumber: driver.vehicle_registration_number || 'N/A',
-            motDate: 'N/A', // Vehicle MOT date not in main response
+            motDate: 'N/A', 
         }));
     }, [apiData]);
 
