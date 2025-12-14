@@ -1,25 +1,42 @@
 'use client'
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect } from 'react'
 import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
 import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination'
-import invoicesData from '@/public/data/invoices.json'
 import { Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import InvoicePageDesign from '../../_components/Garage/InvoicePageDesign'
-import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
+// import InvoicePageDesign from '../../_components/Garage/InvoicePageDesign' // Modal not needed
+// import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal' // Modal not needed
+import { useGetInvoicesQuery } from '@/rtk'
+import { toast } from 'react-toastify'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function Invoices() {
     const [searchTerm, setSearchTerm] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
     const [itemsPerPage, setItemsPerPage] = useState(10)
-    const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    // const [selectedInvoice, setSelectedInvoice] = useState<any>(null) // Modal not needed
+    // const [isModalOpen, setIsModalOpen] = useState(false) // Modal not needed
+
+    // Debounce search term
+    const debouncedSearch = useDebounce(searchTerm, 500)
+
+    // Reset to first page when search changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [debouncedSearch])
+
+    // Fetch invoices from API with debounced search
+    const { data: invoicesData, isLoading, error } = useGetInvoicesQuery({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: debouncedSearch
+    })
 
     // Define table columns
     const columns = [
         {
-            key: 'invoice_id',
-            label: 'Invoice ID',
+            key: 'invoice_number',
+            label: 'Invoice Number',
         },
         {
             key: 'membership_period',
@@ -37,39 +54,27 @@ export default function Invoices() {
             }
         },
         {
-            key: 'invoice_amount',
+            key: 'amount',
             label: 'Amount',
-            render: (value: number) => `£${value.toFixed(2)}`
+            render: (value: string) => `£${parseFloat(value).toFixed(2)}`
         },
         {
-            key: 'invoice_status',
+            key: 'status',
             label: 'Status',
             render: (value: string) => {
-                return <span className={`capitalize ${value === 'paid' ? 'bg-[#E7F4F3] text-[#19CA32] px-5 py-1 rounded-md border border-[#0E9384]' : 'text-red-500 bg-red-50 px-2 py-1 rounded-md border border-red-500'}`}>{value}</span>
+                const statusColors = {
+                    'PAID': 'bg-[#E7F4F3] text-[#19CA32] border-[#0E9384]',
+                    'PENDING': 'bg-yellow-50 text-yellow-800 border-yellow-500',
+                    'OVERDUE': 'bg-red-50 text-red-600 border-red-500'
+                }
+                return (
+                    <span className={`capitalize px-5 py-1 rounded-md border ${statusColors[value as keyof typeof statusColors] || 'bg-gray-50 text-gray-600 border-gray-500'}`}>
+                        {value.toLowerCase()}
+                    </span>
+                )
             }
         }
     ]
-
-    // Filter data based on search
-    const filteredData = useMemo(() => {
-        let filtered = invoicesData
-
-        // Filter by search term
-        if (searchTerm) {
-            filtered = filtered.filter(invoice =>
-                Object.values(invoice).some(value =>
-                    value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-                )
-            )
-        }
-
-        return filtered
-    }, [searchTerm])
-
-    // Pagination logic
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage)
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page)
@@ -81,8 +86,23 @@ export default function Invoices() {
     }
 
     const handleDownload = (invoice: any) => {
-        setSelectedInvoice(invoice)
-        setIsModalOpen(true)
+        // Just open PDF in new tab - no modal needed
+        if (invoice.pdf_url) {
+            window.open(invoice.pdf_url, '_blank')
+        } else {
+            toast.error('PDF not available for this invoice')
+        }
+
+        // Modal commented out - not needed anymore
+        // const mappedInvoice = {
+        //     invoice_id: invoice.invoice_number,
+        //     membership_period: invoice.membership_period,
+        //     issue_date: invoice.issue_date,
+        //     invoice_amount: parseFloat(invoice.amount),
+        //     invoice_status: invoice.status
+        // }
+        // setSelectedInvoice(mappedInvoice)
+        // setIsModalOpen(true)
     }
 
     // Define actions with download button
@@ -102,6 +122,9 @@ export default function Invoices() {
             )
         }
     ]
+
+    const invoices = invoicesData?.data || []
+    const meta = invoicesData?.meta || { total: 0, page: 1, limit: 10, totalPages: 1 }
 
     return (
         <div className="">
@@ -127,25 +150,64 @@ export default function Invoices() {
                 </div>
             </div>
 
-            <ReusableTable
-                data={paginatedData}
-                columns={columns}
-                actions={actions}
-                className=""
-            />
+            {/* Show error state */}
+            {error && !isLoading && (
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="text-red-600 text-lg font-medium mb-2">Error loading invoices</div>
+                    <p className="text-gray-600">Please try again later</p>
+                </div>
+            )}
 
-            <ReusablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredData.length}
-                onPageChange={handlePageChange}
-                onItemsPerPageChange={handleItemsPerPageChange}
-                className=""
-            />
+            {/* No invoices - empty state */}
+            {!isLoading && !error && invoices.length === 0 && !searchTerm && (
+                <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+                    <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div className="text-gray-600 text-lg font-medium mb-2">No invoices found</div>
+                    <p className="text-gray-500">Invoices will appear here once generated</p>
+                </div>
+            )}
 
-            {/* Invoice Preview Modal */}
-            <CustomReusableModal
+            {/* No search results */}
+            {!isLoading && !error && invoices.length === 0 && searchTerm && (
+                <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+                    <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <div className="text-gray-600 text-lg font-medium mb-2">No results found</div>
+                    <p className="text-gray-500">Try adjusting your search terms</p>
+                </div>
+            )}
+
+            {/* Table - show when loading or has data */}
+            {(isLoading || (!error && invoices.length > 0)) && (
+                <>
+                    <ReusableTable
+                        data={invoices}
+                        columns={columns}
+                        actions={actions}
+                        className=""
+                        isLoading={isLoading}
+                        skeletonRows={itemsPerPage}
+                    />
+
+                    {!isLoading && (
+                        <ReusablePagination
+                            currentPage={meta.page}
+                            totalPages={meta.totalPages}
+                            itemsPerPage={meta.limit}
+                            totalItems={meta.total}
+                            onPageChange={handlePageChange}
+                            onItemsPerPageChange={handleItemsPerPageChange}
+                            className=""
+                        />
+                    )}
+                </>
+            )}
+
+            {/* Invoice Preview Modal - Not needed anymore, PDF opens in new tab */}
+            {/* <CustomReusableModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title="Invoice Preview"
@@ -154,7 +216,7 @@ export default function Invoices() {
                 {selectedInvoice && (
                     <InvoicePageDesign invoice={selectedInvoice} />
                 )}
-            </CustomReusableModal>
+            </CustomReusableModal> */}
         </div>
     )
 }

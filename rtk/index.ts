@@ -5,6 +5,7 @@ export { subscriptionApi } from "./api/admin/garages-management/subscriptionApis
 export * from "./api/admin/usersManagentApis";
 export * from "./api/admin/roleManagementApis";
 export * from "./api/garage/pricingApis";
+export * from "./api/garage/invoiceApis";
 export * from "./slices/subscriptionSlice";
 export * from "./slices/admin/usersManagentSlice";
 export {
