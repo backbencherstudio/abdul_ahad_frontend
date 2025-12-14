@@ -137,6 +137,7 @@ export const bookMyMotApi = createApi({
                 method: "GET",
             }),
             providesTags: ["BookMyMot"],
+            keepUnusedDataFor: 0,
         }),
 
         // get garage slots
@@ -156,6 +157,7 @@ export const bookMyMotApi = createApi({
                 return { slots: [] };
             },
             providesTags: ["BookMyMot"],
+            keepUnusedDataFor: 0,
         }),
 
         // book slot /api/vehicles/book-slot 
@@ -165,7 +167,7 @@ export const bookMyMotApi = createApi({
                 method: "POST",
                 body: body,
             }),
-            invalidatesTags: ["BookMyMot"],
+            invalidatesTags: ["BookMyMot"]
         }),
 
         // get my bookings /api/vehicles/my-bookings?search=&status=&page=&limit=  pending, accepted, rejected
@@ -186,6 +188,7 @@ export const bookMyMotApi = createApi({
                 return response
             },
             providesTags: ["BookMyMot"],
+            keepUnusedDataFor: 0,
         }),
     }),
 });
