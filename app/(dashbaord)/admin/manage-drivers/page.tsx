@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import {
   useGetADriverDetailsQuery,
   useGetAllDriversQuery,
-} from "@/rtk/api/admin/driverManagement/driverManagement";
+} from "@/rtk/api/admin/driverManagement/driver-managementApis";
 import { useSendReminderToDriversMutation } from "@/rtk/api/admin/vehiclesManagements/reminderApis";
 import {
   Dialog,

@@ -9,7 +9,7 @@ import { garagesApi } from "./api/admin/garages-management/listAllGarageApi";
 import { subscriptionsManagementApi } from "./api/admin/subscriptions-management/subscriptionManagementAPI";
 import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
 import { vehiclesApi } from "./api/admin/vehiclesManagements/vehicles-management";
-import { driversApi } from "./api/admin/driverManagement/driverManagement";
+import { driversApi } from "./api/admin/driverManagement/driver-managementApis";
 import { reminderApis } from "./api/admin/vehiclesManagements/reminderApis";
 import { garageAvailabilityApi } from "./api/garage/api";
 import { profileApi } from "./api/garage/profileApis";
