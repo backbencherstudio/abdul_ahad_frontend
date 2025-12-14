@@ -73,8 +73,7 @@ export type Vehicle = {
 };
 
 export type DriversResponseData = {
-  drivers?: Driver[];
-  vehicles?: Vehicle[];
+  drivers: Driver[];
   pagination: Pagination;
 };
 
@@ -132,6 +131,7 @@ export const driversApi = createApi({
         };
       },
       providesTags: ["Drivers"],
+      keepUnusedDataFor: 0,
     }),
 
     // Get a driver details
@@ -144,6 +144,7 @@ export const driversApi = createApi({
         method: "GET",
       }),
       providesTags: ["Drivers"],
+      keepUnusedDataFor: 0,
     }),
 
   }),

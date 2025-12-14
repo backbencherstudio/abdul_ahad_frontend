@@ -17,10 +17,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  useGetADriverDetailsQuery,
-  useGetAllDriversQuery,
-} from "@/rtk/api/admin/drivers-management/allDriversList";
-import { useSendReminderToDriversMutation } from "@/rtk/api/admin/drivers-management/reminderApis";
+  useGetAVehicleDetailsQuery,
+  useGetAllVehiclesQuery,
+} from "@/rtk/api/admin/vehiclesManagements/vehicles-management";
+import { useSendReminderToDriversMutation } from "@/rtk/api/admin/vehiclesManagements/reminderApis";
 import {
   Dialog,
   DialogContent,
@@ -31,14 +31,15 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
 
-const DriverDetailsDropdown = React.memo(({ driverId }: { driverId: string }) => {
+const DriverDetailsDropdown = React.memo(({ vehicleId }: { vehicleId: string }) => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
-  const { data: driverData, isLoading, isError } = useGetADriverDetailsQuery(driverId || '', {
-    skip: !dropdownOpen || !driverId,
+  const { data: vehicleData, isLoading, isError } = useGetAVehicleDetailsQuery(vehicleId || '', {
+    skip: !dropdownOpen || !vehicleId,
     refetchOnMountOrArgChange: true,
   });
 
-  const singleDriver = driverData?.data;
+  const vehicle = vehicleData?.data;
+  const singleDriver = vehicle?.user;
 
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
@@ -55,31 +56,23 @@ const DriverDetailsDropdown = React.memo(({ driverId }: { driverId: string }) =>
             <span className="ml-2 text-sm text-gray-500">Loading...</span>
           </div>
         )}
-        {isError && <div className="text-sm text-red-500 py-4">Failed to load driver details</div>}
-        {!isLoading && !isError && singleDriver && (
+        {isError && <div className="text-sm text-red-500 py-4">Failed to load vehicle details</div>}
+        {!isLoading && !isError && vehicle && singleDriver && (
           <div>
-            <DetailRow label="Driver Name" value={singleDriver.name} />
-            <DetailRow label="Email" value={singleDriver.email} />
-            <DetailRow label="Phone Number" value={singleDriver.phone_number} />
+            <DetailRow label="Vehicle Registration" value={vehicle.registration_number} />
+            <DetailRow label="Make" value={vehicle.make} />
+            <DetailRow label="Model" value={vehicle.model} />
+            <DetailRow label="Color" value={vehicle.color} />
             <DetailRow
-              label="Address"
-              value={[
-                singleDriver.address,
-                singleDriver.city,
-                singleDriver.state,
-                singleDriver.country,
-                singleDriver.zip_code,
-              ].filter(Boolean).join(", ") || "N/A"}
+              label="MOT Expiry Date"
+              value={vehicle.mot_expiry_date ? format(new Date(vehicle.mot_expiry_date), "dd/MM/yyyy") : "N/A"}
             />
-            <DetailRow label="Status" value={singleDriver.status === 1 ? "Active" : "Inactive"} />
-            <DetailRow
-              label="Created At"
-              value={singleDriver.created_at ? new Date(singleDriver.created_at).toLocaleString() : "N/A"}
-            />
-            <DetailRow
-              label="Approved At"
-              value={singleDriver.approved_at ? new Date(singleDriver.approved_at).toLocaleString() : "N/A"}
-            />
+            <div className="border-t my-3 pt-3">
+              <div className="text-xs font-semibold text-gray-700 mb-2">Driver Information</div>
+              <DetailRow label="Driver Name" value={singleDriver.name} />
+              <DetailRow label="Email" value={singleDriver.email} />
+              <DetailRow label="Phone Number" value={singleDriver.phone_number || "N/A"} />
+            </div>
           </div>
         )}
       </DropdownMenuContent>
@@ -146,7 +139,7 @@ export default function VehiclesManagement() {
     setCurrentPage(1);
   }, [debouncedSearch, startDate, endDate]);
 
-  const { data: apiData, isLoading } = useGetAllDriversQuery({
+  const { data: apiData, isLoading } = useGetAllVehiclesQuery({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch || undefined,
@@ -234,7 +227,7 @@ export default function VehiclesManagement() {
       key: "driver_details",
       label: "Driver Details",
       width: "15%",
-      render: (_: string, row: any) => <DriverDetailsDropdown driverId={row.driverId} />,
+      render: (_: string, row: any) => <DriverDetailsDropdown vehicleId={row.id} />,
     },
     { key: "email", label: "Email", width: "20%" },
     { key: "phone_number", label: "Phone", width: "15%", render: (value: any) => value || "—" },

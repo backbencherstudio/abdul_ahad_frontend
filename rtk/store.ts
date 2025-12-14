@@ -8,8 +8,9 @@ import roleManagementSlice from "./slices/admin/roleManagementSlice";
 import { garagesApi } from "./api/admin/garages-management/listAllGarageApi";
 import { subscriptionsManagementApi } from "./api/admin/subscriptions-management/subscriptionManagementAPI";
 import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
-import { driversApi } from "./api/admin/drivers-management/allDriversList";
-import { reminderApis } from "./api/admin/drivers-management/reminderApis";
+import { vehiclesApi } from "./api/admin/vehiclesManagements/vehicles-management";
+import { driversApi } from "./api/admin/driverManagement/driverManagement";
+import { reminderApis } from "./api/admin/vehiclesManagements/reminderApis";
 import { garageAvailabilityApi } from "./api/garage/api";
 import { profileApi } from "./api/garage/profileApis";
 import { apiClient } from "./api/garage/api";
@@ -36,6 +37,7 @@ export const store = configureStore({
     [subscriptionsManagementApi.reducerPath]:
       subscriptionsManagementApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
+    [vehiclesApi.reducerPath]: vehiclesApi.reducer,
     [driversApi.reducerPath]: driversApi.reducer,
     [reminderApis.reducerPath]: reminderApis.reducer,
     [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
@@ -63,6 +65,7 @@ export const store = configureStore({
       usersManagementApi.middleware,
       roleManagementApi.middleware,
       garagesApi.middleware,
+      vehiclesApi.middleware,
       driversApi.middleware,
       reminderApis.middleware,
       subscriptionsManagementApi.middleware,
