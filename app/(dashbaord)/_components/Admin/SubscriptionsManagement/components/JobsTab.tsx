@@ -20,7 +20,7 @@ interface Props {
 
 export default function JobsTab({ subscriptionId, selectedJobType, onJobTypeChange }: Props) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  
+
   const migrationJobs = useGetMigrationJobsQuery(
     { id: subscriptionId, job_type: selectedJobType },
     { refetchOnMountOrArgChange: true }
@@ -96,6 +96,7 @@ export default function JobsTab({ subscriptionId, selectedJobType, onJobTypeChan
           variant={selectedJobType === undefined ? 'default' : 'outline'}
           onClick={() => onJobTypeChange(undefined)}
           size="sm"
+          className="cursor-pointer"
         >
           All Jobs
         </Button>
@@ -103,6 +104,7 @@ export default function JobsTab({ subscriptionId, selectedJobType, onJobTypeChan
           variant={selectedJobType === 'NOTICE' ? 'default' : 'outline'}
           onClick={() => onJobTypeChange('NOTICE')}
           size="sm"
+          className="cursor-pointer"
         >
           Notices
         </Button>
@@ -110,6 +112,7 @@ export default function JobsTab({ subscriptionId, selectedJobType, onJobTypeChan
           variant={selectedJobType === 'MIGRATION' ? 'default' : 'outline'}
           onClick={() => onJobTypeChange('MIGRATION')}
           size="sm"
+          className="cursor-pointer"
         >
           Migrations
         </Button>

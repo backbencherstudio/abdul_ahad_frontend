@@ -8,10 +8,10 @@ import {
   useGetASubscriptionQuery,
   JobType,
 } from '@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI';
-import SubscriptionDetailsTab from './components/SubscriptionDetailsTab';
-import MigrationTab from './components/MigrationTab';
-import JobsTab from './components/JobsTab';
-import GarageSubscriptionsTab from './components/GarageSubscriptionsTab';
+import SubscriptionDetailsTab from '../../../_components/Admin/SubscriptionsManagement/components/SubscriptionDetailsTab';
+import MigrationTab from '../../../_components/Admin/SubscriptionsManagement/components/MigrationTab';
+import JobsTab from '../../../_components/Admin/SubscriptionsManagement/components/JobsTab';
+import GarageSubscriptionsTab from '../../../_components/Admin/SubscriptionsManagement/components/GarageSubscriptionsTab';
 
 export default function SubscriptionDetailsPage() {
   const params = useParams();
@@ -92,7 +92,7 @@ export default function SubscriptionDetailsPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 -mb-px whitespace-nowrap ${
+                className={`px-4 cursor-pointer py-3 font-medium text-sm transition-colors border-b-2 -mb-px whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'border-green-600 text-green-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'

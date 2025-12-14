@@ -78,7 +78,7 @@ export default function MigrationTab({ subscriptionId }: Props) {
         <div className="flex gap-3 min-w-max">
           <Button
             onClick={handleSyncToStripe}
-            className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+            className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap cursor-pointer"
             disabled={isSyncing}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
@@ -86,7 +86,7 @@ export default function MigrationTab({ subscriptionId }: Props) {
           </Button>
           <Button
             onClick={() => setOpenPriceDialog(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white whitespace-nowrap"
+            className="bg-purple-600 hover:bg-purple-700 text-white whitespace-nowrap cursor-pointer"
             disabled={isCreatingPrice}
           >
             <Database className="mr-2 h-4 w-4" />
@@ -94,7 +94,7 @@ export default function MigrationTab({ subscriptionId }: Props) {
           </Button>
           <Button
             onClick={handleSendNotices}
-            className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap"
+            className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap cursor-pointer"
             disabled={isSendingNotices}
           >
             <Mail className="mr-2 h-4 w-4" />
@@ -102,7 +102,7 @@ export default function MigrationTab({ subscriptionId }: Props) {
           </Button>
           <Button
             onClick={handleBulkMigrate}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white whitespace-nowrap"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white whitespace-nowrap cursor-pointer"
             disabled={isBulkMigrating}
           >
             <ArrowRight className="mr-2 h-4 w-4" />

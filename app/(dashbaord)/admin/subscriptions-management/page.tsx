@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SubscriptionsManagement() {
   const router = useRouter();
@@ -194,26 +195,64 @@ export default function SubscriptionsManagement() {
       </div>
 
       {/* Subscription Cards Grid */}
-      <div className="mt-5">
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-8">
         {allSubscriptions.isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+          <div className="w-full max-w-md">
+            {/* Shimmer Skeleton Card */}
+            <div className="bg-white rounded-lg border-2 border-green-200 p-6 shadow-sm animate-pulse">
+              {/* Title Skeleton */}
+              <Skeleton className="h-8 w-3/4 mb-2" />
+
+              {/* Description Skeleton */}
+              <Skeleton className="h-4 w-full mb-6" />
+              <Skeleton className="h-4 w-5/6 mb-6" />
+
+              {/* Membership Section Skeleton */}
+              <div className="mb-6">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <div className="flex items-baseline gap-2 mb-1">
+                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+                <Skeleton className="h-3 w-full" />
+              </div>
+
+              {/* Button Skeleton */}
+              <Skeleton className="h-10 w-full mb-6 rounded-md" />
+
+              {/* Features Section Skeleton */}
+              <div>
+                <Skeleton className="h-4 w-20 mb-3" />
+                <div className="space-y-3">
+                  {[1, 2, 3, 4, 5].map((index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <Skeleton className="h-5 w-5 rounded mt-0.5" />
+                      <Skeleton className="h-4 flex-1" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status Badge Skeleton */}
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            </div>
           </div>
         ) : allSubscriptions?.data?.data?.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center text-gray-500">
             No subscriptions found. Create your first subscription!
           </div>
         ) : (
-          <div className="flex justify-center">
-            <div className="">
+          <div className="w-full max-w-md">
             {allSubscriptions?.data?.data?.map((subscription: any) => {
               const features = getFeatures(subscription);
               const price = formatPrice(subscription.price_pence);
-              
+
               return (
                 <div
                   key={subscription.id}
-                  className="bg-white rounded-lg border-2 border-green-200 p-6 shadow-sm hover:shadow-md transition-shadow w-full max-w-md"
+                  className="bg-white rounded-lg border-2 border-green-200 p-6 shadow-sm hover:shadow-md transition-shadow w-full"
                 >
                   {/* Title */}
                   <h2 className="text-2xl font-bold text-black mb-2">
@@ -246,7 +285,7 @@ export default function SubscriptionsManagement() {
                   {/* Details Button */}
                   <Button
                     onClick={() => handleViewDetails(subscription.id)}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md mb-6"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-md mb-6 cursor-pointer"
                   >
                     Details
                   </Button>
@@ -274,11 +313,10 @@ export default function SubscriptionsManagement() {
                   {/* Status Badge */}
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <span
-                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium ${
-                        subscription.is_active
+                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium ${subscription.is_active
                           ? "bg-green-100 text-green-800 border border-green-300"
                           : "bg-red-100 text-red-800 border border-red-300"
-                      }`}
+                        }`}
                     >
                       {subscription.is_active ? "Active" : "Inactive"}
                     </span>
@@ -286,7 +324,6 @@ export default function SubscriptionsManagement() {
                 </div>
               );
             })}
-            </div>
           </div>
         )}
       </div>
