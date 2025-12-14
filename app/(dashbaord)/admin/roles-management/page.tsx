@@ -227,12 +227,7 @@ export default function RolesManagement() {
 
             {/* Table */}
             <div className="">
-                {isLoading ? (
-                    <div className="flex justify-center items-center py-16">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-                        <span className="ml-3 text-gray-600 font-medium">Loading roles...</span>
-                    </div>
-                ) : error ? (
+                {error ? (
                     <div className="text-center py-16">
                         <div className="text-red-600 mb-4 font-semibold">Error loading roles</div>
                         <button
@@ -242,7 +237,7 @@ export default function RolesManagement() {
                             Try again
                         </button>
                     </div>
-                ) : roles.length === 0 ? (
+                ) : !isLoading && roles.length === 0 ? (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 text-center py-16">
                         <Shield className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                         <p className="text-gray-500 font-medium">No roles found</p>
@@ -255,17 +250,21 @@ export default function RolesManagement() {
                             columns={columns}
                             actions={actions}
                             className="rounded-t-xl"
+                            isLoading={isLoading}
+                            skeletonRows={pagination.itemsPerPage}
                         />
 
-                        <ReusablePagination
-                            currentPage={pagination.currentPage}
-                            totalPages={pagination.totalPages}
-                            itemsPerPage={pagination.itemsPerPage}
-                            totalItems={pagination.totalItems}
-                            onPageChange={handlePageChange}
-                            onItemsPerPageChange={handleItemsPerPageChange}
-                            className=""
-                        />
+                        {!isLoading && (
+                            <ReusablePagination
+                                currentPage={pagination.currentPage}
+                                totalPages={pagination.totalPages}
+                                itemsPerPage={pagination.itemsPerPage}
+                                totalItems={pagination.totalItems}
+                                onPageChange={handlePageChange}
+                                onItemsPerPageChange={handleItemsPerPageChange}
+                                className=""
+                            />
+                        )}
                     </>
                 )}
             </div>
