@@ -132,7 +132,7 @@ const formatDate = (value: string) => {
 };
 
 export default function NewGarages() {
-  const garagesInfo = useGetAllGaragesQuery({ page: 1, limit: 10, status: undefined });
+  const garagesInfo = useGetAllGaragesQuery({ page: 1, limit: 5, status: undefined });
   const [approveGarage, { isLoading: isApproving }] = useApproveAGarageMutation();
   const [rejectGarage, { isLoading: isRejecting }] = useRejectAGarageMutation();
 
@@ -143,7 +143,7 @@ export default function NewGarages() {
     garageName: string | null;
   }>({ isOpen: false, garageId: null, action: null, garageName: null });
 
-  const garagesData = useMemo(() => (garagesInfo?.data?.data?.garages || []).slice(0, 5), [garagesInfo?.data?.data?.garages]);
+  const garagesData = garagesInfo?.data?.data?.garages || [];
 
   const handleApprove = React.useCallback((id: string, name: string) => {
     setConfirmModal({ isOpen: true, garageId: id, action: 'approve', garageName: name });
@@ -249,7 +249,7 @@ export default function NewGarages() {
             <Button
               onClick={handleConfirm}
               disabled={isApproving || isRejecting}
-              className={ confirmModal.action === 'approve' ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white' : 'bg-red-600 cursor-pointer hover:bg-red-700 text-white'}
+              className={confirmModal.action === 'approve' ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white' : 'bg-red-600 cursor-pointer hover:bg-red-700 text-white'}
             >
               {isApproving || isRejecting ? 'Processing...' : confirmModal.action === 'approve' ? 'Approve' : 'Reject'}
             </Button>

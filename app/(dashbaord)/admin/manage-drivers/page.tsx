@@ -3,30 +3,28 @@
 import React, { useState, useEffect } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
-import { MoreVertical, Loader2, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
+import { MoreVertical, Loader2, CalendarIcon, X } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
-import { toast } from "react-toastify";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import {
-  Driver,
-  useDeleteDriverMutation,
   useGetADriverDetailsQuery,
   useGetAllDriversQuery,
-  useApproveADriverMutation,
-  useRejectADriverMutation,
 } from "@/rtk/api/admin/drivers-management/allDriversList";
 
 // Separate component for Driver Details Dropdown
 const DriverDetailsDropdown = React.memo(({ driverId }: { driverId: string }) => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
-  
+
   const { data: driverData, isLoading, isError } = useGetADriverDetailsQuery(
     driverId || '',
     {
@@ -128,156 +126,98 @@ const DriverDetailsDropdown = React.memo(({ driverId }: { driverId: string }) =>
 
 DriverDetailsDropdown.displayName = 'DriverDetailsDropdown';
 
-// Separate component for Actions Dropdown
-const ActionsDropdown = React.memo(({ 
-  row, 
-  onApprove, 
-  onReject,
-  onDelete,
-  isApproving, 
-  isRejecting,
-  isDeleting
-}: { 
-  row: any;
-  onApprove: (id: string, name: string) => void;
-  onReject: (id: string, name: string) => void;
-  onDelete: (id: string, name: string) => void;
-  isApproving: boolean;
-  isRejecting: boolean;
-  isDeleting: boolean;
+// Date Picker Component
+const DatePicker = ({
+  date,
+  onDateChange,
+  placeholder
+}: {
+  date: Date | undefined;
+  onDateChange: (date: Date | undefined) => void;
+  placeholder: string;
 }) => {
-  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-      <DropdownMenuTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
-          variant="ghost"
-          className="h-8 cursor-pointer w-8 p-0"
-          disabled={isApproving || isRejecting || isDeleting}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal min-w-[200px]",
+            !date && "text-muted-foreground"
+          )}
         >
-          <span className="sr-only">Open menu</span>
-          <MoreVertical className="h-4 w-4" />
+          <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="truncate">{date ? format(date, "dd/MM/yyyy") : placeholder}</span>
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-        }}
-        onEscapeKeyDown={() => {
-          setDropdownOpen(false);
-        }}
-      >
-        <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDropdownOpen(false);
-            setTimeout(() => {
-              onApprove(row.id, row.name || 'Driver');
-            }, 150);
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(selectedDate) => {
+            onDateChange(selectedDate);
+            setOpen(false);
           }}
-          className="cursor-pointer"
-          disabled={isApproving || isRejecting || isDeleting || row.status === 1}
-        >
-          Approve
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDropdownOpen(false);
-            setTimeout(() => {
-              onReject(row.id, row.name || 'Driver');
-            }, 150);
-          }}
-          className="cursor-pointer text-red-600"
-          disabled={isApproving || isRejecting || isDeleting || row.status === 0}
-        >
-          Reject
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDropdownOpen(false);
-            setTimeout(() => {
-              onDelete(row.id, row.name || 'Driver');
-            }, 150);
-          }}
-          className="cursor-pointer text-red-600"
-          disabled={isApproving || isRejecting || isDeleting}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
   );
-});
-
-ActionsDropdown.displayName = 'ActionsDropdown';
+};
 
 export default function ManageDrivers() {
-  const [activeTab, setActiveTab] = useState<string | number>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  // Modals
-  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
-  const [selectedDriverId, setSelectedDriverId] = React.useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = React.useState(false);
-
-  // Fetch single driver details for delete modal
-  const { data: driverDetailsData, isLoading: isLoadingDriverDetails } = useGetADriverDetailsQuery(
-    selectedDriverId || '',
-    {
-      skip: !openDeleteModal || !selectedDriverId,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  const selectedDriver = driverDetailsData?.data;
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   // Debounce search term
   const debouncedSearch = useDebounce(searchTerm, 500);
 
-  // Reset to first page when search or tab changes
+  // Reset to first page when search or date filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, activeTab]);
+  }, [debouncedSearch, startDate, endDate]);
+
+  // Format dates for API (YYYY-MM-DD)
+  const startDateString = startDate ? format(startDate, "yyyy-MM-dd") : "";
+  const endDateString = endDate ? format(endDate, "yyyy-MM-dd") : "";
 
   // Get all drivers information
-  const { data: apiData, isLoading, refetch } = useGetAllDriversQuery({
+  const { data: apiData, isLoading } = useGetAllDriversQuery({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch || undefined,
-    status: activeTab ? String(activeTab) : undefined,
+    startdate: startDateString || undefined,
+    enddate: endDateString || undefined,
   });
 
-  const [approveDriver, { isLoading: isApproving }] = useApproveADriverMutation();
-  const [rejectDriver, { isLoading: isRejecting }] = useRejectADriverMutation();
-  const [deleteDriver] = useDeleteDriverMutation();
+  // Get vehicles data from API and transform to driver format
+  const vehiclesData = (apiData?.data as any)?.vehicles || [];
 
-  const [confirmModal, setConfirmModal] = React.useState<{
-    isOpen: boolean;
-    driverId: string | null;
-    action: 'approve' | 'reject' | null;
-    driverName: string | null;
-  }>({
-    isOpen: false,
-    driverId: null,
-    action: null,
-    driverName: null,
-  });
+  // Transform vehicles data to match table structure
+  // Use vehicle.id as the unique key since one driver can have multiple vehicles
+  const driverData = vehiclesData.map((vehicle: any) => ({
+    id: vehicle.id, // Use vehicle ID as unique key for React
+    driverId: vehicle.user?.id || vehicle.id, // Store driver ID separately for operations
+    name: vehicle.user?.name || '',
+    email: vehicle.user?.email || '',
+    phone_number: vehicle.user?.phone_number || null,
+    vehicle_registration_number: vehicle.registration_number || null,
+    vehicle_make: vehicle.make || null,
+    vehicle_model: vehicle.model || null,
+    status: vehicle.user?.status ?? 0, // Default to 0 (pending) if not available
+    created_at: vehicle.user?.created_at || vehicle.created_at || '',
+    approved_at: vehicle.user?.approved_at || null,
+    // Keep original vehicle and user for reference
+    _vehicle: vehicle,
+    _user: vehicle.user,
+  }));
 
-  // Get drivers data from API
-  const driverData = apiData?.data?.drivers || [];
   const pagination = apiData?.data?.pagination || {
     page: 1,
     limit: 10,
@@ -288,90 +228,30 @@ export default function ManageDrivers() {
   const totalPages = pagination.pages || 1;
   const totalItems = pagination.total || 0;
 
-  const handleApproveDriver = async (id: string, driverName: string) => {
-    setConfirmModal({
-      isOpen: true,
-      driverId: id,
-      action: 'approve',
-      driverName: driverName,
-    });
-  };
-
-  const handleRejectDriver = async (id: string, driverName: string) => {
-    setConfirmModal({
-      isOpen: true,
-      driverId: id,
-      action: 'reject',
-      driverName: driverName,
-    });
-  };
-
-  const handleConfirmAction = async () => {
-    if (!confirmModal.driverId || !confirmModal.action) return;
-
-    try {
-      if (confirmModal.action === 'approve') {
-        const response = await approveDriver(confirmModal.driverId).unwrap();
-        toast.success(response?.message || "Driver approved successfully!");
-      } else if (confirmModal.action === 'reject') {
-        const response = await rejectDriver(confirmModal.driverId).unwrap();
-        toast.success(response?.message || "Driver rejected successfully!");
+  // Checkbox handlers
+  const handleSelectRow = (rowId: string, checked: boolean) => {
+    setSelectedRows((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(rowId);
+      } else {
+        newSet.delete(rowId);
       }
-      setConfirmModal({
-        isOpen: false,
-        driverId: null,
-        action: null,
-        driverName: null,
-      });
-      refetch();
-    } catch (error: any) {
-      toast.error(
-        error?.data?.message || `Failed to ${confirmModal.action} driver`
-      );
-      setConfirmModal({
-        isOpen: false,
-        driverId: null,
-        action: null,
-        driverName: null,
-      });
-    }
-  };
-
-  const handleCloseModal = () => {
-    setConfirmModal({
-      isOpen: false,
-      driverId: null,
-      action: null,
-      driverName: null,
+      return newSet;
     });
   };
 
-  // DELETE a driver handler
-  const handleDeleteDriverClick = (id: string, driverName: string) => {
-    setSelectedDriverId(id);
-    setOpenDeleteModal(true);
-  };
-
-  const handleDeleteDriver = async () => {
-    if (!selectedDriverId) return;
-
-    setIsDeleting(true);
-    try {
-      await deleteDriver(selectedDriverId).unwrap();
-      toast.success("Driver deleted successfully");
-      setOpenDeleteModal(false);
-      setSelectedDriverId(null);
-      refetch();
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to delete driver");
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set<string>(driverData.map((row: any) => row.id));
+      setSelectedRows(allIds);
+    } else {
+      setSelectedRows(new Set<string>());
     }
-    setIsDeleting(false);
   };
 
-  const handleCloseDeleteModal = () => {
-    setOpenDeleteModal(false);
-    setSelectedDriverId(null);
-  };
+  const isAllSelected = driverData.length > 0 && selectedRows.size === driverData.length;
+  const isIndeterminate = selectedRows.size > 0 && selectedRows.size < driverData.length;
 
   // PAGINATION
   const handlePageChange = (page: number) => setCurrentPage(page);
@@ -380,31 +260,26 @@ export default function ManageDrivers() {
     setCurrentPage(1);
   };
 
-  const handleTabChange = (tabKey: string) => {
-    setActiveTab(tabKey === "all" ? "" : tabKey);
-    setCurrentPage(1);
-  };
-
-  // Define tabs with counts
-  const tabs = [
-    {
-      key: "all",
-      label: "All Drivers",
-      count: totalItems,
-    },
-    {
-      key: "1",
-      label: "Approved",
-      count: driverData.filter((driver: any) => driver.status === 1).length,
-    },
-    {
-      key: "0",
-      label: "Pending",
-      count: driverData.filter((driver: any) => driver.status === 0).length,
-    },
-  ];
-
   const columns = [
+    {
+      key: "checkbox",
+      label: (
+        <Checkbox
+          checked={isAllSelected}
+          onCheckedChange={handleSelectAll}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      ),
+      width: "5%",
+      render: (value: string, row: any) => (
+        <Checkbox
+          checked={selectedRows.has(row.id)}
+          onCheckedChange={(checked) => handleSelectRow(row.id, checked as boolean)}
+          onClick={(e) => e.stopPropagation()}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      ),
+    },
     {
       key: "name",
       label: "Driver Name",
@@ -415,7 +290,7 @@ export default function ManageDrivers() {
       label: "Driver Details",
       width: "15%",
       render: (value: string, row: any) => (
-        <DriverDetailsDropdown driverId={row.id} />
+        <DriverDetailsDropdown driverId={row.driverId || row._user?.id || row.id} />
       ),
     },
     {
@@ -443,101 +318,109 @@ export default function ManageDrivers() {
         const status = typeof value === 'string' ? parseInt(value) : value;
         return (
           <span
-            className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${
-              status === 1
-                ? "bg-green-100 text-green-800 border border-green-300"
-                : "bg-red-100 text-red-800 border border-red-300"
-            }`}
+            className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${status === 1
+              ? "bg-green-100 text-green-800 border border-green-300"
+              : "bg-red-100 text-red-800 border border-red-300"
+              }`}
           >
             {status === 1 ? "Approved" : "Pending"}
           </span>
         );
       },
     },
-    {
-      key: "created_at",
-      label: "Created At",
-      width: "15%",
-      render: (value: string) => {
-        if (!value) return 'N/A';
-        try {
-          return new Date(value).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
-        } catch {
-          return value;
-        }
-      },
-    },
-    {
-      key: "approved_at",
-      label: "Approved At",
-      width: "15%",
-      render: (value: string) => {
-        if (!value) return 'N/A';
-        try {
-          return new Date(value).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
-        } catch {
-          return value;
-        }
-      },
-    },
-    {
-      key: "actions",
-      label: "Actions",
-      width: "15%",
-      render: (value: string, row: any) => (
-        <ActionsDropdown
-          row={row}
-          onApprove={handleApproveDriver}
-          onReject={handleRejectDriver}
-          onDelete={handleDeleteDriverClick}
-          isApproving={isApproving}
-          isRejecting={isRejecting}
-          isDeleting={isDeleting}
-        />
-      ),
-    },
   ];
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">List of All Drivers</h1>
+
+
+      {/* Filters Section - Fully Responsive */}
+      <div className="flex flex-col gap-4 mb-4">
+        {/* Main Row - MOT Reminder (left) and Date Filters (right) in same line */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 w-full">
+
+          {/* Left Side - MOT Reminder Section - Show only when rows are selected */}
+         
+            <div className="flex flex-col gap-2">
+              <h1 className="text-xl lg:text-2xl font-semibold">MOT Reminder</h1>
+              <Button
+                className="bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium px-4 lg:px-6 py-2 rounded-lg transition-colors w-full sm:w-auto"
+              >
+                Send Reminder ({selectedRows.size})
+              </Button>
+            </div>
+       
+     
+
+          {/* Right Side - Date Filters in same row */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 lg:flex-initial min-w-0">
+            {/* Start Date */}
+            <div className="flex-1 min-w-0 max-w-full sm:max-w-[280px]">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Date
+              </label>
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 min-w-0">
+                  <DatePicker
+                    date={startDate}
+                    onDateChange={setStartDate}
+                    placeholder="mm/dd/yyyy"
+                  />
+                </div>
+                {startDate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => setStartDate(undefined)}
+                    title="Clear start date"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* End Date */}
+            <div className="flex-1 min-w-0 max-w-full sm:max-w-[280px]">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Date
+              </label>
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 min-w-0">
+                  <DatePicker
+                    date={endDate}
+                    onDateChange={setEndDate}
+                    placeholder="mm/dd/yyyy"
+                  />
+                </div>
+                {endDate && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => setEndDate(undefined)}
+                    title="Clear end date"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs and Search */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-        {/* Tabs on the left */}
-        <nav className="flex flex-wrap gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => handleTabChange(tab.key)}
-              className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${
-                (activeTab === "" && tab.key === "all") || activeTab === tab.key
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              }`}
-            >
-              {tab.label}
-              {tab.count > 0 && (
-                <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 py-2">
+        {/* Title */}
+        <h1 className="text-2xl font-semibold order-2 lg:order-1 text-left">
+          List of All Drivers
+        </h1>
 
-        {/* Search on the right */}
-        <div className="relative w-full lg:w-auto lg:max-w-md">
+        {/* Search */}
+        <div className="relative w-full lg:w-80 order-1 lg:order-2">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg
               className="h-5 w-5 text-gray-400"
@@ -555,13 +438,14 @@ export default function ManageDrivers() {
           </div>
           <input
             type="text"
-            placeholder="Search drivers..."
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full lg:w-80 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm"
           />
         </div>
       </div>
+
 
       {/* TABLE */}
       {isLoading ? (
@@ -589,134 +473,6 @@ export default function ManageDrivers() {
           />
         </>
       )}
-
-      {/* Confirmation Modal */}
-      <CustomReusableModal
-        isOpen={confirmModal.isOpen}
-        onClose={handleCloseModal}
-        title={confirmModal.action === 'approve' ? 'Approve Driver' : 'Reject Driver'}
-        variant={confirmModal.action === 'approve' ? 'success' : 'danger'}
-        icon={confirmModal.action === 'approve' ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
-        description={`Are you sure you want to ${confirmModal.action} this driver?`}
-        className="max-w-md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            {confirmModal.action === 'approve'
-              ? `You are about to approve the driver "${confirmModal.driverName}". This action cannot be undone.`
-              : `You are about to reject the driver "${confirmModal.driverName}". This action cannot be undone.`
-            }
-          </p>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={handleCloseModal}
-              disabled={isApproving || isRejecting}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmAction}
-              disabled={isApproving || isRejecting}
-              className={confirmModal.action === 'approve'
-                ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white'
-                : 'bg-red-600 cursor-pointer hover:bg-red-700 text-white'
-              }
-            >
-              {isApproving || isRejecting
-                ? 'Processing...'
-                : confirmModal.action === 'approve'
-                  ? 'Approve'
-                  : 'Reject'
-              }
-            </Button>
-          </div>
-        </div>
-      </CustomReusableModal>
-
-      {/* DELETE MODAL */}
-      <CustomReusableModal
-        isOpen={openDeleteModal}
-        onClose={handleCloseDeleteModal}
-        customHeader={
-          <div className="text-black mt-4 text-center p-4 pb-0 rounded-t-lg">
-            <h2 className="text-lg font-semibold">Delete Driver Account</h2>
-          </div>
-        }
-        className="max-w-sm"
-      >
-        <div className="p-6 pt-0">
-          {isLoadingDriverDetails ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              <span className="text-sm text-gray-600">Loading driver details...</span>
-            </div>
-          ) : selectedDriver ? (
-            <>
-              <p className="text-sm text-gray-600 mb-4">
-                Are you sure you want to delete this driver? This action cannot be undone.
-              </p>
-
-              <div className="space-y-3">
-                {/* Driver Name */}
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Driver Name
-                  </label>
-                  <div className="text-sm font-medium text-gray-900 bg-gray-50 p-2 rounded border">
-                    {selectedDriver.name || "N/A"}
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Email
-                  </label>
-                  <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">
-                    {selectedDriver.email || "N/A"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={handleCloseDeleteModal}
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleDeleteDriver}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <span className="flex items-center justify-center">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Deleting...
-                    </span>
-                  ) : (
-                    "Delete Driver"
-                  )}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-sm text-red-600">Failed to load driver details</p>
-              <button
-                className="mt-4 text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
-                onClick={handleCloseDeleteModal}
-              >
-                Close
-              </button>
-            </div>
-          )}
-        </div>
-      </CustomReusableModal>
     </>
   );
 }

@@ -50,8 +50,31 @@ export type Pagination = {
   pages: number;
 };
 
+export type VehicleUser = {
+  id: string;
+  name: string;
+  email: string;
+  phone_number: string | null;
+  status?: number;
+  created_at?: string;
+  approved_at?: string | null;
+};
+
+export type Vehicle = {
+  id: string;
+  registration_number: string;
+  make: string;
+  model: string;
+  color: string;
+  mot_expiry_date: string;
+  user: VehicleUser;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type DriversResponseData = {
-  drivers: Driver[];
+  drivers?: Driver[];
+  vehicles?: Vehicle[];
   pagination: Pagination;
 };
 
@@ -123,48 +146,10 @@ export const driversApi = createApi({
       providesTags: ["Drivers"],
     }),
 
-    // DELETE DRIVER
-    deleteDriver: builder.mutation<
-      { success?: boolean; message?: string },
-      string
-    >({
-      query: (id) => ({
-        url: `/api/admin/driver/${id}/delete`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["Drivers"],
-    }),
-
-    // approve a driver /api/admin/driver/cmih358fx0001gn1qaoqihj6y/approve
-    approveADriver: builder.mutation<
-      { success?: boolean; message?: string },
-      string
-    >({
-      query: (id) => ({
-        url: `/api/admin/driver/${id}/approve`,
-        method: "PATCH",
-      }),
-      invalidatesTags: ["Drivers"],
-    }),
-
-    // reject a driver /api/admin/driver/:id/reject
-    rejectADriver: builder.mutation<
-      { success?: boolean; message?: string },
-      string
-    >({
-      query: (id) => ({
-        url: `/api/admin/driver/${id}/reject`,
-        method: "PATCH",
-      }),
-      invalidatesTags: ["Drivers"],
-    }),
   }),
 });
 
 export const {
   useGetAllDriversQuery,
   useGetADriverDetailsQuery,
-  useDeleteDriverMutation,
-  useApproveADriverMutation,
-  useRejectADriverMutation,
 } = driversApi;
