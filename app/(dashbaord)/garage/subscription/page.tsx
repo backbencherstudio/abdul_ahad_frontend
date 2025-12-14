@@ -1,5 +1,5 @@
 'use client'
-import { Check, FileText, Package, ShoppingCart, Star, TrendingUp } from 'lucide-react'
+import { Check, FileText, Package, ShoppingCart, TrendingUp } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useGetSubscriptionPlansQuery, useCheckoutSubscriptionMutation, useGetCurrentSubscriptionQuery, useAppDispatch, useAppSelector, setCheckoutLoading, setSelectedPlan, subscriptionApi } from '../../../../rtk'
 import { PAGINATION_CONFIG } from '../../../../config/pagination.config'
@@ -7,6 +7,7 @@ import CustomReusableModal from '../../../../components/reusable/Dashboard/Modal
 import SubscriptionDetails from '../../_components/Garage/Subscription/SubscriptionDetails'
 import CancelSubscription from '../../_components/Garage/Subscription/CancelSubscription'
 import { toast } from 'react-toastify'
+import { Skeleton } from '@/components/ui/skeleton'
 
 
 export default function SubscriptionPage() {
@@ -118,10 +119,57 @@ export default function SubscriptionPage() {
 
     if (isLoading || isLoadingCurrent) {
         return (
-            <div className="flex-1 lg:flex-1 flex items-center justify-center  h-full">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading subscription data...</p>
+            <div className="flex-1 lg:flex-1 flex items-center justify-center p-4 lg:p-8">
+                <div className="w-full">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
+                        <p className="text-gray-600 text-lg">
+                            Select the perfect plan for your garage business
+                        </p>
+                    </div>
+
+                    {/* Shimmer Skeleton Card */}
+                    <div className="flex justify-center items-center">
+                        <div className="w-full max-w-md">
+                            <div className="bg-white rounded-lg border-2 border-gray-200 p-6 shadow-sm animate-pulse">
+                                {/* Badge Skeleton */}
+                                <div className="flex justify-center mb-4">
+                                    <Skeleton className="h-6 w-24 rounded-full" />
+                                </div>
+
+                                {/* Title Skeleton */}
+                                <Skeleton className="h-8 w-3/4 mx-auto mb-2" />
+
+                                {/* Description Skeleton */}
+                                <Skeleton className="h-4 w-full mb-6 mx-auto" />
+
+                                {/* Membership Section Skeleton */}
+                                <div className="mb-6">
+                                    <div className="flex justify-center items-baseline gap-2 mb-1">
+                                        <Skeleton className="h-10 w-32" />
+                                        <Skeleton className="h-6 w-16" />
+                                    </div>
+                                    <Skeleton className="h-3 w-full" />
+                                </div>
+
+                                {/* Button Skeleton */}
+                                <Skeleton className="h-12 w-full mb-6 rounded-md" />
+
+                                {/* Features Section Skeleton */}
+                                <div>
+                                    <Skeleton className="h-6 w-24 mb-3" />
+                                    <div className="space-y-3">
+                                        {[1, 2, 3, 4, 5].map((index) => (
+                                            <div key={index} className="flex items-start gap-3">
+                                                <Skeleton className="h-5 w-5 rounded mt-0.5" />
+                                                <Skeleton className="h-4 flex-1" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
@@ -220,25 +268,21 @@ export default function SubscriptionPage() {
                             (new Date(currentSubscription.current_period_end) > new Date() ||
                                 (currentSubscription.trial_information?.days_remaining && currentSubscription.trial_information.days_remaining > 0))
 
-                        const isPopular = plan.name === 'Gold Plan'
-
                         return (
                             <div
                                 key={plan.id}
                                 className={`relative w-fit min-w-[400px] max-w-[500px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${isCurrentPlan && isActiveSubscription
-                                    ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
+                                    ? 'border-green-500 ring-2 ring-blue-100 bg-blue-50'
                                     : isCurrentPlan && isCancelledButActive
                                         ? 'border-orange-500 ring-2 ring-orange-100 bg-orange-50'
                                         : isCurrentPlan && !isActiveSubscription && !isCancelledButActive
                                             ? 'border-red-500 ring-2 ring-red-100 bg-red-50'
-                                            : isPopular
-                                                ? 'border-[#19CA32] ring-2 ring-green-100'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 {isCurrentPlan && isActiveSubscription && (
                                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                        <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
+                                        <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                                             <Check className="w-4 h-4" />
                                             Current Plan
                                         </span>
@@ -266,15 +310,6 @@ export default function SubscriptionPage() {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                             Cancelled
-                                        </span>
-                                    </div>
-                                )}
-
-                                {!isCurrentPlan && isPopular && (
-                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                        <span className="bg-[#19CA32] text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                                            <Star className="w-4 h-4" />
-                                            Popular
                                         </span>
                                     </div>
                                 )}
@@ -372,10 +407,7 @@ export default function SubscriptionPage() {
                                     <button
                                         onClick={() => handleSelectPlan(plan)}
                                         disabled={loadingPlanId === plan.id}
-                                        className={`w-full cursor-pointer py-3 px-6 rounded-lg font-semibold transition-colors duration-200 mb-6 disabled:opacity-50 text-sm disabled:cursor-not-allowed ${plan.name === 'Gold Plan'
-                                            ? 'bg-[#19CA32] hover:bg-green-600 text-white'
-                                            : 'bg-gray-900 hover:bg-gray-800 text-white'
-                                            }`}
+                                        className="w-full cursor-pointer py-3 px-6 rounded-lg font-semibold transition-colors duration-200 mb-6 disabled:opacity-50 text-sm disabled:cursor-not-allowed bg-[#19CA32] hover:bg-green-600 text-white"
                                     >
                                         {loadingPlanId === plan.id ? 'Processing...' : `Choose ${plan.name}`}
                                     </button>
