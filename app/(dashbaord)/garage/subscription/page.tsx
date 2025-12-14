@@ -1,5 +1,5 @@
 'use client'
-import { Check, Star } from 'lucide-react'
+import { Check, FileText, Package, ShoppingCart, Star, TrendingUp } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useGetSubscriptionPlansQuery, useCheckoutSubscriptionMutation, useGetCurrentSubscriptionQuery, useAppDispatch, useAppSelector, setCheckoutLoading, setSelectedPlan } from '../../../../rtk'
 import { PAGINATION_CONFIG } from '../../../../config/pagination.config'
@@ -157,6 +157,35 @@ export default function SubscriptionPage() {
         )
     }
 
+
+    // Get features list for a subscription
+    const getFeatures = (subscription: any) => {
+        const features = [
+            {
+                icon: Package,
+                text: "Unlimited opportunity to receive MOT bookings — 24/7",
+            },
+            {
+                icon: ShoppingCart,
+                text: "Boost Your Garage's Visibility.",
+            },
+            {
+                icon: FileText,
+                text: "Opportunity to upsell and offer extra services!",
+            },
+            {
+                icon: TrendingUp,
+                text: "No Contract. No commission.",
+            },
+            {
+                icon: Package,
+                text: "Simple set up.",
+            },
+        ];
+
+        return features;
+    };
+
     return (
         <div className="flex-1 lg:flex-1 flex items-center justify-center p-4 lg:p-8">
             <div className="w-full">
@@ -167,7 +196,7 @@ export default function SubscriptionPage() {
                     </p>
                 </div>
 
-                <div className="grid gap-6 justify-center grid-cols-[repeat(auto-fit,minmax(320px,max-content))]">
+                <div className="flex justify-center items-center gap-4">
                     {plans.map((plan) => {
                         // Check if this plan is the current subscription (regardless of status)
                         const isCurrentPlan = currentSubscription &&
@@ -188,7 +217,7 @@ export default function SubscriptionPage() {
                         return (
                             <div
                                 key={plan.id}
-                                className={`relative w-fit min-w-[320px] max-w-[420px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${isCurrentPlan && isActiveSubscription
+                                className={`relative w-fit min-w-[400px] max-w-[500px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${isCurrentPlan && isActiveSubscription
                                     ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
                                     : isCurrentPlan && isCancelledButActive
                                         ? 'border-orange-500 ring-2 ring-orange-100 bg-orange-50'
@@ -242,16 +271,18 @@ export default function SubscriptionPage() {
                                     </div>
                                 )}
 
-                                <div className="text-center mb-6">
-                                    <h3 className="sm:text-2xl text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                                    <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
+                                <div className=" mb-6">
+                                    <div className="text-center flex flex-col items-center justify-center gap-2">
+                                        <h3 className="sm:text-2xl text-xl font-bold text-gray-900 ">{plan.name}</h3>
+                                        <p className="text-gray-600 text-sm">{plan.description}</p>
+                                    </div>
 
-                                    <div className="mb-4">
+                                    <div className="my-4">
                                         <span className="sm:text-4xl text-2xl font-bold text-gray-900">{plan.price_formatted}</span>
                                         <span className="text-gray-600 ml-1">/month</span>
                                     </div>
 
-                                    {isCurrentPlan && isActiveSubscription ? (
+                                    {/* {isCurrentPlan && isActiveSubscription ? (
                                         <div className="space-y-2">
                                             <p className="text-green-600 text-sm font-medium">
                                                 ✓ Currently Active
@@ -272,12 +303,14 @@ export default function SubscriptionPage() {
                                                 ✗ Cancelled
                                             </p>
                                         </div>
-                                    ) : (
-                                        <p className="text-gray-500 text-xs">
-                                            Billed automatically every month (unless cancelled)
-                                        </p>
-                                    )}
+                                    ) : null} */}
+
+                                    <p className="text-gray-500 text-xs">
+                                        {plan.price_formatted} billed automatically every month on the sign-up date (unless cancelled)
+                                    </p>
                                 </div>
+
+
 
                                 {/* choose plan button */}
                                 {isCurrentPlan ? (
@@ -340,15 +373,17 @@ export default function SubscriptionPage() {
                                     </button>
                                 )}
 
+
+
                                 <div>
                                     <h4 className="text-lg font-semibold text-gray-900 mb-4">Features</h4>
                                     <div className="space-y-3">
-                                        {plan.features.map((feature, index) => (
+                                        {getFeatures(plan).map((feature, index) => (
                                             <div key={index} className="flex items-start gap-3">
                                                 <div className="flex-shrink-0 mt-0.5">
-                                                    <Check className="w-4 h-4 text-green-500" />
+                                                    <feature.icon className="w-4 h-4 text-green-500" />
                                                 </div>
-                                                <p className="text-sm text-gray-700">{feature}</p>
+                                                <span className="text-sm text-gray-700">{feature.text}</span>
                                             </div>
                                         ))}
                                     </div>
