@@ -9,6 +9,7 @@ import { garagesApi } from "./api/admin/garages-management/listAllGarageApi";
 import { subscriptionsManagementApi } from "./api/admin/subscriptions-management/subscriptionManagementAPI";
 import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
 import { driversApi } from "./api/admin/drivers-management/allDriversList";
+import { reminderApis } from "./api/admin/drivers-management/reminderApis";
 import { garageAvailabilityApi } from "./api/garage/api";
 import { profileApi } from "./api/garage/profileApis";
 import { apiClient } from "./api/garage/api";
@@ -35,6 +36,7 @@ export const store = configureStore({
       subscriptionsManagementApi.reducer,
     [dashboardApi.reducerPath]: dashboardApi.reducer,
     [driversApi.reducerPath]: driversApi.reducer,
+    [reminderApis.reducerPath]: reminderApis.reducer,
     [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
     [pricingApi.reducerPath]: pricingApi.reducer,
@@ -60,6 +62,7 @@ export const store = configureStore({
       roleManagementApi.middleware,
       garagesApi.middleware,
       driversApi.middleware,
+      reminderApis.middleware,
       subscriptionsManagementApi.middleware,
       dashboardApi.middleware,
       garageAvailabilityApi.middleware,

@@ -20,103 +20,66 @@ import {
   useGetADriverDetailsQuery,
   useGetAllDriversQuery,
 } from "@/rtk/api/admin/drivers-management/allDriversList";
+import { useSendReminderToDriversMutation } from "@/rtk/api/admin/drivers-management/reminderApis";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "react-toastify";
 
-// Separate component for Driver Details Dropdown
 const DriverDetailsDropdown = React.memo(({ driverId }: { driverId: string }) => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
-
-  const { data: driverData, isLoading, isError } = useGetADriverDetailsQuery(
-    driverId || '',
-    {
-      skip: !dropdownOpen || !driverId,
-      refetchOnMountOrArgChange: true,
-    }
-  );
+  const { data: driverData, isLoading, isError } = useGetADriverDetailsQuery(driverId || '', {
+    skip: !dropdownOpen || !driverId,
+    refetchOnMountOrArgChange: true,
+  });
 
   const singleDriver = driverData?.data;
 
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="h-8 cursor-pointer w-8 p-0"
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
+        <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
           <span className="sr-only">Open menu</span>
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-64 p-4 space-y-2 max-h-[500px] overflow-y-auto"
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-        }}
-      >
+      <DropdownMenuContent align="end" className="w-64 p-4 space-y-2 max-h-[500px] overflow-y-auto">
         {isLoading && (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="ml-2 text-sm text-gray-500">Loading...</span>
           </div>
         )}
-
-        {isError && (
-          <div className="text-sm text-red-500 py-4">
-            Failed to load driver details
-          </div>
-        )}
-
+        {isError && <div className="text-sm text-red-500 py-4">Failed to load driver details</div>}
         {!isLoading && !isError && singleDriver && (
           <div>
-            <div className="text-xs text-gray-500 mb-1">Driver Name</div>
-            <div className="font-medium text-sm mb-2">
-              {singleDriver.name || "-"}
-            </div>
-
-            <div className="text-xs text-gray-500 mb-1">Email</div>
-            <div className="mb-2 text-sm">
-              {singleDriver.email || "-"}
-            </div>
-
-            <div className="text-xs text-gray-500 mb-1">Phone Number</div>
-            <div className="mb-2 text-sm">
-              {singleDriver.phone_number || "-"}
-            </div>
-
-            <div className="text-xs text-gray-500 mb-1">Address</div>
-            <div className="mb-2 text-sm">
-              {[
+            <DetailRow label="Driver Name" value={singleDriver.name} />
+            <DetailRow label="Email" value={singleDriver.email} />
+            <DetailRow label="Phone Number" value={singleDriver.phone_number} />
+            <DetailRow
+              label="Address"
+              value={[
                 singleDriver.address,
                 singleDriver.city,
                 singleDriver.state,
                 singleDriver.country,
                 singleDriver.zip_code,
-              ]
-                .filter(Boolean)
-                .join(", ") || "N/A"}
-            </div>
-
-            <div className="text-xs text-gray-500 mb-1">Status</div>
-            <div className="mb-2 text-sm">
-              {singleDriver.status === 1 ? "Active" : "Inactive"}
-            </div>
-
-            <div className="text-xs text-gray-500 mb-1">Created At</div>
-            <div className="mb-2 text-sm">
-              {singleDriver.created_at
-                ? new Date(singleDriver.created_at).toLocaleString()
-                : "N/A"}
-            </div>
-
-            <div className="text-xs text-gray-500 mb-1">Approved At</div>
-            <div className="mb-2 text-sm">
-              {singleDriver.approved_at
-                ? new Date(singleDriver.approved_at).toLocaleString()
-                : "N/A"}
-            </div>
+              ].filter(Boolean).join(", ") || "N/A"}
+            />
+            <DetailRow label="Status" value={singleDriver.status === 1 ? "Active" : "Inactive"} />
+            <DetailRow
+              label="Created At"
+              value={singleDriver.created_at ? new Date(singleDriver.created_at).toLocaleString() : "N/A"}
+            />
+            <DetailRow
+              label="Approved At"
+              value={singleDriver.approved_at ? new Date(singleDriver.approved_at).toLocaleString() : "N/A"}
+            />
           </div>
         )}
       </DropdownMenuContent>
@@ -126,12 +89,14 @@ const DriverDetailsDropdown = React.memo(({ driverId }: { driverId: string }) =>
 
 DriverDetailsDropdown.displayName = 'DriverDetailsDropdown';
 
-// Date Picker Component
-const DatePicker = ({
-  date,
-  onDateChange,
-  placeholder
-}: {
+const DetailRow = ({ label, value }: { label: string; value: string | null }) => (
+  <>
+    <div className="text-xs text-gray-500 mb-1">{label}</div>
+    <div className="font-medium text-sm mb-2">{value || "-"}</div>
+  </>
+);
+
+const DatePicker = ({ date, onDateChange, placeholder }: {
   date: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   placeholder: string;
@@ -143,10 +108,7 @@ const DatePicker = ({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn(
-            "w-full justify-start text-left font-normal min-w-[200px]",
-            !date && "text-muted-foreground"
-          )}
+          className={cn("w-full justify-start text-left font-normal min-w-[200px]", !date && "text-muted-foreground")}
         >
           <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
           <span className="truncate">{date ? format(date, "dd/MM/yyyy") : placeholder}</span>
@@ -174,90 +136,77 @@ export default function ManageDrivers() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
-  // Debounce search term
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const [sendReminder, { isLoading: isSending }] = useSendReminderToDriversMutation();
 
-  // Reset to first page when search or date filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, startDate, endDate]);
 
-  // Format dates for API (YYYY-MM-DD)
-  const startDateString = startDate ? format(startDate, "yyyy-MM-dd") : "";
-  const endDateString = endDate ? format(endDate, "yyyy-MM-dd") : "";
-
-  // Get all drivers information
   const { data: apiData, isLoading } = useGetAllDriversQuery({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch || undefined,
-    startdate: startDateString || undefined,
-    enddate: endDateString || undefined,
+    startdate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
+    enddate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
   });
 
-  // Get vehicles data from API and transform to driver format
   const vehiclesData = (apiData?.data as any)?.vehicles || [];
-
-  // Transform vehicles data to match table structure
-  // Use vehicle.id as the unique key since one driver can have multiple vehicles
   const driverData = vehiclesData.map((vehicle: any) => ({
-    id: vehicle.id, // Use vehicle ID as unique key for React
-    driverId: vehicle.user?.id || vehicle.id, // Store driver ID separately for operations
+    id: vehicle.id,
+    driverId: vehicle.user?.id || vehicle.id,
     name: vehicle.user?.name || '',
     email: vehicle.user?.email || '',
     phone_number: vehicle.user?.phone_number || null,
     vehicle_registration_number: vehicle.registration_number || null,
-    vehicle_make: vehicle.make || null,
-    vehicle_model: vehicle.model || null,
-    status: vehicle.user?.status ?? 0, // Default to 0 (pending) if not available
-    created_at: vehicle.user?.created_at || vehicle.created_at || '',
-    approved_at: vehicle.user?.approved_at || null,
-    // Keep original vehicle and user for reference
-    _vehicle: vehicle,
-    _user: vehicle.user,
+    mot_expiry_date: vehicle.mot_expiry_date || null,
   }));
 
-  const pagination = apiData?.data?.pagination || {
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 1,
+  const pagination = apiData?.data?.pagination || { page: 1, limit: 10, total: 0, pages: 1 };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedRows(checked ? new Set(driverData.map((row: any) => row.id)) : new Set());
   };
 
-  const totalPages = pagination.pages || 1;
-  const totalItems = pagination.total || 0;
-
-  // Checkbox handlers
   const handleSelectRow = (rowId: string, checked: boolean) => {
     setSelectedRows((prev) => {
       const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(rowId);
-      } else {
-        newSet.delete(rowId);
-      }
+      checked ? newSet.add(rowId) : newSet.delete(rowId);
       return newSet;
     });
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const allIds = new Set<string>(driverData.map((row: any) => row.id));
-      setSelectedRows(allIds);
-    } else {
-      setSelectedRows(new Set<string>());
-    }
-  };
-
   const isAllSelected = driverData.length > 0 && selectedRows.size === driverData.length;
-  const isIndeterminate = selectedRows.size > 0 && selectedRows.size < driverData.length;
 
-  // PAGINATION
-  const handlePageChange = (page: number) => setCurrentPage(page);
-  const handleItemsPerPageChange = (limit: number) => {
-    setItemsPerPage(limit);
-    setCurrentPage(1);
+  const handleSendReminder = async () => {
+    if (selectedRows.size === 0) {
+      toast.error("Please select at least one driver");
+      return;
+    }
+
+    if (!message.trim()) {
+      toast.error("Please enter a message");
+      return;
+    }
+
+    try {
+      const selectedDrivers = driverData.filter((driver: any) => selectedRows.has(driver.id));
+      const receivers = selectedDrivers.map((driver: any) => ({
+        receiver_id: driver.driverId,
+        entity_id: driver.id,
+      }));
+
+      await sendReminder({ receivers, message }).unwrap();
+      toast.success(`Reminder sent successfully to ${receivers.length} driver(s)`);
+      setIsModalOpen(false);
+      setSelectedRows(new Set());
+      setMessage("");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to send reminder");
+    }
   };
 
   const columns = [
@@ -271,7 +220,7 @@ export default function ManageDrivers() {
         />
       ),
       width: "5%",
-      render: (value: string, row: any) => (
+      render: (_: string, row: any) => (
         <Checkbox
           checked={selectedRows.has(row.id)}
           onCheckedChange={(checked) => handleSelectRow(row.id, checked as boolean)}
@@ -280,160 +229,65 @@ export default function ManageDrivers() {
         />
       ),
     },
-    {
-      key: "name",
-      label: "Driver Name",
-      width: "20%",
-    },
+    { key: "name", label: "Driver Name", width: "20%" },
     {
       key: "driver_details",
       label: "Driver Details",
       width: "15%",
-      render: (value: string, row: any) => (
-        <DriverDetailsDropdown driverId={row.driverId || row._user?.id || row.id} />
-      ),
+      render: (_: string, row: any) => <DriverDetailsDropdown driverId={row.driverId} />,
     },
+    { key: "email", label: "Email", width: "20%" },
+    { key: "phone_number", label: "Phone", width: "15%", render: (value: any) => value || "—" },
+    { key: "vehicle_registration_number", label: "Vehicle Number", width: "15%", render: (value: any) => value || "—" },
     {
-      key: "email",
-      label: "Email",
-      width: "20%",
-    },
-    {
-      key: "phone_number",
-      label: "Phone",
+      key: "mot_expiry_date",
+      label: "MOT Date",
       width: "15%",
-      render: (value: any) => value || "—",
-    },
-    {
-      key: "vehicle_registration_number",
-      label: "Vehicle Number",
-      width: "15%",
-      render: (value: any) => value || "—",
-    },
-    {
-      key: "status",
-      label: "Status",
-      width: "10%",
       render: (value: any) => {
-        const status = typeof value === 'string' ? parseInt(value) : value;
-        return (
-          <span
-            className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${status === 1
-              ? "bg-green-100 text-green-800 border border-green-300"
-              : "bg-red-100 text-red-800 border border-red-300"
-              }`}
-          >
-            {status === 1 ? "Approved" : "Pending"}
-          </span>
-        );
+        if (!value) return "—";
+        try {
+          return format(new Date(value), "dd/MM/yyyy");
+        } catch {
+          return "—";
+        }
       },
     },
   ];
 
   return (
     <>
-
-
-      {/* Filters Section - Fully Responsive */}
       <div className="flex flex-col gap-4 mb-4">
-        {/* Main Row - MOT Reminder (left) and Date Filters (right) in same line */}
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 w-full">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-xl lg:text-2xl font-semibold">MOT Reminder</h1>
+            <Button
+              onClick={() => {
+                if (selectedRows.size === 0) {
+                  toast.error("Please select at least one driver");
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
+              disabled={selectedRows.size === 0}
+              className="bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium px-4 lg:px-6 py-2 rounded-lg transition-colors w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send Reminder ({selectedRows.size})
+            </Button>
+          </div>
 
-          {/* Left Side - MOT Reminder Section - Show only when rows are selected */}
-         
-            <div className="flex flex-col gap-2">
-              <h1 className="text-xl lg:text-2xl font-semibold">MOT Reminder</h1>
-              <Button
-                className="bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium px-4 lg:px-6 py-2 rounded-lg transition-colors w-full sm:w-auto"
-              >
-                Send Reminder ({selectedRows.size})
-              </Button>
-            </div>
-       
-     
-
-          {/* Right Side - Date Filters in same row */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 lg:flex-initial min-w-0">
-            {/* Start Date */}
-            <div className="flex-1 min-w-0 max-w-full sm:max-w-[280px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date
-              </label>
-              <div className="flex gap-3 items-center">
-                <div className="flex-1 min-w-0">
-                  <DatePicker
-                    date={startDate}
-                    onDateChange={setStartDate}
-                    placeholder="mm/dd/yyyy"
-                  />
-                </div>
-                {startDate && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    onClick={() => setStartDate(undefined)}
-                    title="Clear start date"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* End Date */}
-            <div className="flex-1 min-w-0 max-w-full sm:max-w-[280px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date
-              </label>
-              <div className="flex gap-3 items-center">
-                <div className="flex-1 min-w-0">
-                  <DatePicker
-                    date={endDate}
-                    onDateChange={setEndDate}
-                    placeholder="mm/dd/yyyy"
-                  />
-                </div>
-                {endDate && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    onClick={() => setEndDate(undefined)}
-                    title="Clear end date"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
+            <DateFilter label="Start Date" date={startDate} onDateChange={setStartDate} />
+            <DateFilter label="End Date" date={endDate} onDateChange={setEndDate} />
           </div>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 py-2">
-        {/* Title */}
-        <h1 className="text-2xl font-semibold order-2 lg:order-1 text-left">
-          List of All Drivers
-        </h1>
-
-        {/* Search */}
+        <h1 className="text-2xl font-semibold order-2 lg:order-1 text-left">List of All Drivers</h1>
         <div className="relative w-full lg:w-80 order-1 lg:order-2">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
+            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           <input
@@ -446,33 +300,110 @@ export default function ManageDrivers() {
         </div>
       </div>
 
-
-      {/* TABLE */}
-      {isLoading ? (
-        <div className="flex justify-center items-center py-16">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <span className="ml-3 text-gray-600 font-medium">
-            Loading drivers...
-          </span>
-        </div>
-      ) : (
-        <>
-          <ReusableTable
-            data={driverData}
-            columns={columns}
-            className="mt-5"
-          />
+      <>
+        <ReusableTable
+          data={driverData}
+          columns={columns}
+          className="mt-5"
+          isLoading={isLoading}
+          skeletonRows={itemsPerPage}
+        />
+        {!isLoading && (
           <ReusablePagination
             currentPage={currentPage}
-            totalPages={totalPages}
+            totalPages={pagination.pages}
             itemsPerPage={itemsPerPage}
-            totalItems={totalItems}
-            onPageChange={handlePageChange}
-            onItemsPerPageChange={handleItemsPerPageChange}
-            className=""
+            totalItems={pagination.total}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(limit) => {
+              setItemsPerPage(limit);
+              setCurrentPage(1);
+            }}
           />
-        </>
-      )}
+        )}
+      </>
+
+      {/* Send Reminder Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Send MOT Reminder</DialogTitle>
+            <DialogDescription>
+              Send reminder notification to {selectedRows.size} selected driver(s)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="message" className="text-sm font-medium">
+                Message
+              </label>
+              <textarea
+                id="message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Enter your reminder message..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 text-sm resize-none"
+              />
+            </div>
+            <div className="text-sm text-gray-500">
+              This reminder will be sent to {selectedRows.size} driver(s)
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+              disabled={isSending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSendReminder}
+              disabled={isSending || !message.trim()}
+              className="bg-[#19CA32] hover:bg-[#16b82e] text-white"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Send Reminder"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
+const DateFilter = ({ label, date, onDateChange }: {
+  label: string;
+  date: Date | undefined;
+  onDateChange: (date: Date | undefined) => void;
+}) => (
+  <div className="flex-1 min-w-0 max-w-full sm:max-w-[280px]">
+    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <div className="flex gap-3 items-center">
+      <div className="flex-1 min-w-0">
+        <DatePicker date={date} onDateChange={onDateChange} placeholder="mm/dd/yyyy" />
+      </div>
+      {date && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          onClick={() => onDateChange(undefined)}
+          title={`Clear ${label.toLowerCase()}`}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  </div>
+);
