@@ -186,7 +186,7 @@ export default function WeekView({ weekData, onManageSlots }: WeekViewProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => onManageSlots((day as any).date)}
-                  className="text-xs px-2 py-1 h-7"
+                  className="text-xs px-2 py-1 h-7 cursor-pointer"
                 >
                   <Settings className="w-3 h-3 mr-1" />
                   Manage Slots

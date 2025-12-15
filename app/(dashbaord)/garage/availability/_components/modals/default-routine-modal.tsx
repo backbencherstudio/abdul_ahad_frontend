@@ -310,14 +310,14 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto py-4">
+      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto ">
         <Card className="border-0 shadow-none">
           <CardHeader className="border-b bg-gray-50">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-5">
                   <CardTitle className="text-2xl font-bold text-gray-900">Setup Default Routine</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}><X className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="sm" className="cursor-pointer" onClick={onClose} disabled={loading}><X className="w-4 h-4" /></Button>
                 </div>
                 <CardDescription className="text-gray-600 mt-1">
                   Configure your garage's working hours, breaks, and holidays to get started
@@ -344,21 +344,29 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                    <Input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        disabled={loading}
+                        className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-                    <Input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        disabled={loading}
+                        className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Slot Duration (minutes)</label>
@@ -383,11 +391,11 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                     <h3 className="text-lg font-semibold text-gray-900">Breaks & Holidays</h3>
                   </div>
                   <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={addBreak} disabled={loading}>
+                    <Button type="button" variant="outline" size="sm" className="cursor-pointer" onClick={addBreak} disabled={loading}>
                       <Plus className="w-4 h-4 mr-1" />
                       Add Break
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={addHoliday} disabled={loading}>
+                    <Button type="button" variant="outline" size="sm" className="cursor-pointer" onClick={addHoliday} disabled={loading}>
                       <Plus className="w-4 h-4 mr-1" />
                       Add Holiday
                     </Button>
@@ -423,6 +431,7 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                           type="button"
                           variant="ghost"
                           size="sm"
+                          className="cursor-pointer"
                           onClick={() => removeRestriction(index)}
                           disabled={loading}
                         >
@@ -445,21 +454,29 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                              <Input
-                                type="time"
-                                value={restriction.start_time || ""}
-                                onChange={(e) => updateRestriction(index, { start_time: e.target.value })}
-                                disabled={loading}
-                              />
+                              <div className="relative">
+                                <Input
+                                  type="time"
+                                  value={restriction.start_time || ""}
+                                  onChange={(e) => updateRestriction(index, { start_time: e.target.value })}
+                                  disabled={loading}
+                                  className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                />
+                                <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                              </div>
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-                              <Input
-                                type="time"
-                                value={restriction.end_time || ""}
-                                onChange={(e) => updateRestriction(index, { end_time: e.target.value })}
-                                disabled={loading}
-                              />
+                              <div className="relative">
+                                <Input
+                                  type="time"
+                                  value={restriction.end_time || ""}
+                                  onChange={(e) => updateRestriction(index, { end_time: e.target.value })}
+                                  disabled={loading}
+                                  className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                />
+                                <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                              </div>
                             </div>
                           </div>
                         )}
@@ -483,9 +500,10 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                                 type="button"
                                 variant={isSelected ? "default" : "outline"}
                                 size="sm"
+                                
                                 onClick={() => toggleDay(index, dayIndex)}
                                 disabled={loading || (isBreakType && isHoliday)}
-                                className={`text-xs ${isBreakType && isHoliday
+                                className={`text-xs cursor-pointer ${isBreakType && isHoliday
                                     ? "opacity-50 cursor-not-allowed bg-gray-100"
                                     : ""
                                   }`}
@@ -550,10 +568,10 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
 
               {/* Submit Button */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+                <Button type="button" variant="outline" className="cursor-pointer" onClick={onClose} disabled={loading}>
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={loading}>
+                <Button type="submit" className="bg-green-600 hover:bg-green-700 cursor-pointer" disabled={loading}>
                   {loading ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

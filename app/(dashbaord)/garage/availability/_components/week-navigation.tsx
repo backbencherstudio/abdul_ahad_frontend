@@ -99,7 +99,7 @@ export default function WeekNavigation({
             size="sm"
             onClick={handlePreviousWeek}
             disabled={currentWeek <= 1}
-            className="p-1 h-8 w-8 bg-transparent"
+            className="p-1 h-8 w-8 bg-transparent cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -108,7 +108,7 @@ export default function WeekNavigation({
             size="sm"
             onClick={handleNextWeek}
             disabled={currentWeek >= 6}
-            className="p-1 h-8 w-8"
+            className="p-1 h-8 w-8 cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -116,7 +116,7 @@ export default function WeekNavigation({
       </div>
 
       <div>
-        <Button variant="outline" size="sm" onClick={handleDefaultRoutine} className="text-sm bg-transparent">
+        <Button variant="outline" size="sm" onClick={handleDefaultRoutine} className="text-sm bg-transparent cursor-pointer">
           <Settings className="w-4 h-4 mr-2" />
           Set Default Routine
         </Button>
