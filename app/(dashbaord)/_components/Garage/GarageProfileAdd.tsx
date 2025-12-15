@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useId, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'react-toastify'
-import Image from 'next/image'
+
+import { GarageProfile, useUpdateProfileMutation } from '@/rtk/api/garage/profileApis'
 
 interface GarageProfileFormData {
     garageName: string
@@ -17,17 +18,21 @@ interface GarageProfileFormData {
     postcode: string
     email: string
     contactNumber: string
+    address: string
 }
 
 interface FileUploadProps {
     onFileSelect: (file: File | null) => void
     selectedFile: File | null
+    initialImage?: string | null
     className?: string
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, className }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, initialImage, className }) => {
     const [isDragOver, setIsDragOver] = useState(false)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const inputId = useId()
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault()
@@ -69,9 +74,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, cla
     }
     React.useEffect(() => {
         if (!selectedFile) {
-            setImagePreview(null)
+            setImagePreview(initialImage || null)
         }
-    }, [selectedFile])
+    }, [selectedFile, initialImage])
 
     return (
         <div className={cn("space-y-2", className)}>
@@ -87,7 +92,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, cla
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => document.getElementById('file-input')?.click()}
+                onClick={() => fileInputRef.current?.click()}
             >
                 <div className="flex flex-col items-center space-y-3">
                     <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
@@ -110,7 +115,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, cla
                         className="mt-2"
                         onClick={(e) => {
                             e.stopPropagation()
-                            document.getElementById('file-input')?.click()
+                            fileInputRef.current?.click()
                         }}
                     >
                         Browse file
@@ -118,8 +123,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, cla
                 </div>
 
                 <input
-                    id="file-input"
+                    id={inputId}
                     type="file"
+                    ref={fileInputRef}
                     className="hidden"
                     accept="image/*"
                     onChange={handleFileInput}
@@ -130,9 +136,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, cla
                 <div className="mt-4 space-y-3">
                     {imagePreview && (
                         <div className="relative h-48 flex items-center justify-center">
-                            <Image
-                                width={100}
-                                height={100}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
                                 src={imagePreview}
                                 alt="Selected image preview"
                                 className="w-full max-w-md h-full object-cover rounded-lg border border-gray-200"
@@ -145,9 +150,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, selectedFile, cla
     )
 }
 
-export default function GarageProfileAdd() {
+interface GarageProfileAddProps {
+    profile: GarageProfile
+}
+
+export default function GarageProfileAdd({ profile }: GarageProfileAddProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
-    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation()
 
     const {
         register,
@@ -156,38 +165,59 @@ export default function GarageProfileAdd() {
         formState: { errors }
     } = useForm<GarageProfileFormData>({
         defaultValues: {
-            garageName: '',
-            vtsNumber: '',
-            postcode: '',
-            email: '',
-            contactNumber: '',
+            garageName: profile?.garage_name || '',
+            vtsNumber: profile?.vts_number || '',
+            postcode: profile?.zip_code || '',
+            email: profile?.email || '',
+            contactNumber: profile?.phone_number || '',
+            address: profile?.address || '',
         }
     })
 
-    const onSubmit = async (data: GarageProfileFormData) => {
-        setIsSubmitting(true)
-        try {
-            const formData = new FormData()
-            Object.entries(data).forEach(([key, value]) => {
-                if (value) formData.append(key, value)
-            })
+    useEffect(() => {
+        reset({
+            garageName: profile?.garage_name || '',
+            vtsNumber: profile?.vts_number || '',
+            postcode: profile?.zip_code || '',
+            email: profile?.email || '',
+            contactNumber: profile?.phone_number || '',
+            address: profile?.address || '',
+        })
+    }, [profile, reset])
 
-            if (selectedFile) {
-                formData.append('garageProfile', selectedFile)
+    const onSubmit = async (data: GarageProfileFormData) => {
+        try {
+            const basePayload = {
+                garage_name: data.garageName,
+                vts_number: data.vtsNumber,
+                zip_code: data.postcode,
+                email: data.email,
+                phone_number: data.contactNumber,
+                address: data.address,
+                primary_contact: profile?.primary_contact || "",
             }
 
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            let payload: FormData | typeof basePayload = basePayload
 
-            reset()
+            if (selectedFile) {
+                const formData = new FormData()
+                Object.entries(basePayload).forEach(([key, value]) => {
+                    if (value) formData.append(key, value)
+                })
+                formData.append('avatar', selectedFile)
+                payload = formData
+            }
+
+            await updateProfile(payload).unwrap()
+            toast.success('Garage profile updated successfully!')
+            if (!selectedFile) {
+                // ensure form stays in sync even if response takes a bit to refresh
+                reset(data)
+            }
             setSelectedFile(null)
-
-            toast.success('Garage profile created successfully!')
-
         } catch (error) {
-            console.error('Error submitting form:', error)
-            toast.error('Error creating garage profile. Please try again.')
-        } finally {
-            setIsSubmitting(false)
+            console.error('Error updating profile:', error)
+            toast.error('Failed to update garage profile. Please try again.')
         }
     }
 
@@ -223,7 +253,7 @@ export default function GarageProfileAdd() {
                             )}
                         </div>
 
-                        {/* VTS Number & Postcode - Side by Side */}
+                        {/* VTS Number & Postcode */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium text-gray-700">
@@ -243,7 +273,7 @@ export default function GarageProfileAdd() {
 
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium text-gray-700">
-                                    Postcode
+                                    Zip / Postcode
                                 </Label>
                                 <Input
                                     {...register('postcode', {
@@ -258,7 +288,7 @@ export default function GarageProfileAdd() {
                             </div>
                         </div>
 
-                        {/* Email & Contact Number - Side by Side */}
+                        {/* Email & Contact Number */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium text-gray-700">
@@ -303,20 +333,38 @@ export default function GarageProfileAdd() {
                             </div>
                         </div>
 
+                        {/* Address */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700">
+                                Address
+                            </Label>
+                            <Input
+                                {...register('address', {
+                                    required: 'Address is required'
+                                })}
+                                placeholder="Enter address"
+                                className="h-11 border border-[#19CA32] focus:border-green-500 focus:ring-green-500"
+                            />
+                            {errors.address && (
+                                <p className="text-sm text-red-500">{errors.address.message}</p>
+                            )}
+                        </div>
+
                         {/* File Upload */}
                         <FileUpload
                             onFileSelect={setSelectedFile}
                             selectedFile={selectedFile}
+                            initialImage={profile?.avatar_url || null}
                             className="w-full"
                         />
 
                         {/* Submit Button */}
                         <Button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isUpdating}
                             className="w-full h-12 bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white font-medium text-base"
                         >
-                            {isSubmitting ? 'Saving...' : 'Save'}
+                            {isUpdating ? 'Saving...' : 'Save'}
                         </Button>
                     </form>
                 </CardContent>

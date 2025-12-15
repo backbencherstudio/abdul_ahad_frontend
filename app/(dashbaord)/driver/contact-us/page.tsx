@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,42 +8,43 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { toast } from 'react-toastify'
 import { Loader2 } from 'lucide-react'
+import { useCreateContactMessageMutation } from '@/rtk/api/driver/contactusApi'
 
 type ContactFormValues = {
     name: string
     email: string
-    contactNumber: string
+    phone_number: string
     message: string
 }
 
 export default function ContactUs() {
-    const [isLoading, setIsLoading] = useState(false)
+    const [createContactMessage, { isLoading }] = useCreateContactMessageMutation()
+    
     const {
         register,
         handleSubmit,
         reset,
-        formState: { errors, isSubmitting }
+        formState: { errors }
     } = useForm<ContactFormValues>({
         defaultValues: {
             name: "",
             email: "",
-            contactNumber: "",
+            phone_number: "",
             message: "",
         },
     })
 
     const onSubmit = async (data: ContactFormValues) => {
         try {
-            setIsLoading(true)
-
-            await new Promise(resolve => setTimeout(resolve, 1000))
-            toast.success("Form submitted successfully")
-            // console.log("Form submitted:", data)
+            const response = await createContactMessage(data).unwrap()
+            toast.success(response.message || "Form submitted successfully")
             reset()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error submitting form:", error)
-        } finally {
-            setIsLoading(false)
+            const errorMessage = Array.isArray(error?.data?.message) 
+                ? error.data.message.join(', ') 
+                : error?.data?.message || "Failed to submit form. Please try again."
+            toast.error(errorMessage)
         }
     }
 
@@ -95,22 +96,22 @@ export default function ContactUs() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="contactNumber" className="text-gray-700 font-medium">Contact Number</Label>
+                            <Label htmlFor="phone_number" className="text-gray-700 font-medium">Phone Number</Label>
                             <Input
-                                id="contactNumber"
+                                id="phone_number"
                                 type="tel"
                                 placeholder=""
-                                {...register("contactNumber", {
-                                    required: "Contact number is required",
+                                {...register("phone_number", {
+                                    required: "Phone number is required",
                                     minLength: {
                                         value: 10,
-                                        message: "Contact number must be at least 10 digits"
+                                        message: "Phone number must be at least 10 digits"
                                     }
                                 })}
                                 className="border-gray-300 focus:border-green-500 focus:ring-green-500"
                             />
-                            {errors.contactNumber && (
-                                <p className="text-red-500 text-sm">{errors.contactNumber.message}</p>
+                            {errors.phone_number && (
+                                <p className="text-red-500 text-sm">{errors.phone_number.message}</p>
                             )}
                         </div>
 

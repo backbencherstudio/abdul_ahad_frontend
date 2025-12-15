@@ -1,11 +1,13 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
-import { MoreVertical, Trash2, Loader2 } from "lucide-react";
+import { MoreVertical, Trash2, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,7 @@ import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReu
 import { toast } from "react-toastify";
 import {
   useApproveAGarageMutation,
+  useRejectAGarageMutation,
   useGetAGarageByIdQuery,
   useGetAllGaragesQuery,
 } from "@/rtk/api/admin/garages-management/listAllGarageApi";
@@ -21,98 +24,312 @@ const BRAND_COLOR = "#19CA32";
 const BRAND_COLOR_HOVER = "#16b82e";
 const DANGER_COLOR = "#F04438";
 
+// Separate component for Garage Details Dropdown
+const GarageDetailsDropdown = React.memo(({ garageId }: { garageId: string }) => {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  
+  const { data: garageData, isLoading, isError } = useGetAGarageByIdQuery(
+    garageId || '',
+    {
+      skip: !dropdownOpen || !garageId,
+      refetchOnMountOrArgChange: true,
+    }
+  );
+
+  const singleGarage = garageData?.data;
+
+  return (
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="h-8 cursor-pointer w-8 p-0"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <span className="sr-only">Open menu</span>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-64 p-4 space-y-2 max-h-[500px] overflow-y-auto"
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+        }}
+      >
+        {isLoading && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="ml-2 text-sm text-gray-500">Loading...</span>
+          </div>
+        )}
+
+        {isError && (
+          <div className="text-sm text-red-500 py-4">
+            Failed to load garage details
+          </div>
+        )}
+
+        {!isLoading && !isError && singleGarage && (
+          <div>
+            <div className="text-xs text-gray-500 mb-1">Garage Name</div>
+            <div className="font-medium text-sm mb-2">
+              {singleGarage.garage_name || "-"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">
+              Primary Contact Person
+            </div>
+            <div className="font-medium text-sm mb-2">
+              {singleGarage.primary_contact || "-"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">VTS Number</div>
+            <div className="mb-2 text-sm">
+              {singleGarage.vts_number || "-"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">Email</div>
+            <div className="mb-2 text-sm">
+              {singleGarage.email || "-"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">Phone Number</div>
+            <div className="mb-2 text-sm">
+              {singleGarage.phone_number || "-"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">Address</div>
+            <div className="mb-2 text-sm">
+              {[
+                singleGarage.address,
+                singleGarage.city,
+                singleGarage.state,
+                singleGarage.country,
+                singleGarage.zip_code,
+              ]
+                .filter(Boolean)
+                .join(", ") || "N/A"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">Status</div>
+            <div className="mb-2 text-sm">
+              {singleGarage.status === 1 ? "Active" : "Inactive"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">Created At</div>
+            <div className="mb-2 text-sm">
+              {singleGarage.created_at
+                ? new Date(singleGarage.created_at).toLocaleString()
+                : "N/A"}
+            </div>
+
+            <div className="text-xs text-gray-500 mb-1">Approved At</div>
+            <div className="mb-2 text-sm">
+              {singleGarage.approved_at
+                ? new Date(singleGarage.approved_at).toLocaleString()
+                : "N/A"}
+            </div>
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+
+GarageDetailsDropdown.displayName = 'GarageDetailsDropdown';
+
+// Separate component for Actions Dropdown
+const ActionsDropdown = React.memo(({ 
+  row, 
+  onApprove, 
+  onReject, 
+  isApproving, 
+  isRejecting 
+}: { 
+  row: any;
+  onApprove: (id: string, name: string) => void;
+  onReject: (id: string, name: string) => void;
+  isApproving: boolean;
+  isRejecting: boolean;
+}) => {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  return (
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="h-8 cursor-pointer w-8 p-0"
+          disabled={isApproving || isRejecting}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <span className="sr-only">Open menu</span>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={() => {
+          setDropdownOpen(false);
+        }}
+      >
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDropdownOpen(false);
+            setTimeout(() => {
+              onApprove(row.id, row.garage_name || 'Garage');
+            }, 150);
+          }}
+          className="cursor-pointer"
+          disabled={isApproving || isRejecting || row.status === 1}
+        >
+          Approve
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDropdownOpen(false);
+            setTimeout(() => {
+              onReject(row.id, row.garage_name || 'Garage');
+            }, 150);
+          }}
+          className="cursor-pointer text-red-600"
+          disabled={isApproving || isRejecting || row.status === 0}
+        >
+          Reject
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+
+ActionsDropdown.displayName = 'ActionsDropdown';
+
 export default function ManageGarages() {
-  const [data, setData] = useState([]);
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState<string | number>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [openMessageModal, setOpenMessageModal] = React.useState(false);
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
-  const [currentGarageId, setCurrentGarageId] = React.useState<any>(null);
 
   const [message, setMessage] = React.useState("");
   const [isSending, setIsSending] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
+  // Debounce search term
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+  // Reset to first page when search or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, activeTab]);
+
   const garagesInfo = useGetAllGaragesQuery({
     page: currentPage,
     limit: itemsPerPage,
-    search: searchTerm,
-    status: activeTab,
-  });
-
-  const getAGarageData = useGetAGarageByIdQuery(currentGarageId, {
-    refetchOnMountOrArgChange: true,
+    search: debouncedSearch,
+    status: activeTab ? String(activeTab) : undefined,
   });
 
   const [approveGarage, { isLoading: isApproving }] =
     useApproveAGarageMutation();
+  
+  const [rejectGarage, { isLoading: isRejecting }] =
+    useRejectAGarageMutation();
 
-  // Define tabs with counts
-  const tabs = [
-    {
-      key: "all",
-      label: "All Garages",
-      count: data.length,
-    },
-    {
-      key: "paid",
-      label: "Paid",
-      count: data.filter(
-        (garage) => garage.subscription.toLowerCase() === "paid"
-      ).length,
-    },
-    {
-      key: "unpaid",
-      label: "Unpaid",
-      count: data.filter(
-        (garage) => garage.subscription.toLowerCase() === "unpaid"
-      ).length,
-    },
-  ];
+  const [confirmModal, setConfirmModal] = React.useState<{
+    isOpen: boolean;
+    garageId: string | null;
+    action: 'approve' | 'reject' | null;
+    garageName: string | null;
+  }>({
+    isOpen: false,
+    garageId: null,
+    action: null,
+    garageName: null,
+  });
 
-  // Filter data based on active tab and search
-  const filteredData = useMemo(() => {
-    let filtered = data;
+  // Get garages data from API
+  const garagesData = garagesInfo?.data?.data?.garages || [];
+  const pagination = garagesInfo?.data?.data?.pagination || {
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  };
 
-    // Filter by tab
-    if (activeTab !== "all") {
-      filtered = filtered.filter(
-        (garage) => garage.subscription.toLowerCase() === activeTab
-      );
-    }
+  const totalPages = pagination.pages || 1;
+  const totalItems = pagination.total || 0;
 
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter((garage) =>
-        Object.values(garage).some((value) =>
-          value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
+  const handleApproveGarage = async (id: string, garageName: string) => {
+    setConfirmModal({
+      isOpen: true,
+      garageId: id,
+      action: 'approve',
+      garageName: garageName,
+    });
+  };
 
-    return filtered;
-  }, [activeTab, searchTerm, data]);
+  const handleRejectGarage = async (id: string, garageName: string) => {
+    setConfirmModal({
+      isOpen: true,
+      garageId: id,
+      action: 'reject',
+      garageName: garageName,
+    });
+  };
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = garagesInfo?.data?.data?.garages?.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-  const handleApproveGarage = async (id: string) => {
+  const handleConfirmAction = async () => {
+    if (!confirmModal.garageId || !confirmModal.action) return;
+
     try {
-      const response = await approveGarage(id).unwrap();
-
-      toast.success(response?.message || "Garage approved successfully!");
-      setOpenMessageModal(false);
+      if (confirmModal.action === 'approve') {
+        const response = await approveGarage(confirmModal.garageId).unwrap();
+        toast.success(response?.message || "Garage approved successfully!");
+      } else if (confirmModal.action === 'reject') {
+        const response = await rejectGarage(confirmModal.garageId).unwrap();
+        toast.success(response?.message || "Garage rejected successfully!");
+      }
+      setConfirmModal({
+        isOpen: false,
+        garageId: null,
+        action: null,
+        garageName: null,
+      });
+      garagesInfo.refetch();
     } catch (error: any) {
-      toast.error(error?.data?.message?.message || "Failed to approve garage");
-      setOpenMessageModal(false);
+      toast.error(
+        error?.data?.message || `Failed to ${confirmModal.action} garage`
+      );
+      setConfirmModal({
+        isOpen: false,
+        garageId: null,
+        action: null,
+        garageName: null,
+      });
     }
+  };
+
+  const handleCloseModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      garageId: null,
+      action: null,
+      garageName: null,
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -125,13 +342,28 @@ export default function ManageGarages() {
   };
 
   const handleTabChange = (tabKey: string) => {
-    setActiveTab(tabKey);
+    setActiveTab(tabKey === "all" ? "" : tabKey);
     setCurrentPage(1); // Reset to first page when tab changes
   };
-  const handleCurrentGarageId = (id) => {
-    console.log("clicked", id);
-    setCurrentGarageId(id);
-  };
+
+  // Define tabs with counts
+  const tabs = [
+    {
+      key: "all",
+      label: "All Garages",
+      count: totalItems,
+    },
+    {
+      key: "1",
+      label: "Approved",
+      count: garagesData.filter((garage: any) => garage.status === 1).length,
+    },
+    {
+      key: "0",
+      label: "Pending",
+      count: garagesData.filter((garage: any) => garage.status === 0).length,
+    },
+  ];
 
   const columns = [
     {
@@ -141,94 +373,11 @@ export default function ManageGarages() {
     },
 
     {
-      key: "id",
+      key: "garage_details",
       label: "Garage Details",
       width: "15%",
       render: (value: string, row: any) => (
-        <div className="flex items-center justify-between gap-2">
-          <DropdownMenu
-            onOpenChange={(isOpen) => {
-              if (isOpen) handleCurrentGarageId(value);
-            }}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-4 space-y-2">
-              {getAGarageData?.status === "fulfilled" && (
-                <div>
-                  <div className="text-xs text-gray-500 mb-1">Garage Name</div>
-                  <div className="font-medium text-sm mb-2">
-                    {getAGarageData?.data?.data?.garage_name || "-"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">
-                    Primary Contact Person
-                  </div>
-                  <div className="font-medium text-sm mb-2">
-                    {getAGarageData?.data?.data?.primary_contact || "-"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">VTS Number</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.vts_number || "-"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">Email</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.email || "-"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">Number</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.phone_number || "-"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">Address</div>
-                  <div className="mb-2 text-sm">
-                    {[
-                      getAGarageData?.data?.data?.address,
-                      getAGarageData?.data?.data?.city,
-                      getAGarageData?.data?.data?.state,
-                      getAGarageData?.data?.data?.country,
-                      getAGarageData?.data?.data?.zip_code,
-                    ]
-                      .filter(Boolean)
-                      .join(", ") || "N/A"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">Status</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.status === 1
-                      ? "Active"
-                      : "Inactive"}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">Created At</div>
-                  <div className="mb-2 text-sm">
-                    {new Date(
-                      getAGarageData?.data?.data?.created_at
-                    ).toLocaleString()}
-                  </div>
-
-                  <div className="text-xs text-gray-500 mb-1">Approved At</div>
-                  <div className="mb-2 text-sm">
-                    {getAGarageData?.data?.data?.approved_at
-                      ? new Date(
-                          getAGarageData?.data?.data?.approved_at
-                        ).toLocaleString()
-                      : "N/A"}
-                  </div>
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <GarageDetailsDropdown garageId={row.id} />
       ),
     },
     {
@@ -250,75 +399,67 @@ export default function ManageGarages() {
       key: "status",
       label: "Status",
       width: "15%",
-      render: (value: string) => (
-        <span
-          className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${
-            value == "1"
-              ? "bg-green-100 text-green-800 border border-green-300"
-              : "bg-red-100 text-red-800 border border-red-300"
-          }`}
-        >
-          {value == 1 ? "Approved" : "Unpaid"}
-        </span>
-      ),
+      render: (value: any) => {
+        const status = typeof value === 'string' ? parseInt(value) : value;
+        return (
+          <span
+            className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${
+              status === 1
+                ? "bg-green-100 text-green-800 border border-green-300"
+                : "bg-red-100 text-red-800 border border-red-300"
+            }`}
+          >
+            {status === 1 ? "Approved" : "Pending"}
+          </span>
+        );
+      },
     },
     {
       key: "created_at",
       label: "Created At",
       width: "15%",
+      render: (value: string) => {
+        if (!value) return 'N/A';
+        try {
+          return new Date(value).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+        } catch {
+          return value;
+        }
+      },
     },
     {
       key: "approved_at",
       label: "Approved At",
       width: "15%",
+      render: (value: string) => {
+        if (!value) return 'N/A';
+        try {
+          return new Date(value).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+        } catch {
+          return value;
+        }
+      },
     },
     {
-      key: "id",
+      key: "actions",
       label: "Actions",
       width: "15%",
       render: (value: string, row: any) => (
-        <div className="flex items-center justify-between gap-2">
-          <DropdownMenu
-            onOpenChange={(isOpen) => {
-              if (isOpen) handleCurrentGarageId(value);
-            }}
-          >
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className=" space-y-2">
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer hover:text-green-900"
-                  onClick={() => handleApproveGarage(value)}
-                  disabled={isApproving}
-                >
-                  {isApproving ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : null}
-                  {isApproving ? "Approving..." : "Approve"}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start bg-red-700 hover:bg-red-800 hover:text-white cursor-pointer text-white`}
-                  onClick={() => {
-                    // Add your status change logic here
-                    console.log("Set to Deactive");
-                  }}
-                >
-                  Decline
-                </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <ActionsDropdown
+          row={row}
+          onApprove={handleApproveGarage}
+          onReject={handleRejectGarage}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
+        />
       ),
     },
   ];
@@ -359,12 +500,17 @@ export default function ManageGarages() {
               key={tab.key}
               onClick={() => handleTabChange(tab.key)}
               className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${
-                activeTab === tab.key
+                (activeTab === "" && tab.key === "all") || activeTab === tab.key
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               }`}
             >
               {tab.label}
+              {tab.count > 0 && (
+                <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -405,7 +551,7 @@ export default function ManageGarages() {
       ) : (
         <>
           <ReusableTable
-            data={paginatedData}
+            data={garagesData}
             columns={columns}
             className="mt-5"
           />
@@ -413,7 +559,7 @@ export default function ManageGarages() {
             currentPage={currentPage}
             totalPages={totalPages}
             itemsPerPage={itemsPerPage}
-            totalItems={filteredData.length}
+            totalItems={totalItems}
             onPageChange={handlePageChange}
             onItemsPerPageChange={handleItemsPerPageChange}
             className=""
@@ -520,6 +666,51 @@ export default function ManageGarages() {
               ) : null}
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
+          </div>
+        </div>
+      </CustomReusableModal>
+
+      {/* Confirmation Modal */}
+      <CustomReusableModal
+        isOpen={confirmModal.isOpen}
+        onClose={handleCloseModal}
+        title={confirmModal.action === 'approve' ? 'Approve Garage' : 'Reject Garage'}
+        variant={confirmModal.action === 'approve' ? 'success' : 'danger'}
+        icon={confirmModal.action === 'approve' ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+        description={`Are you sure you want to ${confirmModal.action} this garage?`}
+        className="max-w-md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            {confirmModal.action === 'approve'
+              ? `You are about to approve the garage "${confirmModal.garageName}". This action cannot be undone.`
+              : `You are about to reject the garage "${confirmModal.garageName}". This action cannot be undone.`
+            }
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleCloseModal}
+              disabled={isApproving || isRejecting}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmAction}
+              disabled={isApproving || isRejecting}
+              className={confirmModal.action === 'approve'
+                ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white'
+                : 'bg-red-600 cursor-pointer hover:bg-red-700 text-white'
+              }
+            >
+              {isApproving || isRejecting
+                ? 'Processing...'
+                : confirmModal.action === 'approve'
+                  ? 'Approve'
+                  : 'Reject'
+              }
+            </Button>
           </div>
         </div>
       </CustomReusableModal>

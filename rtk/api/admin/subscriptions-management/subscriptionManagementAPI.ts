@@ -79,7 +79,7 @@ export const subscriptionsManagementApi = createApi({
     }),
 
     // Get a subscription by ID
-    getASubscription: builder.query<SubscriptionPlan, string>({
+    getASubscription: builder.query<SubscriptionPlan, string | undefined>({
       query: (id) => ({
         url: `/api/admin/subscription/plans/${id}`,
         method: "GET",
@@ -101,10 +101,10 @@ export const subscriptionsManagementApi = createApi({
     //   invalidatesTags: ["Garages"],
     // }),
 
-    // Create a garage
+    // Create a subscription
     createASubscription: builder.mutation<
-      ICreateSubscription,
-      Partial<ICreateSubscription>
+      SubscriptionPlan,
+      Partial<TCreateSubscription>
     >({
       query: (body) => ({
         url: `/api/admin/subscription/plans`,

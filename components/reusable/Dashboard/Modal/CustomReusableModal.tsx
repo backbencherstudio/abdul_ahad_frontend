@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 interface CustomReusableModalProps {
@@ -32,9 +32,46 @@ export default function CustomReusableModal({
             ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
             : 'bg-slate-100 text-slate-700 ring-slate-200'
 
+    // Ensure proper cleanup when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            // Small delay to ensure modal cleanup is complete
+            const timer = setTimeout(() => {
+                // Remove any lingering pointer-events or overflow styles
+                const body = document.body
+                body.style.pointerEvents = ''
+                body.style.overflow = ''
+                
+                // Remove any backdrop that might be stuck
+                const backdrops = document.querySelectorAll('[data-radix-dialog-overlay]')
+                backdrops.forEach(backdrop => {
+                    if (backdrop instanceof HTMLElement) {
+                        backdrop.style.pointerEvents = ''
+                    }
+                })
+            }, 150)
+            return () => clearTimeout(timer)
+        }
+    }, [isOpen])
+
+    const handleOpenChange = (open: boolean) => {
+        if (!open) {
+            onClose()
+        }
+    }
+
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-            <DialogContent className={`max-w-md mx-auto border p-0 overflow-hidden rounded-xl shadow-lg ${className}`}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+            <DialogContent 
+                className={`max-w-md mx-auto border p-0 overflow-hidden rounded-xl shadow-lg ${className}`}
+                onInteractOutside={(e) => {
+                    // Allow closing on outside click
+                    onClose()
+                }}
+                onEscapeKeyDown={(e) => {
+                    onClose()
+                }}
+            >
                 {customHeader ? (
                     <>
                         {/* Visually hidden DialogTitle for accessibility */}

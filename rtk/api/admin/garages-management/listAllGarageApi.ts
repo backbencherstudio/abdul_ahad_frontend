@@ -58,7 +58,7 @@ export const garagesApi = createApi({
   baseQuery,
   tagTypes: ["Garages"],
   endpoints: (builder) => ({
-    // Get all garages
+    // Get all garages api/admin/garage?status=&page=&limit=
     getAllGarages: builder.query<
       GaragesAPIResponse,
       { page?: number; limit?: number; status?: string; search?: string }
@@ -98,10 +98,22 @@ export const garagesApi = createApi({
     // Approve a garage
     approveAGarage: builder.mutation<
       { success?: boolean; message?: string },
-      { id: string; body: Partial<Garage> }
+      string
     >({
       query: (id) => ({
         url: `/api/admin/garage/${id}/approve`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Garages"],
+    }),
+
+    // reject a garage /api/admin/garage/:id/reject
+    rejectAGarage: builder.mutation<
+      { success?: boolean; message?: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/api/admin/garage/${id}/reject`,
         method: "PATCH",
       }),
       invalidatesTags: ["Garages"],
@@ -136,5 +148,6 @@ export const {
   useGetAGarageByIdQuery,
   useCreateGarageMutation,
   useApproveAGarageMutation,
+  useRejectAGarageMutation,
   useDeleteGarageMutation,
 } = garagesApi;
