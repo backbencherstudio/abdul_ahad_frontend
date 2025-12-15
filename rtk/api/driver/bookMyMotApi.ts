@@ -110,6 +110,7 @@ export interface Slot {
     start_time: string;
     end_time: string;
     date: string;
+    status?: string[];
 }
 
 // search vehicles and garages pass in body registrationNumber and postcode
@@ -147,14 +148,32 @@ export const bookMyMotApi = createApi({
                 url: `/api/vehicles/garages/${id}/slots?date=${date}`,
                 method: "GET",
             }),
-            transformResponse: (response: any) => {
-                // Handle both array and object response formats
+            transformResponse: (response: any, _meta, arg) => {
+                const toSlot = (slot: any, index: number): Slot => ({
+                    id:
+                        slot?.id ||
+                        `${slot?.date || arg.date || "date"}-${slot?.start_time || "start"}-${slot?.end_time || "end"}-${index}`,
+                    start_time: slot?.start_time || "",
+                    end_time: slot?.end_time || "",
+                    date: slot?.date || arg.date,
+                    status: slot?.status,
+                });
+
+                // Array response
                 if (Array.isArray(response)) {
-                    return { slots: response };
+                    return { slots: response.map(toSlot) };
                 }
+
+                // { slots: [...] }
                 if (response?.slots && Array.isArray(response.slots)) {
-                    return response;
+                    return { slots: response.slots.map(toSlot) };
                 }
+
+                // { data: [...] } or other wrapped formats
+                if (response?.data && Array.isArray(response.data)) {
+                    return { slots: response.data.map(toSlot) };
+                }
+
                 return { slots: [] };
             },
             providesTags: ["BookMyMot"],
@@ -162,7 +181,18 @@ export const bookMyMotApi = createApi({
         }),
 
         // book slot /api/vehicles/book-slot 
-        bookSlot: builder.mutation<ApiResponse, { garage_id: string; vehicle_id: string; slot_id: string; service_type: string }>({
+        bookSlot: builder.mutation<
+            ApiResponse,
+            {
+                garage_id: string;
+                vehicle_id: string;
+                service_type: string;
+                slot_id?: string;
+                start_time?: string;
+                end_time?: string;
+                date?: string;
+            }
+        >({
             query: (body) => ({
                 url: `/api/vehicles/book-slot`,
                 method: "POST",

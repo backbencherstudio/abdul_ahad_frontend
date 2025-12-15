@@ -203,6 +203,12 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     refetch: refetchSlots,
   } = useGetSlotDetailsQuery(date, { skip: !isOpen })
 
+  const safeRefetchSlots = () => {
+    // RTK Query throws if refetch called when the query was never started (skip=true)
+    if (!isOpen) return
+    refetchSlots()
+  }
+
   const slotData = slotResponse?.success ? (slotResponse.data as SlotData) : null
   const responseError =
     slotResponse && !slotResponse.success
@@ -323,8 +329,8 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
         })
       }
     } catch (error) {
-      console.error(` Error ${action.toLowerCase()}ing slot:`, error)
       const message = getMutationErrorMessage(error)
+      console.error(`Error ${action.toLowerCase()}ing slot: ${message}`, error)
       setActionError(message)
       toast({
         title: `Failed to ${action.toLowerCase()} slot`,
@@ -657,7 +663,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
           onSuccess={() => {
             setShowModifyModal(false)
             setSelectedSlot(null)
-            refetchSlots()
+            safeRefetchSlots()
             onSuccess()
           }}
         />
@@ -670,7 +676,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
           date={date}
           onSuccess={() => {
             setShowBulkModal(false)
-            refetchSlots()
+            safeRefetchSlots()
             onSuccess()
           }}
         />

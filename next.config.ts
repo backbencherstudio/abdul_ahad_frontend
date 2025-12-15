@@ -47,6 +47,12 @@ const nextConfig: NextConfig = {
         hostname: "varieties-richardson-honolulu-livecam.trycloudflare.com",
         pathname: "/**",
       },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "4080",
+        pathname: "/**",
+      },
     ],
   },
 };

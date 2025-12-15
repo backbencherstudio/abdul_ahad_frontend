@@ -52,6 +52,12 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
     })
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
     const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
+    const [selectedSlotData, setSelectedSlotData] = useState<{
+        start_time: string
+        end_time: string
+        date: string
+        id: string
+    } | null>(null)
     const [submittedBooking, setSubmittedBooking] = useState<BookingFormData | null>(null)
 
     // Fetch slots when date is selected
@@ -88,6 +94,7 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
             })
             setSelectedDate(undefined)
             setSelectedSlotId(null)
+            setSelectedSlotData(null)
             dispatch(setSelectedSlot(null))
         }
     }, [isOpen, dispatch])
@@ -115,6 +122,7 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
         // Reset selected slot when date changes
         if (field === 'date') {
             setSelectedSlotId(null)
+            setSelectedSlotData(null)
         }
     }
 
@@ -128,6 +136,12 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
         
         // Just select the slot, validation will happen on submit
         setSelectedSlotId(slot.id)
+        setSelectedSlotData({
+            id: slot.id,
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            date: slot.date,
+        })
 
         // Dispatch to slice if garage and vehicle are available
         if (garage?.id && vehicle?.vehicle_id) {
@@ -156,11 +170,13 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
         const garageId = garage?.id
         const vehicleId = vehicle?.vehicle_id
 
-        if (!selectedSlotId || !garageId || !vehicleId) {
+        if (!selectedSlotId || !garageId || !vehicleId || !selectedSlotData) {
             if (!garageId) {
                 toast.error('Garage information is missing. Please search again.')
             } else if (!vehicleId) {
                 toast.error('Vehicle information is missing. Please search again.')
+            } else if (!selectedSlotData) {
+                toast.error('Slot information is missing. Please select a time slot.')
             } else {
                 toast.error('Please select a time slot')
             }
@@ -174,7 +190,10 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                 garage_id: garageId,
                 vehicle_id: vehicleId,
                 slot_id: selectedSlotId,
-                service_type: 'MOT'
+                start_time: selectedSlotData.start_time,
+                end_time: selectedSlotData.end_time,
+                date: selectedSlotData.date,
+                service_type: 'MOT',
             }
 
             const result = await bookSlot(bookingBody).unwrap()

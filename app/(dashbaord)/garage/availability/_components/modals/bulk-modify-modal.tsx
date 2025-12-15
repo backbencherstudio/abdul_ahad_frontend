@@ -158,19 +158,7 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
     return `${displayHours}:${minutes.toString().padStart(2, "0")}${period}`
   }
 
-  /**
-   * Get operation badge
-   */
-  const getOperationBadge = (op: string) => {
-    switch (op) {
-      case "BLOCK":
-        return <Badge className="bg-red-100 text-red-800">Block</Badge>
-      case "UNBLOCK":
-        return <Badge className="bg-green-100 text-green-800">Unblock</Badge>
-      default:
-        return <Badge variant="outline">{op}</Badge>
-    }
-  }
+  const getOperationLabel = (op: string) => (op === "BLOCK" ? "Block" : "Unblock")
 
   if (!isOpen) return null
 
@@ -179,7 +167,7 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <Card className="border-0 shadow-none">
           <CardHeader className="border-b bg-gray-50">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between py-5">
               <div>
                 <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-purple-600" />
@@ -189,7 +177,7 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
                   Perform operations on multiple slots across date and time ranges
                 </CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}>
+              <Button variant="ghost" size="sm" className="cursor-pointer" onClick={onClose} disabled={loading}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -206,11 +194,16 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
                       key={op}
                       type="button"
                       variant={operation === op ? "default" : "outline"}
+                      className={
+                        operation === op
+                          ? "border-gray-300 bg-gray-900 text-white hover:bg-gray-800 cursor-pointer"
+                          : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50 cursor-pointer"
+                      }
                       size="sm"
                       onClick={() => setOperation(op)}
                       disabled={loading}
                     >
-                      {getOperationBadge(op)}
+                      {getOperationLabel(op)}
                     </Button>
                   ))}
                 </div>
@@ -222,21 +215,29 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Start Date</label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        disabled={loading}
+                        className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">End Date</label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        disabled={loading}
+                        className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -247,21 +248,29 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Start Time</label>
+                  <div className="relative">
                     <Input
                       type="time"
                       value={startTime}
                       onChange={(e) => setStartTime(e.target.value)}
                       disabled={loading}
+                      className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     />
+                    <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">End Time</label>
+                  <div className="relative">
                     <Input
                       type="time"
                       value={endTime}
                       onChange={(e) => setEndTime(e.target.value)}
                       disabled={loading}
+                      className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     />
+                    <Calendar className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                   </div>
                 </div>
               </div>
@@ -280,7 +289,7 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
 
               {/* Preview Button */}
               <div className="flex justify-center">
-                <Button type="button" variant="outline" onClick={generatePreview} disabled={loading}>
+                <Button type="button" variant="outline" className="cursor-pointer" onClick={generatePreview} disabled={loading}>
                   Generate Preview
                 </Button>
               </div>
@@ -292,7 +301,15 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
                   <div className="space-y-2 text-sm text-blue-800">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Operation:</span>
-                      {getOperationBadge(operation)}
+                      <span
+                        className={
+                          operation === "BLOCK"
+                            ? "inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-xs font-medium"
+                            : "inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium"
+                        }
+                      >
+                        {getOperationLabel(operation)}
+                      </span>
                     </div>
                     <div>
                       <span className="font-medium">Date Range:</span> {preview.dateRange}
@@ -322,14 +339,14 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
                   variant="outline"
                   onClick={onClose}
                   disabled={loading}
-                  className="flex-1 bg-transparent"
+                  className="flex-1 bg-transparent cursor-pointer"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={loading || !preview}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 cursor-pointer"
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
