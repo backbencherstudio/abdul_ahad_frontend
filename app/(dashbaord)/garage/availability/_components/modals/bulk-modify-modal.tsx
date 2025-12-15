@@ -134,7 +134,11 @@ export default function BulkModifyModal({ isOpen, onClose, date, onSuccess }: Bu
       if (response.success) {
         onSuccess()
       } else {
-        setError(response.message || "Failed to perform bulk operation")
+        const message =
+          typeof response.message === "string"
+            ? response.message
+            : (response as any)?.message?.message || "Failed to perform bulk operation"
+        setError(message)
       }
     } catch (error) {
       console.error("[v0] Error performing bulk operation:", error)

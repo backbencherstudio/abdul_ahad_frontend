@@ -17,6 +17,9 @@ import {
 } from '@/rtk/api/admin/subscriptions-management/subscriptionManagementAPI';
 import { LineChart } from '@/components/Chart/LineChart';
 import { PieChart } from '@/components/Chart/PieChart';
+import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable';
+import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination';
+import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal';
 
 interface Props {
   planId: string;
@@ -27,7 +30,7 @@ export default function GarageSubscriptionsTab({ planId }: Props) {
   const [filters, setFilters] = useState<GarageSubscriptionsQueryParams>({
     plan_id: planId,
     page: 1,
-    limit: 20,
+    limit: 10,
   });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -85,6 +88,105 @@ export default function GarageSubscriptionsTab({ planId }: Props) {
     });
   };
 
+  const subscriptions = garageSubscriptions.data?.data || [];
+  const totalPages = garageSubscriptions.data?.totalPages || 1;
+  const totalItems = garageSubscriptions.data?.total || subscriptions.length || 0;
+  const currentPage = filters.page || 1;
+  const itemsPerPage = filters.limit || 10;
+
+  const columns = [
+    {
+      key: 'garage_name',
+      label: 'Garage',
+      width: '20%',
+      render: (_: any, row: any) => (
+        <div>
+          <p className="text-sm font-medium text-gray-900">{row.garage_name}</p>
+          <p className="text-xs text-gray-500">{row.garage_email}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'plan_name',
+      label: 'Plan',
+      width: '15%',
+      render: (value: string) => <span className="text-sm text-gray-900">{value}</span>,
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      width: '15%',
+      render: (value: string) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(value)}`}>
+          {value}
+        </span>
+      ),
+    },
+    {
+      key: 'price_formatted',
+      label: 'Price',
+      width: '15%',
+      render: (value: string) => <span className="text-sm text-gray-900">{value}</span>,
+    },
+    {
+      key: 'next_billing_date',
+      label: 'Next Billing',
+      width: '20%',
+      render: (value: string | null) => <span className="text-sm text-gray-500">{formatDate(value)}</span>,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      width: '15%',
+      render: (_: any, row: any) => (
+        <div className="flex gap-2">
+          {row.status === 'ACTIVE' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange(row.id, 'SUSPEND');
+              }}
+              disabled={isUpdating}
+              className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
+            >
+              Suspend
+            </Button>
+          )}
+          {row.status === 'SUSPENDED' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange(row.id, 'REACTIVATE');
+              }}
+              disabled={isUpdating}
+              className="text-green-600 border-green-300 hover:bg-green-50"
+            >
+              Reactivate
+            </Button>
+          )}
+          {row.status !== 'CANCELLED' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStatusChange(row.id, 'CANCEL');
+              }}
+              disabled={isUpdating}
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Health Summary Alert */}
@@ -136,17 +238,19 @@ export default function GarageSubscriptionsTab({ planId }: Props) {
               <Loader2 className="h-6 w-6 animate-spin text-green-600" />
             </div>
           ) : statusBreakdown.data ? (
-            <PieChart
-              labels={Object.keys(statusBreakdown.data)}
-              data={Object.values(statusBreakdown.data)}
-              colors={[
-                'rgba(34, 197, 94, 0.8)', // green - active
-                'rgba(107, 114, 128, 0.8)', // gray - inactive
-                'rgba(234, 179, 8, 0.8)', // yellow - suspended
-                'rgba(239, 68, 68, 0.8)', // red - cancelled
-                'rgba(249, 115, 22, 0.8)', // orange - past_due
-              ]}
-            />
+            <div className="flex justify-center">
+              <PieChart
+                labels={Object.keys(statusBreakdown.data)}
+                data={Object.values(statusBreakdown.data)}
+                colors={[
+                  'rgba(34, 197, 94, 0.8)', // green - active
+                  'rgba(107, 114, 128, 0.8)', // gray - inactive
+                  'rgba(234, 179, 8, 0.8)', // yellow - suspended
+                  'rgba(239, 68, 68, 0.8)', // red - cancelled
+                  'rgba(249, 115, 22, 0.8)', // orange - past_due
+                ]}
+              />
+            </div>
           ) : (
             <p className="text-gray-500 text-center py-8">No data available</p>
           )}
@@ -252,187 +356,82 @@ export default function GarageSubscriptionsTab({ planId }: Props) {
         <div className="p-4 border-b">
           <h3 className="text-lg font-semibold">Garage Subscriptions</h3>
         </div>
-        {garageSubscriptions.isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-          </div>
-        ) : garageSubscriptions.data?.data.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            No subscriptions found
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Garage</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Next Billing</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {garageSubscriptions.data?.data.map((subscription) => (
-                    <tr
-                      key={subscription.id}
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setSelectedSubscriptionId(subscription.id)}
-                    >
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{subscription.garage_name}</p>
-                          <p className="text-xs text-gray-500">{subscription.garage_email}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{subscription.plan_name}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(subscription.status)}`}>
-                          {subscription.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{subscription.price_formatted}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{formatDate(subscription.next_billing_date)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          {subscription.status === 'ACTIVE' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(subscription.id, 'SUSPEND');
-                              }}
-                              disabled={isUpdating}
-                              className="text-yellow-600 border-yellow-300 hover:bg-yellow-50"
-                            >
-                              Suspend
-                            </Button>
-                          )}
-                          {subscription.status === 'SUSPENDED' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(subscription.id, 'REACTIVATE');
-                              }}
-                              disabled={isUpdating}
-                              className="text-green-600 border-green-300 hover:bg-green-50"
-                            >
-                              Reactivate
-                            </Button>
-                          )}
-                          {subscription.status !== 'CANCELLED' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(subscription.id, 'CANCEL');
-                              }}
-                              disabled={isUpdating}
-                              className="text-red-600 border-red-300 hover:bg-red-50"
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {/* Pagination */}
-            {garageSubscriptions.data && garageSubscriptions.data.totalPages > 1 && (
-              <div className="px-4 py-3 border-t flex justify-between items-center">
-                <p className="text-sm text-gray-600">
-                  Showing {((filters.page || 1) - 1) * (filters.limit || 20) + 1} to{' '}
-                  {Math.min((filters.page || 1) * (filters.limit || 20), garageSubscriptions.data.total)} of{' '}
-                  {garageSubscriptions.data.total} results
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setFilters({ ...filters, page: (filters.page || 1) - 1 })}
-                    disabled={(filters.page || 1) <= 1}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setFilters({ ...filters, page: (filters.page || 1) + 1 })}
-                    disabled={(filters.page || 1) >= (garageSubscriptions.data?.totalPages || 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
-          </>
+        <ReusableTable
+          data={subscriptions}
+          columns={columns}
+          isLoading={garageSubscriptions.isLoading}
+          skeletonRows={itemsPerPage}
+          onRowClick={(row) => setSelectedSubscriptionId(row.id)}
+          className="mt-0"
+        />
+        {!garageSubscriptions.isLoading && totalPages > 1 && (
+          <ReusablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            totalItems={totalItems}
+            onPageChange={(page) => setFilters({ ...filters, page })}
+            onItemsPerPageChange={(limit) => setFilters({ ...filters, limit, page: 1 })}
+            className="border-t"
+          />
         )}
       </div>
 
       {/* Subscription Details Modal */}
-      {selectedSubscriptionId && subscriptionDetails.data && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Subscription Details</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedSubscriptionId(null)}
-              >
-                ×
-              </Button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs text-gray-500">Garage Name</span>
-                  <p className="text-sm font-medium">{subscriptionDetails.data.garage_name}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Email</span>
-                  <p className="text-sm font-medium">{subscriptionDetails.data.garage_email}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Plan</span>
-                  <p className="text-sm font-medium">{subscriptionDetails.data.plan_name}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Status</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(subscriptionDetails.data.status)}`}>
-                    {subscriptionDetails.data.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Price</span>
-                  <p className="text-sm font-medium">{subscriptionDetails.data.price_formatted}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Next Billing Date</span>
-                  <p className="text-sm font-medium">{formatDate(subscriptionDetails.data.next_billing_date)}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Period Start</span>
-                  <p className="text-sm font-medium">{formatDate(subscriptionDetails.data.current_period_start)}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-gray-500">Period End</span>
-                  <p className="text-sm font-medium">{formatDate(subscriptionDetails.data.current_period_end)}</p>
-                </div>
+      <CustomReusableModal
+        isOpen={Boolean(selectedSubscriptionId)}
+        onClose={() => setSelectedSubscriptionId(null)}
+        title="Subscription Details"
+        description="Garage subscription details"
+        className="max-w-2xl"
+      >
+        {subscriptionDetails.isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+          </div>
+        ) : subscriptionDetails.data ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="text-xs text-gray-500">Garage Name</span>
+                <p className="text-sm font-medium">{subscriptionDetails.data.garage_name}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Email</span>
+                <p className="text-sm font-medium">{subscriptionDetails.data.garage_email}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Plan</span>
+                <p className="text-sm font-medium">{subscriptionDetails.data.plan_name}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Status</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(subscriptionDetails.data.status)}`}>
+                  {subscriptionDetails.data.status}
+                </span>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Price</span>
+                <p className="text-sm font-medium">{subscriptionDetails.data.price_formatted}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Next Billing Date</span>
+                <p className="text-sm font-medium">{formatDate(subscriptionDetails.data.next_billing_date)}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Period Start</span>
+                <p className="text-sm font-medium">{formatDate(subscriptionDetails.data.current_period_start)}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500">Period End</span>
+                <p className="text-sm font-medium">{formatDate(subscriptionDetails.data.current_period_end)}</p>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-600">No details available.</p>
+        )}
+      </CustomReusableModal>
     </div>
   );
 }

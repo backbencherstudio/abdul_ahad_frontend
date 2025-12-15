@@ -22,10 +22,12 @@ export function PieChart({
   labels,
   data,
   colors,
+  className,
 }: {
   labels: string[];
   data: number[];
   colors?: string[];
+  className?: string;
 }) {
   const defaultColors = [
     "rgba(34, 197, 94, 0.8)", // green
@@ -47,6 +49,10 @@ export function PieChart({
     ],
   };
 
-  return <Pie options={pieOptions} data={chartData} />;
+  return (
+    <div className={className || "h-56 w-56 mx-auto"}>
+      <Pie options={pieOptions} data={chartData} />
+    </div>
+  );
 }
 

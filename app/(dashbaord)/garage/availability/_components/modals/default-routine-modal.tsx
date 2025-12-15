@@ -292,7 +292,11 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
       if (response.success) {
         onSuccess()
       } else {
-        setError(response.message || "Failed to create schedule")
+        const message =
+          typeof response.message === "string"
+            ? response.message
+            : (response as any)?.message?.message || "Failed to create schedule"
+        setError(message)
       }
     } catch (error) {
       console.error("[v0] Error creating schedule:", error)

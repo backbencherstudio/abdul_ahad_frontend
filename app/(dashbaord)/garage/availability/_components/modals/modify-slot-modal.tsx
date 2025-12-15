@@ -110,7 +110,11 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
           setAffectedSlots((response as any).data.affected_slots)
           setShowConfirmation(true)
         } else {
-          setError(response.message || "Failed to modify slot")
+          const message =
+            typeof response.message === "string"
+              ? response.message
+              : (response as any)?.message?.message || "Failed to modify slot"
+          setError(message)
         }
       }
     } catch (error) {
@@ -145,7 +149,11 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
       if (response.success) {
         onSuccess()
       } else {
-        setError(response.message || "Failed to modify slot")
+        const message =
+          typeof response.message === "string"
+            ? response.message
+            : (response as any)?.message?.message || "Failed to modify slot"
+        setError(message)
       }
     } catch (error) {
       console.error("[v0] Error modifying slot with overlap:", error)
