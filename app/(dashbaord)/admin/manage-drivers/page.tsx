@@ -250,18 +250,6 @@ export default function DriversManagement() {
     { key: "email", label: "Email", width: "20%" },
     { key: "phone_number", label: "Phone", width: "15%", render: (value: any) => value || "—" },
     {
-      key: "status",
-      label: "Status",
-      width: "10%",
-      render: (value: any) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          value === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-        }`}>
-          {value === 1 ? "Active" : "Inactive"}
-        </span>
-      ),
-    },
-    {
       key: "created_at",
       label: "Created At",
       width: "15%",

@@ -21,22 +21,20 @@ export default function NewDrivers() {
             name: driver.name || '',
             email: driver.email || '',
             phone: driver.phone_number || 'N/A',
-            VehicleNumber: driver.vehicle_registration_number || 'N/A',
-            motDate: 'N/A', 
+            createdAt: driver.created_at || '',
         }));
     }, [apiData]);
 
     const columns = [
-        { key: 'name', label: 'Drivers Name', width: '20%' },
+        { key: 'name', label: 'Drivers Name', width: '25%' },
         { key: 'email', label: 'Email', width: '25%' },
-        { key: 'phone', label: 'Contact Number', width: '20%' },
-        { key: 'VehicleNumber', label: 'Vehicle Number', width: '20%' },
+        { key: 'phone', label: 'Contact Number', width: '25%' },
         { 
-            key: 'motDate', 
-            label: 'MOT Date', 
-            width: '15%',
+            key: 'createdAt', 
+            label: 'Created At', 
+            width: '25%',
             render: (value: any) => {
-                if (!value || value === 'N/A') return 'N/A';
+                if (!value) return 'N/A';
                 try {
                     return format(new Date(value), 'dd/MM/yyyy');
                 } catch {
@@ -47,7 +45,7 @@ export default function NewDrivers() {
     ]
 
     return (
-        <>
+        <div className="w-full">
             <div className='flex justify-between items-center'>
                 <h1 className='text-2xl font-semibold '>New Drivers</h1>
                 <div>
@@ -55,14 +53,16 @@ export default function NewDrivers() {
                 </div>
             </div>
 
-            <ReusableTable
-                data={data}
-                columns={columns}
-                className="mt-4"
-                isLoading={loading}
-                skeletonRows={5}
-            />
-        </>
+            <div className="mt-4 w-full">
+                <ReusableTable
+                    data={data}
+                    columns={columns}
+                    className="w-full"
+                    isLoading={loading}
+                    skeletonRows={5}
+                />
+            </div>
+        </div>
     )
 }
 
