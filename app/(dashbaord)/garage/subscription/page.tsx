@@ -262,6 +262,10 @@ export default function SubscriptionPage() {
                         const isActiveSubscription = currentSubscription &&
                             currentSubscription.status === 'ACTIVE'
 
+                        // Check if the subscription is suspended (payment failed/card disabled)
+                        const isSuspended = currentSubscription &&
+                            currentSubscription.status === 'SUSPENDED'
+
                         // Check if the subscription is cancelled but still in period (including trial)
                         const isCancelledButActive = currentSubscription &&
                             currentSubscription.status === 'CANCELLED' &&
@@ -273,11 +277,13 @@ export default function SubscriptionPage() {
                                 key={plan.id}
                                 className={`relative w-fit min-w-[400px] max-w-[500px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${isCurrentPlan && isActiveSubscription
                                     ? 'border-green-500 ring-2 ring-blue-100 bg-blue-50'
-                                    : isCurrentPlan && isCancelledButActive
-                                        ? 'border-orange-500 ring-2 ring-orange-100 bg-orange-50'
-                                        : isCurrentPlan && !isActiveSubscription && !isCancelledButActive
-                                            ? 'border-red-500 ring-2 ring-red-100 bg-red-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                    : isCurrentPlan && isSuspended
+                                        ? 'border-yellow-500 ring-2 ring-yellow-100 bg-yellow-50'
+                                        : isCurrentPlan && isCancelledButActive
+                                            ? 'border-orange-500 ring-2 ring-orange-100 bg-orange-50'
+                                            : isCurrentPlan && !isActiveSubscription && !isCancelledButActive && !isSuspended
+                                                ? 'border-red-500 ring-2 ring-red-100 bg-red-50'
+                                                : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 {isCurrentPlan && isActiveSubscription && (
@@ -285,6 +291,17 @@ export default function SubscriptionPage() {
                                         <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                                             <Check className="w-4 h-4" />
                                             Current Plan
+                                        </span>
+                                    </div>
+                                )}
+
+                                {isCurrentPlan && isSuspended && (
+                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                        <span className="bg-yellow-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Suspended - Payment Required
                                         </span>
                                     </div>
                                 )}
@@ -303,7 +320,7 @@ export default function SubscriptionPage() {
                                     </div>
                                 )}
 
-                                {isCurrentPlan && !isActiveSubscription && !isCancelledButActive && (
+                                {isCurrentPlan && !isActiveSubscription && !isCancelledButActive && !isSuspended && (
                                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                                         <span className="bg-red-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,8 +380,17 @@ export default function SubscriptionPage() {
                                             <CancelSubscription currentSubscription={currentSubscription} />
                                         )}
 
-                                        {/* Resubscribe Button for cancelled subscriptions */}
-                                        {!isActiveSubscription && (
+                                        {/* Suspended Status - Show payment required message */}
+                                        {isSuspended && (
+                                            <div className="w-full py-3 px-4 rounded-lg bg-yellow-50 border border-yellow-200">
+                                                <p className="text-sm text-yellow-800 text-center">
+                                                    <strong>Payment Required:</strong> Please update your payment method to reactivate your subscription.
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Resubscribe Button for cancelled subscriptions only (not suspended) */}
+                                        {!isActiveSubscription && !isSuspended && (
                                             <button
                                                 onClick={() => handleSelectPlan(plan)}
                                                 disabled={loadingPlanId === plan.id}
@@ -379,9 +405,11 @@ export default function SubscriptionPage() {
                                             {/* Subscription Type Badge */}
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isActiveSubscription
                                                 ? 'bg-blue-100 text-blue-800'
-                                                : isCancelledButActive
-                                                    ? 'bg-orange-100 text-orange-800'
-                                                    : 'bg-red-100 text-red-800'
+                                                : isSuspended
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : isCancelledButActive
+                                                        ? 'bg-orange-100 text-orange-800'
+                                                        : 'bg-red-100 text-red-800'
                                                 }`}>
                                                 {currentSubscription.subscription_type?.replace(/_/g, ' ')}
                                             </span>

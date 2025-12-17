@@ -37,7 +37,7 @@ export interface PlansResponse {
 export interface CurrentSubscription {
   id: string;
   plan_id: string;
-  status: "ACTIVE" | "INACTIVE" | "CANCELLED";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED";
   current_period_start: string;
   current_period_end: string;
   next_billing_date: string;
