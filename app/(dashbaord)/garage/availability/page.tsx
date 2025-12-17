@@ -200,7 +200,7 @@ export default function AvailabilityPage() {
 
           {/* Right Panel - Calendar View */}
           <div>
-            {/* <CalendarView
+            <CalendarView
               year={currentYear}
               month={currentMonth}
               monthHolidays={calendarData?.month_holidays || []}
@@ -216,7 +216,7 @@ export default function AvailabilityPage() {
                 setShowManageSlotsModal(false)
                 setSelectedSlotDate("")
               }}
-            /> */}
+            />
           </div>
         </div>
       </div>
