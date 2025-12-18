@@ -27,6 +27,8 @@ import { bookingManagementApi } from "./api/admin/booking-management/bookingMana
 import bookingManagementSlice from "./slices/admin/bookingManagementSlice";
 import { subscriptionsMeApi } from "./api/garage/subscriptionsMeApis";
 import { invoicesApi } from "./api/garage/invoiceApis";
+import { garageDriverApis } from "./api/notification/garageDriverApis";
+import { adminNotificationApis } from "./api/notification/adminNotificationApis";
 import authReducer from "./slices/authSlice";
 
 // Combine all reducers
@@ -53,6 +55,8 @@ const appReducer = combineReducers({
   [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
   [subscriptionsMeApi.reducerPath]: subscriptionsMeApi.reducer,
   [invoicesApi.reducerPath]: invoicesApi.reducer,
+  [garageDriverApis.reducerPath]: garageDriverApis.reducer,
+  [adminNotificationApis.reducerPath]: adminNotificationApis.reducer,
   subscription: subscriptionSlice,
   usersManagement: usersManagementSlice,
   roleManagement: roleManagementSlice,
@@ -94,7 +98,9 @@ export const store = configureStore({
       bookMyMotApi.middleware,
       bookingManagementApi.middleware,
       subscriptionsMeApi.middleware,
-      invoicesApi.middleware
+      invoicesApi.middleware,
+      garageDriverApis.middleware,
+      adminNotificationApis.middleware
     ),
 });
 
