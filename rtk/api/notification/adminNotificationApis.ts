@@ -38,6 +38,22 @@ export const adminNotificationApis = createApi({
       }),
       invalidatesTags: ["AdminNotifications"],
     }),
+    // /api/admin/notifications all notifications
+    deleteAllNotifications: builder.mutation<any, void>({
+      query: () => ({
+        url: "/api/admin/notifications/all",
+        method: "DELETE",
+      }),
+      invalidatesTags: ["AdminNotifications"],
+    }),
+    // /api/admin/notifications one notification
+    deleteNotification: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/api/admin/notifications/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["AdminNotifications"],
+    }),
   }),
 });
 
@@ -46,4 +62,6 @@ export const {
   useGetUnreadCountQuery: useGetAdminUnreadCountQuery,
   useReadAllNotificationsMutation: useAdminReadAllNotificationsMutation,
   useReadNotificationMutation: useAdminReadNotificationMutation,
+  useDeleteAllNotificationsMutation: useAdminDeleteAllNotificationsMutation,
+  useDeleteNotificationMutation: useAdminDeleteNotificationMutation,
 } = adminNotificationApis;

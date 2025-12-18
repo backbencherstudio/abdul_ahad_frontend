@@ -43,7 +43,23 @@ export const garageDriverApis = createApi({
             }),
             invalidatesTags: ["GarageDriverNotifications"],
         }),
+
+        // delete all notification  
+        deleteAllNotifications: builder.mutation<any, void>({
+            query: () => ({
+                url: `/api/notification/all`,
+                method: "DELETE",
+            })
+        }),
+
+        // delete one notification   /api/notification/:id
+        deleteNotification: builder.mutation<any, string>({
+            query: (id) => ({
+                url: `/api/notification/${id}`,
+                method: "DELETE",
+            }),
+        }),
     }),
 });
 
-export const { useGetNotificationsQuery, useGetUnreadCountQuery, useReadAllNotificationsMutation, useReadNotificationMutation } = garageDriverApis;
+export const { useGetNotificationsQuery, useGetUnreadCountQuery, useReadAllNotificationsMutation, useReadNotificationMutation, useDeleteAllNotificationsMutation, useDeleteNotificationMutation } = garageDriverApis;

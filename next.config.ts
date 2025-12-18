@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "varieties-richardson-honolulu-livecam.trycloudflare.com",
+        hostname: "marketing-backed-democracy-ranks.trycloudflare.com",
         pathname: "/**",
       },
       {

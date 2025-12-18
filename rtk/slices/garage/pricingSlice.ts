@@ -51,21 +51,36 @@ const pricingSlice = createSlice({
     },
     setPricingFromResponse(state, action: PayloadAction<PricingResponsePayload>) {
       const { mot, retest, additionals } = action.payload;
-      state.mot = {
-        id: mot.id,
-        name: mot.name,
-        price: mot.price ? String(mot.price) : "",
-      };
-      state.retest = {
-        id: retest.id,
-        name: retest.name,
-        price: retest.price ? String(retest.price) : "",
-      };
-      state.additionals = additionals.map((service) => ({
-        id: service.id,
-        name: service.name,
-        price: service.price ? String(service.price) : "",
-      }));
+      
+      // Handle mot with null/undefined checks
+      if (mot) {
+        state.mot = {
+          id: mot.id ?? null,
+          name: mot.name || "MOT Test",
+          price: mot.price ? String(mot.price) : "",
+        };
+      }
+      
+      // Handle retest with null/undefined checks
+      if (retest) {
+        state.retest = {
+          id: retest.id ?? null,
+          name: retest.name || "MOT Retest",
+          price: retest.price ? String(retest.price) : "",
+        };
+      }
+      
+      // Handle additionals with null/undefined checks
+      if (additionals && Array.isArray(additionals)) {
+        state.additionals = additionals.map((service) => ({
+          id: service?.id ?? null,
+          name: service?.name || "",
+          price: service?.price ? String(service.price) : "",
+        }));
+      } else {
+        state.additionals = [];
+      }
+      
       state.formVersion += 1;
     },
   },

@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Loader2 } from 'lucide-react'
 import { useAppDispatch, useAppSelector, setAdditionals } from '@/rtk'
+import { useDeleteServiceMutation, useGetPricingQuery } from '@/rtk/api/garage/pricingApis'
+import { toast } from 'react-toastify'
 
 interface ServiceField {
     serviceName: string
@@ -32,6 +34,9 @@ const buildDefaultServices = (services: { name: string; id?: string | null }[]) 
 export default function AdditionalServicesAdd() {
     const dispatch = useAppDispatch()
     const { additionals, formVersion } = useAppSelector(state => state.pricing)
+    const [deleteService, { isLoading: isDeleting }] = useDeleteServiceMutation()
+    const { refetch } = useGetPricingQuery()
+    const [deletingId, setDeletingId] = useState<string | null>(null)
 
     const {
         register,
@@ -51,15 +56,47 @@ export default function AdditionalServicesAdd() {
     })
 
     const watchedServices = watch('services')
+    const prevFormVersionRef = React.useRef(formVersion)
+    const isResettingRef = React.useRef(false)
+    const hasInitializedRef = React.useRef(false)
+
+    // Initialize form with data from Redux on mount or when formVersion changes
+    useEffect(() => {
+        const shouldReset = 
+            // Initial load: we have data but haven't initialized yet
+            (!hasInitializedRef.current && additionals.length > 0) ||
+            // Form version changed (new data loaded from API)
+            (prevFormVersionRef.current !== formVersion)
+
+        if (shouldReset) {
+            prevFormVersionRef.current = formVersion
+            hasInitializedRef.current = true
+            isResettingRef.current = true
+            
+            const newServices = buildDefaultServices(additionals)
+            reset({
+                services: newServices
+            })
+            
+            // Reset flag after form updates (give form time to fully update)
+            setTimeout(() => {
+                isResettingRef.current = false
+            }, 300)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formVersion, reset, additionals.length]) // Include additionals.length to detect when data arrives
 
     useEffect(() => {
-        // when API data changes, refill the form
-        reset({
-            services: buildDefaultServices(additionals)
-        })
-    }, [formVersion, reset])
+        // Skip if we're currently resetting the form
+        if (isResettingRef.current) {
+            return
+        }
 
-    useEffect(() => {
+        // Skip if form hasn't been initialized yet (wait for data to load)
+        if (!hasInitializedRef.current) {
+            return
+        }
+
         // keep RTK slice in sync as user types
         const validServices =
             watchedServices
@@ -69,15 +106,40 @@ export default function AdditionalServicesAdd() {
                     name: service.serviceName.trim()
                 })) ?? []
 
-        dispatch(setAdditionals(validServices))
-    }, [watchedServices, dispatch])
+        // Only dispatch if services actually changed (prevent unnecessary updates)
+        const currentStr = JSON.stringify(validServices)
+        const prevStr = JSON.stringify(additionals)
+        if (currentStr !== prevStr) {
+            dispatch(setAdditionals(validServices))
+        }
+    }, [watchedServices, dispatch, additionals])
 
     const addServiceField = () => {
         append({ serviceName: '', persistedId: undefined })
     }
 
-    const removeService = (index: number) => {
-        remove(index)
+    const removeService = async (index: number) => {
+        const service = watchedServices[index]
+        const serviceId = service?.persistedId
+
+        // If service has an ID (persisted in database), delete it via API
+        if (serviceId) {
+            try {
+                setDeletingId(serviceId)
+                await deleteService(serviceId).unwrap()
+                toast.success('Service deleted successfully')
+                // Refetch data to update the store
+                await refetch()
+            } catch (error: any) {
+                const errorMessage = error?.data?.message || 'Failed to delete service. Please try again.'
+                toast.error(errorMessage)
+            } finally {
+                setDeletingId(null)
+            }
+        } else {
+            // If it's a new service (no ID), just remove from form
+            remove(index)
+        }
     }
 
     const hasServices = fields.length > 0
@@ -138,6 +200,7 @@ export default function AdditionalServicesAdd() {
                                                         })}
                                                         placeholder="e.g. Brake Check"
                                                         className="h-11 pr-10"
+                                                        disabled={deletingId === watchedServices[index]?.persistedId}
                                                     />
                                                     <div className="absolute right-2 top-1/2 -translate-y-1/2">
                                                         <Button
@@ -145,9 +208,14 @@ export default function AdditionalServicesAdd() {
                                                             size="icon"
                                                             variant="ghost"
                                                             onClick={() => removeService(index)}
-                                                            className="h-8 w-8 p-0 hover:bg-red-50"
+                                                            disabled={deletingId === watchedServices[index]?.persistedId || isDeleting}
+                                                            className="h-8 w-8 p-0 hover:bg-red-50 disabled:opacity-50"
                                                         >
-                                                            <X className="h-4 w-4 text-red-500" />
+                                                            {deletingId === watchedServices[index]?.persistedId ? (
+                                                                <Loader2 className="h-4 w-4 text-red-500 animate-spin" />
+                                                            ) : (
+                                                                <X className="h-4 w-4 text-red-500" />
+                                                            )}
                                                         </Button>
                                                     </div>
                                                 </div>
