@@ -17,14 +17,7 @@ interface DefaultRoutineModalProps {
   initialConfig?: ScheduleConfig
 }
 
-interface Restriction {
-  type: "BREAK" | "HOLIDAY"
-  start_time?: string
-  end_time?: string
-  description: string
-  is_recurring: boolean
-  day_of_week: number | number[]
-}
+type Restriction = ScheduleConfig["restrictions"][number]
 
 // Default values for new schedule
 const DEFAULT_START_TIME = "08:00"
@@ -83,17 +76,74 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
    * Load initial configuration when modal opens
    */
   useEffect(() => {
+    if (!isOpen) return
     if (initialConfig) {
       // Populate form with existing configuration
       setStartTime(initialConfig.start_time || DEFAULT_START_TIME)
       setEndTime(initialConfig.end_time || DEFAULT_END_TIME)
       setSlotDuration(initialConfig.slot_duration || DEFAULT_SLOT_DURATION)
 
-      if (initialConfig.restrictions && initialConfig.restrictions.length > 0) {
-        setRestrictions(initialConfig.restrictions as Restriction[])
-      } else {
-        setRestrictions(DEFAULT_RESTRICTIONS)
+      // Base restrictions coming directly from API (if any)
+      const baseRestrictions: Restriction[] = Array.isArray(initialConfig.restrictions)
+        ? (initialConfig.restrictions as Restriction[])
+        : []
+
+      // Collect holiday days from existing HOLIDAY restrictions
+      const existingHolidayRestrictions = baseRestrictions.filter((r) => r.type === "HOLIDAY")
+      const existingHolidayDesc = existingHolidayRestrictions[0]?.description || "Holiday"
+      const holidayDaysFromRestrictions: number[] = existingHolidayRestrictions.flatMap((r) =>
+        Array.isArray(r.day_of_week) ? r.day_of_week : [r.day_of_week],
+      )
+
+      // Collect holiday days from daily_hours (days marked as closed)
+      const dailyHours = (initialConfig as any).daily_hours as
+        | Record<
+            string,
+            {
+              is_closed?: boolean
+            }
+          >
+        | undefined
+
+      const holidayDaysFromDailyHours: number[] = []
+      if (dailyHours) {
+        Object.entries(dailyHours).forEach(([dayKey, value]) => {
+          const dayIndex = Number(dayKey)
+          if (Number.isNaN(dayIndex)) return
+          if (value && value.is_closed) {
+            holidayDaysFromDailyHours.push(dayIndex)
+          }
+        })
       }
+
+      // Merge and de-duplicate all holiday days
+      const allHolidayDays = Array.from(
+        new Set([...holidayDaysFromRestrictions, ...holidayDaysFromDailyHours]),
+      ).sort((a, b) => a - b)
+
+      // Keep all non-holiday restrictions as-is (BREAK etc.)
+      const nonHolidayRestrictions = baseRestrictions.filter((r) => r.type !== "HOLIDAY")
+
+      // Build a single HOLIDAY restriction that represents all holiday days
+      const mergedRestrictions: Restriction[] =
+        nonHolidayRestrictions.length === 0 && allHolidayDays.length === 0
+          ? DEFAULT_RESTRICTIONS
+          : [
+              ...nonHolidayRestrictions,
+              ...(allHolidayDays.length > 0
+                ? [
+                    {
+                      type: "HOLIDAY",
+                      day_of_week: allHolidayDays,
+                      description: existingHolidayDesc,
+                      is_recurring: true,
+                    } as Restriction,
+                  ]
+                : []),
+            ]
+
+      setRestrictions(mergedRestrictions)
+      setError("")
     } else {
       // Reset to defaults for new configuration
       handleRestoreDefaults()

@@ -39,7 +39,23 @@ const normalizeApiMessage = (
 };
 
 /**
+ * Per-day working hours / closure details returned by backend.
+ * Note: this is currently only returned by GET schedule, not required for create/update.
+ */
+export interface DailyHourConfig {
+  is_closed?: boolean;
+  intervals?: Array<{
+    start_time: string;
+    end_time: string;
+  }>;
+  slot_duration?: number;
+}
+
+/**
  * Schedule configuration interface for default routine setup
+ *
+ * For POST/PUT we only send the core fields (start/end/slot_duration/restrictions),
+ * but GET may also return additional metadata like `daily_hours` and `is_active`.
  */
 export interface ScheduleConfig {
   start_time: string;
@@ -50,9 +66,12 @@ export interface ScheduleConfig {
     start_time?: string;
     end_time?: string;
     description: string;
-    is_recurring: boolean;
+    is_recurring?: boolean;
     day_of_week: number | number[];
   }>;
+  // Optional fields only present on read responses
+  daily_hours?: Record<string, DailyHourConfig>;
+  is_active?: boolean;
 }
 
 /**

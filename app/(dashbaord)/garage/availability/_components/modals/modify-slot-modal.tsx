@@ -178,9 +178,9 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60] ">
-      <div className="bg-white rounded-lg w-full max-w-md">
+      <div className="bg-white rounded-lg w-full max-w-lg h-full max-h-[80vh] overflow-y-auto">
         <Card className="border-0 shadow-none g ">
-          <CardHeader className="border-b bg-gray-50 !rounded-lg">
+          <CardHeader className="border-b bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between ">
               <div>
                 <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2 py-4">
