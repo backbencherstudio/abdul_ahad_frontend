@@ -49,7 +49,8 @@ export const garageDriverApis = createApi({
             query: () => ({
                 url: `/api/notification/all`,
                 method: "DELETE",
-            })
+            }),
+            invalidatesTags: ["GarageDriverNotifications"],
         }),
 
         // delete one notification   /api/notification/:id
@@ -58,6 +59,7 @@ export const garageDriverApis = createApi({
                 url: `/api/notification/${id}`,
                 method: "DELETE",
             }),
+            invalidatesTags: ["GarageDriverNotifications"],
         }),
     }),
 });

@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Bell } from "lucide-react";
+import React, { useState } from "react";
+import { Bell, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +34,13 @@ export const NotificationBell: React.FC = () => {
     isLoading,
     markAllRead,
     markOneRead,
+    deleteAll,
+    deleteOne,
   } = isAdmin ? adminNotifications : driverGarageNotifications;
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Show notification bell for all user types
   if (!user) {
@@ -51,6 +57,32 @@ export const NotificationBell: React.FC = () => {
     e.preventDefault();
     e.stopPropagation();
     await markOneRead(id);
+  };
+
+  const handleClearAll = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsDeleting(true);
+    
+    // Add slight delay for smooth animation
+    setTimeout(async () => {
+      await deleteAll();
+      setIsDeleting(false);
+    }, 300);
+  };
+
+  const handleDeleteOne = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setDeletingId(id);
+    
+    // Add slight delay for smooth animation
+    setTimeout(async () => {
+      await deleteOne(id);
+      setDeletingId(null);
+    }, 300);
   };
 
   // Format date to relative time (e.g., "2 hours ago")
@@ -100,11 +132,23 @@ export const NotificationBell: React.FC = () => {
         <DropdownMenuLabel className="px-4 py-3 border-b">
           <div className="flex items-center justify-between">
             <span>{isLoading ? "Loading..." : "Notifications"}</span>
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                {unreadCount} new
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {unreadCount} new
+                </Badge>
+              )}
+              {notifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearAll}
+                  className="h-7 px-2 cursor-pointer text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Clear All
+                </Button>
+              )}
+            </div>
           </div>
         </DropdownMenuLabel>
 
@@ -120,17 +164,23 @@ export const NotificationBell: React.FC = () => {
             const notificationText = getNotificationText(notification);
             const notificationType = getNotificationType(notification);
             const isUnreadNotification = isUnread(notification);
+            const isDeletingThis = deletingId === notification.id || isDeleting;
 
             return (
               <DropdownMenuItem
                 key={notification.id}
-                className={`flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-gray-50 border-b ${isUnreadNotification ? "bg-blue-50/50" : ""
-                  }`}
+                className={`flex flex-col items-start gap-1 p-3 cursor-pointer hover:bg-gray-50 border-b relative group transition-all duration-300 ${
+                  isUnreadNotification ? "bg-blue-50/50" : ""
+                } ${
+                  isDeletingThis ? "opacity-0 scale-95 h-0 p-0 overflow-hidden" : "opacity-100 scale-100"
+                }`}
                 onSelect={(e) => e.preventDefault()}
                 onClick={(e) => handleItemClick(e, notification.id)}
+                onMouseEnter={() => setHoveredId(notification.id)}
+                onMouseLeave={() => setHoveredId(null)}
               >
                 <div className="flex items-start justify-between w-full gap-2">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 pr-8">
                     {/* Notification Type Badge */}
                     <div className="flex items-center gap-2 mb-1.5">
                       <Badge
@@ -156,6 +206,16 @@ export const NotificationBell: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Delete Icon - Shows on hover */}
+                  {hoveredId === notification.id && (
+                    <button
+                      onClick={(e) => handleDeleteOne(e, notification.id)}
+                      className="absolute cursor-pointer right-3 top-3 p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </DropdownMenuItem>
             );

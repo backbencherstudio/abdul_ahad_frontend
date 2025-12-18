@@ -6,6 +6,8 @@ import {
   useGetAdminUnreadCountQuery,
   useAdminReadAllNotificationsMutation,
   useAdminReadNotificationMutation,
+  useAdminDeleteAllNotificationsMutation,
+  useAdminDeleteNotificationMutation,
   adminNotificationApis,
 } from "@/rtk/api/notification/adminNotificationApis";
 import {
@@ -15,6 +17,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { NotificationManager } from "@/lib/NotificationManager/NotificationManager";
 import { useAppDispatch } from "@/rtk";
+import { toast } from "react-toastify";
 
 export const useAdminNotifications = () => {
   const { user } = useAuth();
@@ -46,6 +49,10 @@ export const useAdminNotifications = () => {
     useAdminReadAllNotificationsMutation();
   const [readNotification, { isLoading: isMarkingOneRead }] =
     useAdminReadNotificationMutation();
+  const [deleteAllNotifications, { isLoading: isDeletingAll }] =
+    useAdminDeleteAllNotificationsMutation();
+  const [deleteNotification, { isLoading: isDeletingOne }] =
+    useAdminDeleteNotificationMutation();
 
   const handleSocketNotification = useCallback(
     (payload: any) => {
@@ -124,12 +131,54 @@ export const useAdminNotifications = () => {
     await readNotification(id).unwrap();
   };
 
+  const handleDeleteAll = async () => {
+    try {
+      await deleteAllNotifications().unwrap();
+      
+      // Invalidate cache to refetch data
+      dispatch(
+        adminNotificationApis.util.invalidateTags(["AdminNotifications"])
+      );
+      
+      // Refetch to update UI immediately
+      await Promise.all([refetchNotifications(), refetchUnreadCount()]);
+      
+    } catch (error) {
+      toast.error("Failed to clear notifications", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+
+  const handleDeleteOne = async (id: string) => {
+    try {
+      await deleteNotification(id).unwrap();
+      
+      // Invalidate cache to refetch data
+      dispatch(
+        adminNotificationApis.util.invalidateTags(["AdminNotifications"])
+      );
+      
+      // Refetch to update UI immediately
+      await Promise.all([refetchNotifications(), refetchUnreadCount()]);
+      
+    } catch (error) {
+      toast.error("Failed to delete notification", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  };
+
   return {
     notifications: notifications?.data ?? [],
     unreadCount,
     isLoading:
-      isLoadingNotifications || isLoadingUnread || isMarkingAllRead || isMarkingOneRead,
+      isLoadingNotifications || isLoadingUnread || isMarkingAllRead || isMarkingOneRead || isDeletingAll || isDeletingOne,
     markAllRead: handleMarkAllRead,
     markOneRead: handleMarkOneRead,
+    deleteAll: handleDeleteAll,
+    deleteOne: handleDeleteOne,
   };
 };
