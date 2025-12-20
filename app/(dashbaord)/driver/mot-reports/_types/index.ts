@@ -11,6 +11,7 @@ export interface MOTReport {
 
 export interface Vehicle {
     id: number
+    apiVehicleId?: string // API vehicle ID (string format)
     registrationNumber: string
     expiryDate: string
     roadTax: string
@@ -22,6 +23,7 @@ export interface Vehicle {
 }
 
 export interface MotReportWithVehicle extends MOTReport {
+    vehicleId?: string
     vehicleReg?: string
     vehicleImage?: string
     vehicleMake?: string

@@ -44,7 +44,7 @@ export default function VehicleDetailsModal({ isOpen, onClose, vehicle }: Vehicl
                         </div>
 
                         <Link
-                            href={`/driver/mot-reports/${vehicle.vehicleReg}`}
+                            href={vehicle.vehicleId ? `/driver/mot-reports/${vehicle.vehicleId}` : `/driver/mot-reports/${vehicle.vehicleReg}`}
                             className="w-full bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-2 mt-6 rounded-lg block text-center text-sm sm:text-base"
                         >
                             MOT Reports

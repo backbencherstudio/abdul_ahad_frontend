@@ -3,19 +3,21 @@ import { useGetVehiclesQuery, useGetVehicleMotReportsQuery, ApiVehicle, MotTest 
 import { getBrandLogo } from '@/helper/vehicle.helper'
 import { Vehicle, MOTReport, MotReportWithVehicle } from '../app/(dashbaord)/driver/mot-reports/_types'
 
-export const useVehicleData = (regFromURL: string | null) => {
+export const useVehicleData = (vehicleIdFromURL: string | null) => {
     const { data: vehiclesResponse, isLoading: isLoadingVehicles, error: vehiclesError } = useGetVehiclesQuery()
     
     const foundVehicle = useMemo(() => {
-        if (!vehiclesResponse?.data || !regFromURL) return null
+        if (!vehiclesResponse?.data || !vehicleIdFromURL) return null
         return vehiclesResponse.data.find(v => 
-            v.registration_number.toLowerCase() === regFromURL.toLowerCase()
+            v.id === vehicleIdFromURL
         )
-    }, [vehiclesResponse?.data, regFromURL])
+    }, [vehiclesResponse?.data, vehicleIdFromURL])
     
+    // Always make API call if vehicleIdFromURL is provided, even if foundVehicle is not yet available
+    const vehicleIdForQuery = foundVehicle?.id || vehicleIdFromURL || ''
     const { data: motReportsData, isLoading: isLoadingMotReports, error: motReportsError } = useGetVehicleMotReportsQuery(
-        foundVehicle?.id || '',
-        { skip: !foundVehicle?.id }
+        vehicleIdForQuery,
+        { skip: !vehicleIdForQuery }
     )
 
     const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -54,7 +56,8 @@ export const useVehicleData = (regFromURL: string | null) => {
         }
 
         return {
-            id: parseInt(apiVehicle.id) || Date.now(),
+            id: Date.now(), // Use timestamp for display ID
+            apiVehicleId: apiVehicle.id, // Store the API vehicle ID
             registrationNumber: apiVehicle.registration_number,
             expiryDate: apiVehicle.mot_expiry_date || '',
             roadTax: roadTax,
@@ -74,11 +77,17 @@ export const useVehicleData = (regFromURL: string | null) => {
             // Create motReports entries for ALL vehicles, not just those with MOT reports
             const processedReports: MotReportWithVehicle[] = []
             transformedVehicles.forEach(vehicle => {
+                // Find the API vehicle to get the ID
+                const apiVehicle = vehiclesResponse.data.find(av => 
+                    av.registration_number === vehicle.registrationNumber
+                )
+                
                 if (vehicle.motReport && vehicle.motReport.length > 0) {
                     // If vehicle has MOT reports, use the latest one
                     const latestReport = vehicle.motReport[0]
                     processedReports.push({
                         ...latestReport,
+                        vehicleId: apiVehicle?.id || '',
                         vehicleReg: vehicle.registrationNumber,
                         vehicleImage: vehicle.image,
                         vehicleMake: vehicle.make,
@@ -95,6 +104,7 @@ export const useVehicleData = (regFromURL: string | null) => {
                         motPassDate: '',
                         motExpiryDate: vehicle.expiryDate || '',
                         motStatus: 'Pass' as const,
+                        vehicleId: apiVehicle?.id || '',
                         vehicleReg: vehicle.registrationNumber,
                         vehicleImage: vehicle.image,
                         vehicleMake: vehicle.make,
@@ -120,8 +130,9 @@ export const useVehicleData = (regFromURL: string | null) => {
             }))
 
             setVehicles(prevVehicles => {
-                const updatedVehicles = prevVehicles.map(vehicle => {
-                    if (vehicle.registrationNumber === foundVehicle.registration_number) {
+                return prevVehicles.map(vehicle => {
+                    // Match by apiVehicleId instead of registrationNumber
+                    if (vehicle.apiVehicleId === foundVehicle.id) {
                         return {
                             ...vehicle,
                             motReport: transformedReports
@@ -129,10 +140,9 @@ export const useVehicleData = (regFromURL: string | null) => {
                     }
                     return vehicle
                 })
-                return updatedVehicles
             })
         }
-    }, [motReportsData, foundVehicle])
+    }, [motReportsData, foundVehicle, vehicles.length])
 
     return {
         vehicles,

@@ -225,9 +225,18 @@ export default function MyVehicles() {
 
     const handleMotReports = () => {
         if (selectedVehicle) {
-            // Close the modal before navigating
-            dispatch(closeDetailsModal())
-            router.push(`/driver/mot-reports/${selectedVehicle.registrationNumber}`)
+            // Find the API vehicle to get the ID
+            const apiVehicle = vehiclesResponse?.data?.find(v => 
+                v.registration_number === selectedVehicle.registrationNumber
+            )
+            
+            if (apiVehicle?.id) {
+                // Close the modal before navigating
+                dispatch(closeDetailsModal())
+                router.push(`/driver/mot-reports/${apiVehicle.id}`)
+            } else {
+                toast.error('Vehicle ID not found. Please try again.')
+            }
         }
     }
 
@@ -284,11 +293,11 @@ export default function MyVehicles() {
 
                                 {/* Vehicle Image or Brand Name */}
                                 <div className="flex justify-center mb-4">
-                                    <div className="rounded-lg flex items-center justify-center min-h-[100px]">
+                                    <div className="rounded-lg flex items-center justify-center w-[120px] h-[120px]">
                                         {imageErrors[vehicle.id] || !isValidImageUrl(vehicle.image) ? (
-                                            <div className="flex flex-col items-center justify-center">
-                                                <div className="w-14 h-14 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
-                                                    <span className="text-white text-xl font-bold">
+                                            <div className="flex flex-col items-center justify-center w-full h-full">
+                                                <div className="w-16 h-16 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
+                                                    <span className="text-white text-2xl font-bold">
                                                         {vehicle.make.charAt(0).toUpperCase()}
                                                     </span>
                                                 </div>
@@ -297,14 +306,17 @@ export default function MyVehicles() {
                                                 </span>
                                             </div>
                                         ) : (
-                                            <Image
-                                                src={vehicle.image}
-                                                alt={`${vehicle.make} ${vehicle.model}`}
-                                                width={100}
-                                                height={100}
-                                                className="object-contain w-full h-full"
-                                                onError={() => handleImageError(vehicle.id)}
-                                            />
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <Image
+                                                    src={vehicle.image}
+                                                    alt={`${vehicle.make} ${vehicle.model}`}
+                                                    width={120}
+                                                    height={120}
+                                                    className="object-contain w-full h-full"
+                                                    style={{ maxWidth: '70px', maxHeight: '70px' }}
+                                                    onError={() => handleImageError(vehicle.id)}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 </div>
