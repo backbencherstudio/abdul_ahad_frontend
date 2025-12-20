@@ -32,13 +32,25 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http",
+        hostname: "192.168.7.12",
+        port: "4080",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "baseball-digit-system-livestock.trycloudflare.com",
         pathname: "/**",
       },
       {
         protocol: "https",
-        hostname: "varieties-richardson-honolulu-livecam.trycloudflare.com",
+        hostname: "marketing-backed-democracy-ranks.trycloudflare.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "4080",
         pathname: "/**",
       },
     ],

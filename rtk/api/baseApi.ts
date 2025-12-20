@@ -7,6 +7,10 @@ export const baseQuery = fetchBaseQuery({
         if (token) {
             headers.set('authorization', `Bearer ${token}`);
         }
+        // Ensure Content-Type is set for all requests
+        if (!headers.has('Content-Type')) {
+            headers.set('Content-Type', 'application/json');
+        }
         return headers;
     },
 });

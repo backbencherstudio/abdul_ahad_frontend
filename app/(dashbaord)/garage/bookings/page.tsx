@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
 import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination'
 import { MoreVertical, AlertTriangle, CheckCircle2 } from 'lucide-react'
@@ -14,6 +14,7 @@ import { useGetBookingsQuery, useUpdateBookingStatusMutation } from '@/rtk/api/g
 import { Booking } from '@/rtk/api/garage/bookingsApis'
 import { toast } from 'react-toastify'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function Bookings() {
     const [activeTab, setActiveTab] = useState('all')
@@ -32,9 +33,17 @@ export default function Bookings() {
         bookingName: null,
     })
 
-    // Get bookings from API
+    // Debounce search term
+    const debouncedSearch = useDebounce(searchTerm, 500)
+
+    // Reset to first page when search or tab changes
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [debouncedSearch, activeTab])
+
+    // Get bookings from API with debounced search
     const { data: bookingsData, isLoading, isError, refetch } = useGetBookingsQuery({
-        search: searchTerm,
+        search: debouncedSearch,
         status: activeTab === 'all' ? '' : activeTab.toUpperCase(),
         page: currentPage,
         limit: itemsPerPage,
@@ -151,7 +160,6 @@ export default function Bookings() {
 
     const handleTabChange = (tabKey: string) => {
         setActiveTab(tabKey)
-        setCurrentPage(1)
     }
 
     // Handle status update confirmation
@@ -169,9 +177,9 @@ export default function Bookings() {
         if (!confirmModal.bookingId || !confirmModal.status) return
 
         try {
-            await updateBookingStatus({ 
-                id: confirmModal.bookingId, 
-                status: confirmModal.status 
+            await updateBookingStatus({
+                id: confirmModal.bookingId,
+                status: confirmModal.status
             }).unwrap()
             toast.success(`Booking ${confirmModal.status.toLowerCase()} successfully`)
             setConfirmModal({
@@ -236,7 +244,7 @@ export default function Bookings() {
                         <MoreVertical className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent 
+                <DropdownMenuContent
                     align="end"
                     onCloseAutoFocus={(e) => {
                         e.preventDefault()
@@ -280,30 +288,6 @@ export default function Bookings() {
         }
     ]
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading bookings...</p>
-                </div>
-            </div>
-        )
-    }
-
-    if (isError) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <div className="text-center">
-                    <p className="text-red-600">Error loading bookings. Please try again.</p>
-                    <Button onClick={() => refetch()} className="mt-4">
-                        Retry
-                    </Button>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className="">
             <div className="mb-6">
@@ -340,32 +324,63 @@ export default function Bookings() {
                             type="text"
                             placeholder="Search bookings..."
                             value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value)
-                                setCurrentPage(1)
-                            }}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="block w-full sm:w-80 pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                         />
                     </div>
                 </div>
             </div>
 
-            <ReusableTable
-                data={tableData}
-                columns={columns}
-                actions={actions}
-                className=""
-            />
+            {/* Error state */}
+            {isError && !isLoading && (
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <p className="text-red-600">Error loading bookings. Please try again.</p>
+                        <Button onClick={() => refetch()} className="mt-4 cursor-pointer">
+                            Retry
+                        </Button>
+                    </div>
+                </div>
+            )}
 
-            <ReusablePagination
-                currentPage={currentPage}
-                totalPages={bookingsData?.pagination?.totalPages || 1}
-                itemsPerPage={itemsPerPage}
-                totalItems={bookingsData?.pagination?.total || 0}
-                onPageChange={handlePageChange}
-                onItemsPerPageChange={handleItemsPerPageChange}
-                className=""
-            />
+            {/* Empty state */}
+            {!isLoading && !isError && tableData.length === 0 && (
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <p className="text-gray-600 text-lg">No bookings found</p>
+                        <p className="text-gray-500 text-sm mt-2">Bookings will appear here once created</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Table - show when loading or has data */}
+            {(isLoading || (!isError && tableData.length > 0)) && (
+                <>
+                    <ReusableTable
+                        data={tableData}
+                        columns={columns}
+                        actions={actions}
+                        className=""
+                        isLoading={isLoading}
+                        skeletonRows={itemsPerPage}
+                    />
+
+                    {!isLoading && (
+                        <ReusablePagination
+                            currentPage={currentPage}
+                            totalPages={bookingsData?.pagination?.totalPages || 1}
+                            itemsPerPage={itemsPerPage}
+                            totalItems={bookingsData?.pagination?.total || 0}
+                            onPageChange={handlePageChange}
+                            onItemsPerPageChange={handleItemsPerPageChange}
+                            className=""
+                        />
+                    )}
+                </>
+            )}
 
             {/* Confirmation Modal */}
             <CustomReusableModal
@@ -379,7 +394,7 @@ export default function Bookings() {
             >
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
-                        {confirmModal.status === 'ACCEPTED' 
+                        {confirmModal.status === 'ACCEPTED'
                             ? `You are about to accept the booking for ${confirmModal.bookingName}. This action cannot be undone.`
                             : `You are about to reject the booking for ${confirmModal.bookingName}. This action cannot be undone.`
                         }
@@ -396,11 +411,11 @@ export default function Bookings() {
                         <Button
                             onClick={handleStatusUpdate}
                             disabled={isUpdating}
-                            className={ confirmModal.status === 'ACCEPTED' 
-                                ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white' 
+                            className={confirmModal.status === 'ACCEPTED'
+                                ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white'
                                 : 'bg-red-600 cursor-pointer hover:bg-red-700 text-white'
                             }
-                           
+
                         >
                             {isUpdating ? 'Processing...' : confirmModal.status === 'ACCEPTED' ? 'Accept' : 'Reject'}
                         </Button>

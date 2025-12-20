@@ -1,139 +1,128 @@
 'use client'
 import React from 'react'
 import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
-import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
-import { toast } from 'react-toastify'
-
+import { useGetAllBookingsQuery } from '@/rtk/api/admin/booking-management/bookingManagementApis'
 import Link from 'next/link'
 
-const BRAND_COLOR = '#19CA32';
-const BRAND_COLOR_HOVER = '#16b82e';
-
+const STATUS_OPTIONS = [
+    { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+    { value: 'ACCEPTED', label: 'Accepted', color: 'bg-green-100 text-green-800 border-green-300' },
+    { value: 'REJECTED', label: 'Rejected', color: 'bg-red-100 text-red-800 border-red-300' },
+    { value: 'COMPLETED', label: 'Completed', color: 'bg-blue-100 text-blue-800 border-blue-300' },
+    { value: 'CANCELLED', label: 'Cancelled', color: 'bg-gray-100 text-gray-800 border-gray-300' },
+] as const;
 
 export default function NewBookings() {
-    const [openMessageModal, setOpenMessageModal] = React.useState(false);
-    const [message, setMessage] = React.useState('');
-    const [isSending, setIsSending] = React.useState(false);
-    const [data, setData] = React.useState<any[]>([]);
-    const [loading, setLoading] = React.useState(true);
+    const { data: bookingsData, isLoading } = useGetAllBookingsQuery({
+        page: 1,
+        limit: 5,
+    });
 
-    // Fetch data from JSON file
-    React.useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch('/data/ManageBooking.json');
-                const jsonData = await response.json();
-                setData(jsonData.slice(0, 3));
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                toast.error('Failed to load bookings data');
-            } finally {
-                setLoading(false);
-            }
-        };
+    // Ensure only 5 bookings are displayed
+    const allBookings = bookingsData?.data?.bookings || [];
+    const bookings = allBookings.slice(0, 5);
 
-        fetchData();
-    }, []);
+    const getStatusColor = (status: string) => {
+        const statusUpper = status?.toUpperCase() || 'PENDING';
+        const statusOption = STATUS_OPTIONS.find(s => s.value === statusUpper);
+        return statusOption?.color || 'bg-gray-100 text-gray-800 border-gray-300';
+    };
 
     const columns = [
-        { key: 'name', label: 'Customer Name', width: '14%' },
-        { key: 'registrationNumber', label: 'Registration Number', width: '15%' },
-        { key: 'email', label: 'Email', width: '15%' },
-        { key: 'phone', label: 'Contact Number', width: '15%' },
-        { key: 'garage', label: 'Garage', width: '15%' },
-        { key: 'bookingDate', label: 'Booking Date', width: '10%' },
         {
-            key: 'totalAmount',
+            key: 'driver_name',
+            label: 'Customer Name',
+            width: '15%',
+            render: (_: string, row: any) => row?.driver?.name || 'N/A',
+        },
+        {
+            key: 'registration_number',
+            label: 'Registration Number',
+            width: '15%',
+            render: (_: string, row: any) => row?.vehicle?.registration_number || 'N/A',
+        },
+        {
+            key: 'driver_email',
+            label: 'Email',
+            width: '15%',
+            render: (_: string, row: any) => row?.driver?.email || 'N/A',
+        },
+        {
+            key: 'driver_phone',
+            label: 'Contact Number',
+            width: '15%',
+            render: (_: string, row: any) => row?.driver?.phone_number || 'N/A',
+        },
+        {
+            key: 'garage_name',
+            label: 'Garage',
+            width: '15%',
+            render: (_: string, row: any) => row?.garage?.garage_name || 'N/A',
+        },
+        {
+            key: 'order_date',
+            label: 'Booking Date',
+            width: '12%',
+            render: (value: string, row: any) => {
+                const dateValue = row?.order_date || value;
+                if (!dateValue) return 'N/A';
+                try {
+                    return new Date(dateValue).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                    });
+                } catch {
+                    return dateValue;
+                }
+            },
+        },
+        {
+            key: 'total_amount',
             label: 'Total',
-            width: '5%',
-            render: (value: string) => `$${parseFloat(value).toFixed(2)}`
+            width: '10%',
+            render: (value: number | string, row: any) => {
+                const amount = row?.total_amount || value;
+                if (!amount) return '$0.00';
+                const numValue = typeof amount === 'string' ? parseFloat(amount) : amount;
+                return `$${numValue.toFixed(2)}`;
+            },
         },
         {
             key: 'status',
             label: 'Status',
-            width: '10%',
-            render: (value: string) => (
-                <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${value.toLowerCase() === 'approved'
-                    ? 'bg-green-100 text-green-800 border border-green-300'
-                    : 'bg-red-100 text-red-800 border border-red-300'
-                    }`}
-                >
-                    {value}
-                </span>
-            )
-        }
-    ]
-
-    // Send Message Handler
-    const handleSendMessage = () => {
-        setIsSending(true);
-        setTimeout(() => {
-            setIsSending(false);
-            setOpenMessageModal(false);
-            setMessage('');
-            toast.success('Message sent successfully!');
-        }, 1500);
-    };
-
-
+            width: '13%',
+            render: (value: string, row: any) => {
+                const statusValue = row?.status || value;
+                const statusUpper = statusValue?.toUpperCase() || 'PENDING';
+                const statusLabel = STATUS_OPTIONS.find(s => s.value === statusUpper)?.label || statusUpper;
+                return (
+                    <span
+                        className={`inline-flex capitalize items-center justify-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(statusValue)}`}
+                    >
+                        {statusLabel}
+                    </span>
+                );
+            },
+        },
+    ];
 
     return (
         <>
             <div className='flex justify-between items-center'>
-                <h1 className='text-2xl font-semibold '>New Bookings</h1>
-                <div>
-                    <Link href="/admin/manage-bookings" className='underline hover:text-green-600 cursor-pointer transition-all duration-300'>View All Bookings</Link>
-                </div>
+                <h1 className='text-2xl font-semibold'>New Bookings</h1>
+                <Link href="/admin/manage-bookings" className='underline hover:text-green-600 cursor-pointer transition-all duration-300'>
+                    View All Bookings
+                </Link>
             </div>
 
-            {loading ? (
-                <div className="mt-4 flex items-center justify-center h-32">
-                    <div className="text-gray-500">Loading bookings...</div>
-                </div>
-            ) : (
-                <ReusableTable
-                    data={data}
-                    columns={columns}
-                    actions={[]}
-                    className="mt-4"
-                />
-            )}
-
-            {/* Send Message Modal */}
-            <CustomReusableModal
-                isOpen={openMessageModal}
-                onClose={() => setOpenMessageModal(false)}
-                title="Send Message"
-                showHeader={false}
-                className="max-w-sm border-green-600"
-            >
-                <div className="bg-white rounded-lg overflow-hidden">
-                    {/* Header */}
-                    <div className={`bg-[${BRAND_COLOR}] text-white p-4 flex items-center justify-between`}>
-                        <h2 className="text-lg font-semibold">Send Message</h2>
-                    </div>
-                    {/* Content */}
-                    <div className="p-6">
-                        <textarea
-                            className="w-full border rounded-md p-2 mb-4"
-                            placeholder="Input Message"
-                            rows={4}
-                            value={message}
-                            onChange={e => setMessage(e.target.value)}
-                            disabled={isSending}
-                        />
-                        <button
-                            className={`w-full bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
-                            onClick={handleSendMessage}
-                            disabled={isSending}
-                        >
-                            {isSending ? <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg> : null}
-                            {isSending ? 'Sending...' : 'Send'}
-                        </button>
-                    </div>
-                </div>
-            </CustomReusableModal>
+            <ReusableTable
+                data={bookings}
+                columns={columns}
+                className="mt-4"
+                isLoading={isLoading}
+                skeletonRows={5}
+            />
         </>
     )
 }
-

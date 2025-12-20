@@ -7,6 +7,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface TableColumn {
     key: string
@@ -29,6 +30,8 @@ interface ReusableTableProps {
     actions?: TableAction[]
     onRowClick?: (row: any) => void
     className?: string
+    isLoading?: boolean
+    skeletonRows?: number
 }
 
 const statusColors = {
@@ -43,7 +46,9 @@ export default function ReusableTable({
     columns,
     actions,
     onRowClick,
-    className = ""
+    className = "",
+    isLoading = false,
+    skeletonRows = 5
 }: ReusableTableProps) {
     // Use data directly (no pagination here)
     const tableData = data
@@ -66,6 +71,33 @@ export default function ReusableTable({
 
         return value
     }
+
+    const renderSkeletonRows = () => {
+        return Array.from({ length: skeletonRows }).map((_, rowIndex) => (
+            <TableRow key={`skeleton-${rowIndex}`}>
+                {columns.map((column, colIndex) => (
+                    <TableCell
+                        key={`skeleton-cell-${rowIndex}-${colIndex}`}
+                        style={{ width: column.width }}
+                        className="px-6 py-4"
+                    >
+                        {column.key === 'checkbox' ? (
+                            <Skeleton className="h-4 w-4 rounded" />
+                        ) : column.key === 'driver_details' ? (
+                            <Skeleton className="h-8 w-8 rounded" />
+                        ) : (
+                            <Skeleton className="h-4 w-full" />
+                        )}
+                    </TableCell>
+                ))}
+                {actions && actions.length > 0 && (
+                    <TableCell className="px-6 py-4">
+                        <Skeleton className="h-8 w-20" />
+                    </TableCell>
+                )}
+            </TableRow>
+        ));
+    };
 
     return (
         <div className={className}>
@@ -92,62 +124,66 @@ export default function ReusableTable({
                         </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
-                        {tableData?.map((row, index) => (
-                            <TableRow
-                                key={row.id ?? row._id ?? `row-${index}`}
-                                className={`capitalize ${onRowClick ? 'cursor-pointer' : ''}`}
-                                onClick={() => onRowClick?.(row)}
-                            >
-                                {columns.map((column) => (
-                                    <TableCell
-                                        key={column.key}
-                                        style={{ width: column.width }}
-                                        className="px-6 py-4 text-sm text-gray-900 overflow-hidden"
-                                    >
-                                        <div className="truncate">
-                                            {renderCellContent(column, row)}
-                                        </div>
-                                    </TableCell>
-                                ))}
-                                {actions && actions.length > 0 && (
-                                    <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex space-x-2">
-                                            {actions.map((action, actionIndex) => (
-                                                action.render ? (
-                                                    <React.Fragment key={actionIndex}>
-                                                        {action.render(row)}
-                                                    </React.Fragment>
-                                                ) : (
-                                                    <button
-                                                        key={actionIndex}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            action.onClick?.(row)
-                                                        }}
-                                                        className={`px-3 py-1 rounded text-xs font-medium ${action.variant === 'danger'
-                                                            ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                            : action.variant === 'success'
-                                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                                : action.variant === 'warning'
-                                                                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                                                                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                                                            } ${action.className || ''}`}
-                                                    >
-                                                        {action.label}
-                                                    </button>
-                                                )
-                                            ))}
-                                        </div>
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        ))}
+                        {isLoading ? (
+                            renderSkeletonRows()
+                        ) : (
+                            tableData?.map((row, index) => (
+                                <TableRow
+                                    key={row.id ?? row._id ?? `row-${index}`}
+                                    className={`capitalize ${onRowClick ? 'cursor-pointer' : ''}`}
+                                    onClick={() => onRowClick?.(row)}
+                                >
+                                    {columns.map((column) => (
+                                        <TableCell
+                                            key={column.key}
+                                            style={{ width: column.width }}
+                                            className="px-6 py-4 text-sm text-gray-900 overflow-hidden"
+                                        >
+                                            <div className="truncate">
+                                                {renderCellContent(column, row)}
+                                            </div>
+                                        </TableCell>
+                                    ))}
+                                    {actions && actions.length > 0 && (
+                                        <TableCell className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div className="flex space-x-2">
+                                                {actions.map((action, actionIndex) => (
+                                                    action.render ? (
+                                                        <React.Fragment key={actionIndex}>
+                                                            {action.render(row)}
+                                                        </React.Fragment>
+                                                    ) : (
+                                                        <button
+                                                            key={actionIndex}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                action.onClick?.(row)
+                                                            }}
+                                                            className={`px-3 py-1 rounded text-xs font-medium ${action.variant === 'danger'
+                                                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                                : action.variant === 'success'
+                                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                                    : action.variant === 'warning'
+                                                                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                                                        : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                                                                } ${action.className || ''}`}
+                                                        >
+                                                            {action.label}
+                                                        </button>
+                                                    )
+                                                ))}
+                                            </div>
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>
 
             {/* Empty state */}
-            {tableData?.length === 0 && (
+            {!isLoading && tableData?.length === 0 && (
                 <div className="text-center py-12">
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

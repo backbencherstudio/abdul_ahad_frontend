@@ -37,7 +37,7 @@ export interface PlansResponse {
 export interface CurrentSubscription {
   id: string;
   plan_id: string;
-  status: "ACTIVE" | "INACTIVE" | "CANCELLED";
+  status: "ACTIVE" | "INACTIVE" | "SUSPENDED" | "CANCELLED";
   current_period_start: string;
   current_period_end: string;
   next_billing_date: string;
@@ -91,7 +91,7 @@ export interface CancelResponse {
 export const subscriptionApi = createApi({
   reducerPath: "subscriptionApi",
   baseQuery,
-  tagTypes: ["Subscription", "Plan"],
+  tagTypes: ["Subscription", "Plan", "SubscriptionsMe"],
   endpoints: (builder) => ({
     // Get subscription plans
     getSubscriptionPlans: builder.query<
@@ -111,7 +111,8 @@ export const subscriptionApi = createApi({
     // Get current subscription
     getCurrentSubscription: builder.query<CurrentSubscriptionResponse, void>({
       query: () => "/api/garage-dashboard/subscription/me",
-      providesTags: ["Subscription"],
+      providesTags: ["Subscription", "SubscriptionsMe"],
+      keepUnusedDataFor: 300, // Keep cache for 5 minutes
     }),
 
     // Checkout subscription
@@ -121,7 +122,7 @@ export const subscriptionApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Subscription"],
+      invalidatesTags: ["Subscription", "SubscriptionsMe"],
     }),
 
     // Cancel subscription
@@ -131,7 +132,7 @@ export const subscriptionApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Subscription", "Plan"],
+      invalidatesTags: ["Subscription", "Plan", "SubscriptionsMe"],
     }),
   }),
 });
@@ -141,4 +142,5 @@ export const {
   useGetCurrentSubscriptionQuery,
   useCheckoutSubscriptionMutation,
   useCancelSubscriptionMutation,
+  util: subscriptionApiUtil,
 } = subscriptionApi;

@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CalendarIcon, Clock } from 'lucide-react'
@@ -30,6 +30,16 @@ export default function BookingDetailsSection({
     isBooking,
     formatTime
 }: BookingDetailsSectionProps) {
+    const dateInputRef = useRef<HTMLInputElement | null>(null)
+
+    const openNativePicker = () => {
+        if (dateInputRef.current) {
+            // showPicker is supported in modern Chromium; fallback to focus otherwise
+            (dateInputRef.current as any).showPicker?.()
+            dateInputRef.current.focus()
+        }
+    }
+
     return (
         <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -45,13 +55,15 @@ export default function BookingDetailsSection({
                     <div className="relative">
                         <Input
                             id="date"
+                            ref={dateInputRef}
                             type="date"
                             value={date}
                             onChange={(e) => {
                                 const dateValue = e.target.value
                                 onDateChange(dateValue)
                             }}
-                            className="w-full h-11 border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] pr-10"
+                            onClick={openNativePicker}
+                            className="w-full h-11 border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                             min={new Date().toISOString().split('T')[0]}
                             required
                         />

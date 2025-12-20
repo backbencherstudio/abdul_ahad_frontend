@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
-import { MotReportWithVehicle } from '../../../driver/mot-reports/_types'
-import { formatDate } from '../../../driver/mot-reports/_utils'
+import { MotReportWithVehicle } from '@/app/(dashbaord)/driver/mot-reports/_types'
+import { formatDate } from '@/app/(dashbaord)/driver/mot-reports/_utils'
 
 interface VehicleDetailsModalProps {
     isOpen: boolean

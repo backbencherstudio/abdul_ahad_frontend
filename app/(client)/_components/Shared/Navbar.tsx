@@ -7,12 +7,42 @@ import { Menu } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false)
     const router = useRouter()
+    const { isAuthenticated, user, isLoading } = useAuth()
+    
     // dynamic years
     const currentYear = new Date().getFullYear()
+
+    // Get dashboard route based on user type
+    const getDashboardRoute = () => {
+        if (!user) return '/login'
+        
+        switch (user.type) {
+            case 'DRIVER':
+                return '/driver/book-my-mot'
+            case 'GARAGE':
+                return '/garage/garage-profile'
+            case 'ADMIN':
+                return '/admin/dashboard'
+            default:
+                return '/login'
+        }
+    }
+
+    // handle dashboard navigation
+    const handleDashboard = () => {
+        setIsOpen(false)
+        if (!user || !isAuthenticated) {
+            router.push('/login')
+            return
+        }
+        const route = getDashboardRoute()
+        router.push(route)
+    }
 
 
     // dynamic addional menu items
@@ -59,16 +89,26 @@ export default function Navbar() {
 
                 {/* Desktop Navigation */}
                 <div className='hidden md:flex items-center gap-5'>
-                    <SmalButtonReuseable
-                        text='Log in'
-                        onClick={handleLogIn}
-                        className='border border-white text-white rounded-[8px] px-4 py-2 hover:bg-white hover:text-black transition-all duration-300'
-                    />
-                    <SmalButtonReuseable
-                        text='Sign up'
-                        onClick={handleCreateAccount}
-                        className='bg-white text-black rounded-[8px] px-4 py-2 hover:bg-white/80 transition-all duration-300'
-                    />
+                    {!isLoading && isAuthenticated ? (
+                        <SmalButtonReuseable
+                            text='Dashboard'
+                            onClick={handleDashboard}
+                            className='bg-white text-black rounded-[8px] px-4 py-2 hover:bg-white/80 transition-all duration-300'
+                        />
+                    ) : !isLoading ? (
+                        <>
+                            <SmalButtonReuseable
+                                text='Log in'
+                                onClick={handleLogIn}
+                                className='border border-white text-white rounded-[8px] px-4 py-2 hover:bg-white hover:text-black transition-all duration-300'
+                            />
+                            <SmalButtonReuseable
+                                text='Sign up'
+                                onClick={handleCreateAccount}
+                                className='bg-white text-black rounded-[8px] px-4 py-2 hover:bg-white/80 transition-all duration-300'
+                            />
+                        </>
+                    ) : null}
                 </div>
 
                 {/* Mobile Navigation */}
@@ -94,20 +134,31 @@ export default function Navbar() {
                                     <div className='space-y-3'>
                                         <h3 className='text-lg font-semibold text-gray-800 mb-4'>Account</h3>
 
-                                        <Button
-                                            variant="outline"
-                                            className='w-full cursor-pointer justify-start h-12 text-left border-2 border-[#14A228] text-[#14A228] font-medium hover:bg-[#14A228] hover:text-white transition-all duration-300 shadow-sm'
-                                            onClick={handleLogIn}
-                                        >
-                                            <span className='ml-2'>Log in to your account</span>
-                                        </Button>
+                                        {!isLoading && isAuthenticated ? (
+                                            <Button
+                                                className='w-full cursor-pointer justify-start h-12 text-left bg-[#14A228] text-white font-medium hover:bg-[#14A228]/90 transition-all duration-300 shadow-lg'
+                                                onClick={handleDashboard}
+                                            >
+                                                <span className='ml-2'>Go to Dashboard</span>
+                                            </Button>
+                                        ) : !isLoading ? (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    className='w-full cursor-pointer justify-start h-12 text-left border-2 border-[#14A228] text-[#14A228] font-medium hover:bg-[#14A228] hover:text-white transition-all duration-300 shadow-sm'
+                                                    onClick={handleLogIn}
+                                                >
+                                                    <span className='ml-2'>Log in to your account</span>
+                                                </Button>
 
-                                        <Button
-                                            className='w-full cursor-pointer justify-start h-12 text-left bg-[#14A228] text-white font-medium hover:bg-[#14A228]/90 transition-all duration-300 shadow-lg'
-                                            onClick={handleCreateAccount}
-                                        >
-                                            <span className='ml-2'>Create new account</span>
-                                        </Button>
+                                                <Button
+                                                    className='w-full cursor-pointer justify-start h-12 text-left bg-[#14A228] text-white font-medium hover:bg-[#14A228]/90 transition-all duration-300 shadow-lg'
+                                                    onClick={handleCreateAccount}
+                                                >
+                                                    <span className='ml-2'>Create new account</span>
+                                                </Button>
+                                            </>
+                                        ) : null}
                                     </div>
 
                                     {/* Additional Menu Items */}

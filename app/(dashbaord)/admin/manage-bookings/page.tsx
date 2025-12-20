@@ -28,8 +28,6 @@ import {
 
 const BRAND_COLOR = '#19CA32';
 const BRAND_COLOR_HOVER = '#16b82e';
-
-// Status options
 const STATUS_OPTIONS = [
     { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
     { value: 'ACCEPTED', label: 'Accepted', color: 'bg-green-100 text-green-800 border-green-300' },
@@ -169,9 +167,7 @@ export default function ManageBookings() {
 
     const handleStatusUpdateClick = (id: string, newStatus: string) => {
         const booking = bookings.find((b: any) => b.id === id);
-        // Ensure status is uppercase from the start
         const statusValue = String(newStatus).trim().toUpperCase();
-        console.log('Status update clicked:', { id, newStatus, statusValue });
         setConfirmModal({
             isOpen: true,
             bookingId: id,
@@ -184,24 +180,13 @@ export default function ManageBookings() {
         if (!confirmModal.bookingId || !confirmModal.newStatus) return;
 
         try {
-            // Ensure status is uppercase and trimmed to match backend validation
             const statusToSend = String(confirmModal.newStatus).trim().toUpperCase();
             
-            // Validate status is one of the allowed values
             const validStatuses = ['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED', 'CANCELLED'];
             if (!validStatuses.includes(statusToSend)) {
-                console.error('Invalid status value:', statusToSend, 'Original:', confirmModal.newStatus);
-                toast.error(`Invalid status: ${statusToSend}. Must be one of: ${validStatuses.join(', ')}`);
+                toast.error(`Invalid status: ${statusToSend}`);
                 return;
             }
-            
-            console.log('Sending status update:', { 
-                id: confirmModal.bookingId, 
-                status: statusToSend,
-                originalStatus: confirmModal.newStatus,
-                statusType: typeof statusToSend,
-                statusLength: statusToSend.length
-            });
             
             const response = await updateStatus({
                 id: confirmModal.bookingId,
@@ -436,20 +421,15 @@ export default function ManageBookings() {
             </div>
 
             {/* Table */}
-            {isLoading ? (
-                <div className="flex justify-center items-center py-16">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-                    <span className="ml-3 text-gray-600 font-medium">
-                        Loading bookings...
-                    </span>
-                </div>
-            ) : (
-                <>
-                    <ReusableTable
-                        data={bookings}
-                        columns={columns}
-                        className="mt-5"
-                    />
+            <>
+                <ReusableTable
+                    data={bookings}
+                    columns={columns}
+                    className="mt-5"
+                    isLoading={isLoading}
+                    skeletonRows={pagination.itemsPerPage}
+                />
+                {!isLoading && (
                     <ReusablePagination
                         currentPage={pagination.currentPage}
                         totalPages={totalPages}
@@ -459,8 +439,8 @@ export default function ManageBookings() {
                         onItemsPerPageChange={handleItemsPerPageChange}
                         className=""
                     />
-                </>
-            )}
+                )}
+            </>
 
             {/* Status Update Confirmation Modal */}
             <CustomReusableModal

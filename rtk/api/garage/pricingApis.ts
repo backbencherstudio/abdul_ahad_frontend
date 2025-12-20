@@ -1,5 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../baseApi";
+import { ApiResponse } from "./api";
 
 export interface PricingService {
   id?: string;
@@ -45,7 +46,39 @@ export const pricingApi = createApi({
         invalidatesTags: ["Pricing"],
       }
     ),
+    // get pricing /api/garage-dashboard/service-price
+    getPricing: builder.query<PricingResponsePayload, void>({
+      query: () => "/api/garage-dashboard/services",
+      transformResponse: (response: any): PricingResponsePayload => {
+        // API returns: { success: true, data: [...] } where data is an array of services
+        const servicesArray = response?.data || response || [];
+        
+        // Find MOT service
+        const motService = servicesArray.find((s: PricingService) => s.type === "MOT");
+        // Find RETEST service
+        const retestService = servicesArray.find((s: PricingService) => s.type === "RETEST");
+        // Find all ADDITIONAL services
+        const additionalServices = servicesArray.filter((s: PricingService) => s.type === "ADDITIONAL");
+        
+        // Return with safe defaults if fields are missing
+        return {
+          mot: motService || { name: "MOT Test", price: null, type: "MOT" },
+          retest: retestService || { name: "MOT Retest", price: null, type: "RETEST" },
+          additionals: additionalServices || [],
+        };
+      },
+      providesTags: ["Pricing"],
+    }),
+    //delete service /garage-dashboard/services/:id
+    deleteService: builder.mutation<ApiResponse, string>({
+      query: (id) => ({
+        url: `/api/garage-dashboard/services/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Pricing"],
+    }),
   }),
+
 });
 
-export const { useCreatePricingMutation } = pricingApi;
+export const { useCreatePricingMutation, useGetPricingQuery, useDeleteServiceMutation } = pricingApi;

@@ -5,6 +5,7 @@ import GarageProfileAdd from '../../_components/Garage/GarageProfileAdd'
 import { useGetProfileQuery } from '@/rtk/api/garage/profileApis'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function GarageProfile() {
     const { data, isLoading, isError, refetch } = useGetProfileQuery()
@@ -12,9 +13,72 @@ export default function GarageProfile() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-[#19CA32]" />
-                <p className="ml-2 text-sm text-gray-600">Loading garage profile...</p>
+            <div className="space-y-8">
+                {/* Profile Card Shimmer */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {/* Avatar Shimmer */}
+                        <div className="flex-shrink-0">
+                            <Skeleton className="h-24 w-24 rounded-full" />
+                        </div>
+
+                        {/* Profile Info Shimmer */}
+                        <div className="flex-1 space-y-4">
+                            <Skeleton className="h-8 w-48" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                                <div>
+                                    <Skeleton className="h-4 w-20 mb-2" />
+                                    <Skeleton className="h-5 w-32" />
+                                </div>
+                                <div>
+                                    <Skeleton className="h-4 w-20 mb-2" />
+                                    <Skeleton className="h-5 w-32" />
+                                </div>
+                                <div>
+                                    <Skeleton className="h-4 w-20 mb-2" />
+                                    <Skeleton className="h-5 w-40" />
+                                </div>
+                                <div>
+                                    <Skeleton className="h-4 w-20 mb-2" />
+                                    <Skeleton className="h-5 w-32" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Profile Form Shimmer */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                    <Skeleton className="h-7 w-40 mb-6" />
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div>
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div>
+                            <Skeleton className="h-4 w-24 mb-2" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <Skeleton className="h-4 w-24 mb-2" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div>
+                                <Skeleton className="h-4 w-24 mb-2" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }

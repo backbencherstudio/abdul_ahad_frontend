@@ -25,11 +25,13 @@ export default function MotFeeAdd() {
     const dispatch = useAppDispatch()
     const { mot, retest, additionals, formVersion } = useAppSelector(state => state.pricing)
     const [createPricing, { isLoading }] = useCreatePricingMutation()
+    const prevFormVersionRef = React.useRef(formVersion)
+    const hasInitializedRef = React.useRef(false)
 
     const {
         register,
         handleSubmit,
-        setValue,
+        reset,
         watch,
         formState: { errors }
     } = useForm<MotFeeFormData>({
@@ -42,18 +44,36 @@ export default function MotFeeAdd() {
     const motFeeValue = watch('motFee')
     const retestFeeValue = watch('motRetestFee')
 
+    // Initialize form with Redux data on mount or when formVersion changes
     useEffect(() => {
-        setValue('motFee', mot.price ?? '')
-        setValue('motRetestFee', retest.price ?? '')
-    }, [formVersion, mot.price, retest.price, setValue])
+        const motPrice = mot.price ?? ''
+        const retestPrice = retest.price ?? ''
+        
+        // If formVersion changed (new data loaded) or form hasn't been initialized yet
+        if (prevFormVersionRef.current !== formVersion || !hasInitializedRef.current) {
+            prevFormVersionRef.current = formVersion
+            hasInitializedRef.current = true
+            reset({
+                motFee: motPrice,
+                motRetestFee: retestPrice
+            })
+        }
+    }, [formVersion, reset, mot.price, retest.price])
+
+    // Sync user input to Redux (only when user actually types, not when loading from API)
+    useEffect(() => {
+        // Only sync if the form value is different from Redux value (user typed something)
+        if (motFeeValue !== (mot.price ?? '')) {
+            dispatch(setMot({ price: motFeeValue ?? '' }))
+        }
+    }, [motFeeValue, dispatch, mot.price])
 
     useEffect(() => {
-        dispatch(setMot({ price: motFeeValue ?? '' }))
-    }, [motFeeValue, dispatch])
-
-    useEffect(() => {
-        dispatch(setRetest({ price: retestFeeValue ?? '' }))
-    }, [retestFeeValue, dispatch])
+        // Only sync if the form value is different from Redux value (user typed something)
+        if (retestFeeValue !== (retest.price ?? '')) {
+            dispatch(setRetest({ price: retestFeeValue ?? '' }))
+        }
+    }, [retestFeeValue, dispatch, retest.price])
 
     const parsePrice = (value: string) => {
         const parsed = parseFloat(value)

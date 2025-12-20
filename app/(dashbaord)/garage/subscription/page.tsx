@@ -1,17 +1,19 @@
 'use client'
-import { Check, Star } from 'lucide-react'
+import { Check, FileText, Package, ShoppingCart, TrendingUp } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
-import { useGetSubscriptionPlansQuery, useCheckoutSubscriptionMutation, useGetCurrentSubscriptionQuery, useAppDispatch, useAppSelector, setCheckoutLoading, setSelectedPlan } from '../../../../rtk'
+import { useGetSubscriptionPlansQuery, useCheckoutSubscriptionMutation, useGetCurrentSubscriptionQuery, useAppDispatch, useAppSelector, setCheckoutLoading, setSelectedPlan, subscriptionApi } from '../../../../rtk'
 import { PAGINATION_CONFIG } from '../../../../config/pagination.config'
 import CustomReusableModal from '../../../../components/reusable/Dashboard/Modal/CustomReusableModal'
 import SubscriptionDetails from '../../_components/Garage/Subscription/SubscriptionDetails'
 import CancelSubscription from '../../_components/Garage/Subscription/CancelSubscription'
 import { toast } from 'react-toastify'
+import { Skeleton } from '@/components/ui/skeleton'
 
 
 export default function SubscriptionPage() {
     const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null)
     const [showDetailsModal, setShowDetailsModal] = useState(false)
+    const [isCheckoutInProgress, setIsCheckoutInProgress] = useState(false)
 
 
     // Fetch subscription plans
@@ -25,54 +27,23 @@ export default function SubscriptionPage() {
         data: currentSubscriptionData,
         isLoading: isLoadingCurrent,
         refetch: refetchCurrentSubscription
-    } = useGetCurrentSubscriptionQuery(undefined, {
-        refetchOnFocus: true,
-        refetchOnReconnect: true,
-        refetchOnMountOrArgChange: true
-    })
+    } = useGetCurrentSubscriptionQuery()
     const [checkoutSubscription] = useCheckoutSubscriptionMutation()
 
 
     const dispatch = useAppDispatch()
-
-    const pollingRef = useRef<NodeJS.Timeout | null>(null)
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
     const handleSelectPlan = async (plan: any) => {
         setLoadingPlanId(plan.id)
         dispatch(setSelectedPlan(plan))
         dispatch(setCheckoutLoading(true))
+        setIsCheckoutInProgress(true)
+        
         try {
             const result = await checkoutSubscription({ plan_id: plan.id }).unwrap()
             if (result.success && result.data.checkout_url) {
                 window.open(result.data.checkout_url, '_blank')
-
-                // Begin short-lived polling to detect subscription activation after checkout
-                const startTime = Date.now()
-                if (pollingRef.current) clearInterval(pollingRef.current)
-                pollingRef.current = setInterval(async () => {
-                    try {
-                        const refetchResult = await refetchCurrentSubscription()
-                        const updated = (refetchResult as any)?.data?.data
-                        if (updated?.status === 'ACTIVE' && updated?.plan?.id === plan.id) {
-                            setLoadingPlanId(null)
-                            dispatch(setCheckoutLoading(false))
-                            dispatch(setSelectedPlan(null))
-                            if (pollingRef.current) {
-                                clearInterval(pollingRef.current)
-                                pollingRef.current = null
-                            }
-                        }
-                    } catch (e) {
-                        // swallow
-                    } finally {
-                        // Stop polling after 2 minutes max
-                        if (Date.now() - startTime > 120000 && pollingRef.current) {
-                            clearInterval(pollingRef.current)
-                            pollingRef.current = null
-                            dispatch(setCheckoutLoading(false))
-                        }
-                    }
-                }, 2000)
             }
         } catch (error) {
             const err: any = error
@@ -85,35 +56,120 @@ export default function SubscriptionPage() {
             }
             setLoadingPlanId(null)
             dispatch(setCheckoutLoading(false))
+            setIsCheckoutInProgress(false)
         }
     }
 
 
+    // Smart polling - only when checkout is in progress
     useEffect(() => {
-        const onFocus = () => {
-            refetchCurrentSubscription().then((res: any) => {
-                const updated = res?.data?.data
+        if (!isCheckoutInProgress) return
+
+        const checkSubscriptionStatus = async () => {
+            try {
+                // Invalidate cache to get fresh data
+                dispatch(subscriptionApi.util.invalidateTags(['Subscription', 'SubscriptionsMe']))
+                
+                const result = await refetchCurrentSubscription()
+                const updated = (result as any)?.data?.data
+                
                 if (updated?.status === 'ACTIVE') {
+                    // Payment successful!
                     setLoadingPlanId(null)
                     dispatch(setCheckoutLoading(false))
                     dispatch(setSelectedPlan(null))
+                    setIsCheckoutInProgress(false)
+                    
+                    // Stop polling
+                    if (pollingIntervalRef.current) {
+                        clearInterval(pollingIntervalRef.current)
+                        pollingIntervalRef.current = null
+                    }
+                    
+                    toast.success('Subscription activated successfully!')
                 }
-            })
+            } catch (error) {
+                // Silent error handling
+                console.error('Polling error:', error)
+            }
         }
-        window.addEventListener('focus', onFocus)
+
+        // Start polling every 5 seconds when checkout is in progress
+        pollingIntervalRef.current = setInterval(checkSubscriptionStatus, 5000)
+
+        // Stop polling after 5 minutes max
+        const timeoutId = setTimeout(() => {
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current)
+                pollingIntervalRef.current = null
+                setIsCheckoutInProgress(false)
+                setLoadingPlanId(null)
+                dispatch(setCheckoutLoading(false))
+            }
+        }, 300000) // 5 minutes
+
         return () => {
-            window.removeEventListener('focus', onFocus)
-            if (pollingRef.current) clearInterval(pollingRef.current)
+            if (pollingIntervalRef.current) {
+                clearInterval(pollingIntervalRef.current)
+            }
+            clearTimeout(timeoutId)
         }
-    }, [refetchCurrentSubscription, dispatch])
+    }, [isCheckoutInProgress, dispatch, refetchCurrentSubscription])
 
 
     if (isLoading || isLoadingCurrent) {
         return (
-            <div className="flex-1 lg:flex-1 flex items-center justify-center  h-full">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading subscription data...</p>
+            <div className="flex-1 lg:flex-1 flex items-center justify-center p-4 lg:p-8">
+                <div className="w-full">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
+                        <p className="text-gray-600 text-lg">
+                            Select the perfect plan for your garage business
+                        </p>
+                    </div>
+
+                    {/* Shimmer Skeleton Card */}
+                    <div className="flex justify-center items-center">
+                        <div className="w-full max-w-md">
+                            <div className="bg-white rounded-lg border-2 border-gray-200 p-6 shadow-sm animate-pulse">
+                                {/* Badge Skeleton */}
+                                <div className="flex justify-center mb-4">
+                                    <Skeleton className="h-6 w-24 rounded-full" />
+                                </div>
+
+                                {/* Title Skeleton */}
+                                <Skeleton className="h-8 w-3/4 mx-auto mb-2" />
+
+                                {/* Description Skeleton */}
+                                <Skeleton className="h-4 w-full mb-6 mx-auto" />
+
+                                {/* Membership Section Skeleton */}
+                                <div className="mb-6">
+                                    <div className="flex justify-center items-baseline gap-2 mb-1">
+                                        <Skeleton className="h-10 w-32" />
+                                        <Skeleton className="h-6 w-16" />
+                                    </div>
+                                    <Skeleton className="h-3 w-full" />
+                                </div>
+
+                                {/* Button Skeleton */}
+                                <Skeleton className="h-12 w-full mb-6 rounded-md" />
+
+                                {/* Features Section Skeleton */}
+                                <div>
+                                    <Skeleton className="h-6 w-24 mb-3" />
+                                    <div className="space-y-3">
+                                        {[1, 2, 3, 4, 5].map((index) => (
+                                            <div key={index} className="flex items-start gap-3">
+                                                <Skeleton className="h-5 w-5 rounded mt-0.5" />
+                                                <Skeleton className="h-4 flex-1" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
@@ -157,6 +213,35 @@ export default function SubscriptionPage() {
         )
     }
 
+
+    // Get features list for a subscription
+    const getFeatures = (subscription: any) => {
+        const features = [
+            {
+                icon: Package,
+                text: "Unlimited opportunity to receive MOT bookings — 24/7",
+            },
+            {
+                icon: ShoppingCart,
+                text: "Boost Your Garage's Visibility.",
+            },
+            {
+                icon: FileText,
+                text: "Opportunity to upsell and offer extra services!",
+            },
+            {
+                icon: TrendingUp,
+                text: "No Contract. No commission.",
+            },
+            {
+                icon: Package,
+                text: "Simple set up.",
+            },
+        ];
+
+        return features;
+    };
+
     return (
         <div className="flex-1 lg:flex-1 flex items-center justify-center p-4 lg:p-8">
             <div className="w-full">
@@ -167,7 +252,7 @@ export default function SubscriptionPage() {
                     </p>
                 </div>
 
-                <div className="grid gap-6 justify-center grid-cols-[repeat(auto-fit,minmax(320px,max-content))]">
+                <div className="flex justify-center items-center gap-4">
                     {plans.map((plan) => {
                         // Check if this plan is the current subscription (regardless of status)
                         const isCurrentPlan = currentSubscription &&
@@ -177,33 +262,46 @@ export default function SubscriptionPage() {
                         const isActiveSubscription = currentSubscription &&
                             currentSubscription.status === 'ACTIVE'
 
+                        // Check if the subscription is suspended (payment failed/card disabled)
+                        const isSuspended = currentSubscription &&
+                            currentSubscription.status === 'SUSPENDED'
+
                         // Check if the subscription is cancelled but still in period (including trial)
                         const isCancelledButActive = currentSubscription &&
                             currentSubscription.status === 'CANCELLED' &&
                             (new Date(currentSubscription.current_period_end) > new Date() ||
                                 (currentSubscription.trial_information?.days_remaining && currentSubscription.trial_information.days_remaining > 0))
 
-                        const isPopular = plan.name === 'Gold Plan'
-
                         return (
                             <div
                                 key={plan.id}
-                                className={`relative w-fit min-w-[320px] max-w-[420px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${isCurrentPlan && isActiveSubscription
-                                    ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50'
-                                    : isCurrentPlan && isCancelledButActive
-                                        ? 'border-orange-500 ring-2 ring-orange-100 bg-orange-50'
-                                        : isCurrentPlan && !isActiveSubscription && !isCancelledButActive
-                                            ? 'border-red-500 ring-2 ring-red-100 bg-red-50'
-                                            : isPopular
-                                                ? 'border-[#19CA32] ring-2 ring-green-100'
+                                className={`relative w-fit min-w-[400px] max-w-[500px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${isCurrentPlan && isActiveSubscription
+                                    ? 'border-green-500 ring-2 ring-blue-100 bg-blue-50'
+                                    : isCurrentPlan && isSuspended
+                                        ? 'border-yellow-500 ring-2 ring-yellow-100 bg-yellow-50'
+                                        : isCurrentPlan && isCancelledButActive
+                                            ? 'border-orange-500 ring-2 ring-orange-100 bg-orange-50'
+                                            : isCurrentPlan && !isActiveSubscription && !isCancelledButActive && !isSuspended
+                                                ? 'border-red-500 ring-2 ring-red-100 bg-red-50'
                                                 : 'border-gray-200 hover:border-gray-300'
                                     }`}
                             >
                                 {isCurrentPlan && isActiveSubscription && (
                                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                        <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
+                                        <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                                             <Check className="w-4 h-4" />
                                             Current Plan
+                                        </span>
+                                    </div>
+                                )}
+
+                                {isCurrentPlan && isSuspended && (
+                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                                        <span className="bg-yellow-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            Suspended - Payment Required
                                         </span>
                                     </div>
                                 )}
@@ -222,7 +320,7 @@ export default function SubscriptionPage() {
                                     </div>
                                 )}
 
-                                {isCurrentPlan && !isActiveSubscription && !isCancelledButActive && (
+                                {isCurrentPlan && !isActiveSubscription && !isCancelledButActive && !isSuspended && (
                                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                                         <span className="bg-red-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,25 +331,18 @@ export default function SubscriptionPage() {
                                     </div>
                                 )}
 
-                                {!isCurrentPlan && isPopular && (
-                                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                        <span className="bg-[#19CA32] text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                                            <Star className="w-4 h-4" />
-                                            Popular
-                                        </span>
+                                <div className=" mb-6">
+                                    <div className="text-center flex flex-col items-center justify-center gap-2">
+                                        <h3 className="sm:text-2xl text-xl font-bold text-gray-900 ">{plan.name}</h3>
+                                        <p className="text-gray-600 text-sm">{plan.description}</p>
                                     </div>
-                                )}
 
-                                <div className="text-center mb-6">
-                                    <h3 className="sm:text-2xl text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                                    <p className="text-gray-600 text-sm mb-4">{plan.description}</p>
-
-                                    <div className="mb-4">
+                                    <div className="my-4">
                                         <span className="sm:text-4xl text-2xl font-bold text-gray-900">{plan.price_formatted}</span>
                                         <span className="text-gray-600 ml-1">/month</span>
                                     </div>
 
-                                    {isCurrentPlan && isActiveSubscription ? (
+                                    {/* {isCurrentPlan && isActiveSubscription ? (
                                         <div className="space-y-2">
                                             <p className="text-green-600 text-sm font-medium">
                                                 ✓ Currently Active
@@ -272,12 +363,14 @@ export default function SubscriptionPage() {
                                                 ✗ Cancelled
                                             </p>
                                         </div>
-                                    ) : (
-                                        <p className="text-gray-500 text-xs">
-                                            Billed automatically every month (unless cancelled)
-                                        </p>
-                                    )}
+                                    ) : null} */}
+
+                                    <p className="text-gray-500 text-xs">
+                                        {plan.price_formatted} billed automatically every month on the sign-up date (unless cancelled)
+                                    </p>
                                 </div>
+
+
 
                                 {/* choose plan button */}
                                 {isCurrentPlan ? (
@@ -287,8 +380,17 @@ export default function SubscriptionPage() {
                                             <CancelSubscription currentSubscription={currentSubscription} />
                                         )}
 
-                                        {/* Resubscribe Button for cancelled subscriptions */}
-                                        {!isActiveSubscription && (
+                                        {/* Suspended Status - Show payment required message */}
+                                        {isSuspended && (
+                                            <div className="w-full py-3 px-4 rounded-lg bg-yellow-50 border border-yellow-200">
+                                                <p className="text-sm text-yellow-800 text-center">
+                                                    <strong>Payment Required:</strong> Please update your payment method to reactivate your subscription.
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Resubscribe Button for cancelled subscriptions only (not suspended) */}
+                                        {!isActiveSubscription && !isSuspended && (
                                             <button
                                                 onClick={() => handleSelectPlan(plan)}
                                                 disabled={loadingPlanId === plan.id}
@@ -303,9 +405,11 @@ export default function SubscriptionPage() {
                                             {/* Subscription Type Badge */}
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isActiveSubscription
                                                 ? 'bg-blue-100 text-blue-800'
-                                                : isCancelledButActive
-                                                    ? 'bg-orange-100 text-orange-800'
-                                                    : 'bg-red-100 text-red-800'
+                                                : isSuspended
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : isCancelledButActive
+                                                        ? 'bg-orange-100 text-orange-800'
+                                                        : 'bg-red-100 text-red-800'
                                                 }`}>
                                                 {currentSubscription.subscription_type?.replace(/_/g, ' ')}
                                             </span>
@@ -331,24 +435,23 @@ export default function SubscriptionPage() {
                                     <button
                                         onClick={() => handleSelectPlan(plan)}
                                         disabled={loadingPlanId === plan.id}
-                                        className={`w-full cursor-pointer py-3 px-6 rounded-lg font-semibold transition-colors duration-200 mb-6 disabled:opacity-50 text-sm disabled:cursor-not-allowed ${plan.name === 'Gold Plan'
-                                            ? 'bg-[#19CA32] hover:bg-green-600 text-white'
-                                            : 'bg-gray-900 hover:bg-gray-800 text-white'
-                                            }`}
+                                        className="w-full cursor-pointer py-3 px-6 rounded-lg font-semibold transition-colors duration-200 mb-6 disabled:opacity-50 text-sm disabled:cursor-not-allowed bg-[#19CA32] hover:bg-green-600 text-white"
                                     >
                                         {loadingPlanId === plan.id ? 'Processing...' : `Choose ${plan.name}`}
                                     </button>
                                 )}
 
+
+
                                 <div>
                                     <h4 className="text-lg font-semibold text-gray-900 mb-4">Features</h4>
                                     <div className="space-y-3">
-                                        {plan.features.map((feature, index) => (
+                                        {getFeatures(plan).map((feature, index) => (
                                             <div key={index} className="flex items-start gap-3">
                                                 <div className="flex-shrink-0 mt-0.5">
-                                                    <Check className="w-4 h-4 text-green-500" />
+                                                    <feature.icon className="w-4 h-4 text-green-500" />
                                                 </div>
-                                                <p className="text-sm text-gray-700">{feature}</p>
+                                                <span className="text-sm text-gray-700">{feature.text}</span>
                                             </div>
                                         ))}
                                     </div>

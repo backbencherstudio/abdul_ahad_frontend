@@ -1,344 +1,257 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
-import { MoreVertical, Trash2, Loader2 } from "lucide-react";
+import { MoreVertical, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import {
+  useGetAllGaragesQuery,
+  useGetAGarageByIdQuery,
+  useApproveAGarageMutation,
+  useRejectAGarageMutation,
+} from "@/rtk/api/admin/garages-management/listAllGarageApi";
 
-const BRAND_COLOR = "#19CA32";
-const BRAND_COLOR_HOVER = "#16b82e";
-const DANGER_COLOR = "#F04438";
+// Garage Details Dropdown Component
+const GarageDetailsDropdown = React.memo(({ garageId }: { garageId: string }) => {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const { data: garageData, isLoading, isError } = useGetAGarageByIdQuery(garageId || '', {
+    skip: !dropdownOpen || !garageId,
+    refetchOnMountOrArgChange: true,
+  });
+
+  const garage = garageData?.data;
+
+  return (
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64 p-4 space-y-2 max-h-[500px] overflow-y-auto">
+        {isLoading && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="ml-2 text-sm text-gray-500">Loading...</span>
+          </div>
+        )}
+        {isError && <div className="text-sm text-red-500 py-4">Failed to load garage details</div>}
+        {!isLoading && !isError && garage && (
+          <div>
+            {[
+              { label: "Garage Name", value: garage.garage_name },
+              { label: "Primary Contact Person", value: garage.primary_contact },
+              { label: "VTS Number", value: garage.vts_number },
+              { label: "Email", value: garage.email },
+              { label: "Phone Number", value: garage.phone_number },
+              { label: "Address", value: [garage.address, garage.city, garage.state, garage.country, garage.zip_code].filter(Boolean).join(", ") || "N/A" },
+            ].map((item, idx) => (
+              <div key={idx} className={idx > 0 ? "mt-2" : ""}>
+                <div className="text-xs text-gray-500 mb-1">{item.label}</div>
+                <div className="font-medium text-sm">{item.value || "-"}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+GarageDetailsDropdown.displayName = 'GarageDetailsDropdown';
+
+// Actions Dropdown Component
+const ActionsDropdown = React.memo(({
+  row,
+  onApprove,
+  onReject,
+  isApproving,
+  isRejecting
+}: {
+  row: any;
+  onApprove: (id: string, name: string) => void;
+  onReject: (id: string, name: string) => void;
+  isApproving: boolean;
+  isRejecting: boolean;
+}) => {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  return (
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer" disabled={isApproving || isRejecting} onClick={(e) => e.stopPropagation()}>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDropdownOpen(false);
+            setTimeout(() => onApprove(row.id, row.garage_name || 'Garage'), 150);
+          }}
+          className="cursor-pointer"
+          disabled={isApproving || isRejecting || row.status === 1}
+        >
+          Approve
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDropdownOpen(false);
+            setTimeout(() => onReject(row.id, row.garage_name || 'Garage'), 150);
+          }}
+          className="cursor-pointer text-red-600"
+          disabled={isApproving || isRejecting || row.status === 0}
+        >
+          Reject
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+ActionsDropdown.displayName = 'ActionsDropdown';
+
+// Date formatter helper
+const formatDate = (value: string) => {
+  if (!value) return 'N/A';
+  try {
+    return new Date(value).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  } catch {
+    return value;
+  }
+};
 
 export default function NewGarages() {
-  const [data, setData] = useState([]);
-  const [openMessageModal, setOpenMessageModal] = React.useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
-  const [selectedGarage, setSelectedGarage] = React.useState<any>(null);
-  const [message, setMessage] = React.useState("");
-  const [isSending, setIsSending] = React.useState(false);
-  const [isDeleting, setIsDeleting] = React.useState(false);
+  const garagesInfo = useGetAllGaragesQuery({ page: 1, limit: 5, status: undefined });
+  const [approveGarage, { isLoading: isApproving }] = useApproveAGarageMutation();
+  const [rejectGarage, { isLoading: isRejecting }] = useRejectAGarageMutation();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("/data/ManageGarageData.json");
-        const jsonData = await response.json();
-        setData(jsonData.slice(0, 8));
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load garage data");
-      }
-    };
+  const [confirmModal, setConfirmModal] = React.useState<{
+    isOpen: boolean;
+    garageId: string | null;
+    action: 'approve' | 'reject' | null;
+    garageName: string | null;
+  }>({ isOpen: false, garageId: null, action: null, garageName: null });
 
-    fetchData();
+  const garagesData = garagesInfo?.data?.data?.garages || [];
+
+  const handleApprove = React.useCallback((id: string, name: string) => {
+    setConfirmModal({ isOpen: true, garageId: id, action: 'approve', garageName: name });
   }, []);
 
+  const handleReject = React.useCallback((id: string, name: string) => {
+    setConfirmModal({ isOpen: true, garageId: id, action: 'reject', garageName: name });
+  }, []);
+
+  const handleConfirm = async () => {
+    if (!confirmModal.garageId || !confirmModal.action) return;
+    try {
+      const response = confirmModal.action === 'approve'
+        ? await approveGarage(confirmModal.garageId).unwrap()
+        : await rejectGarage(confirmModal.garageId).unwrap();
+      toast.success(response?.message || `Garage ${confirmModal.action}ed successfully!`);
+      setConfirmModal({ isOpen: false, garageId: null, action: null, garageName: null });
+      garagesInfo.refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || `Failed to ${confirmModal.action} garage`);
+      setConfirmModal({ isOpen: false, garageId: null, action: null, garageName: null });
+    }
+  };
+
   const columns = [
+    { key: "garage_name", label: "Garage Name", width: "30%" },
     {
-      key: "garage_name",
-      label: "Garage Name",
-      width: "30%",
-      render: (value: string, row: any) => (
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate block">{value}</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-4 space-y-2">
-              <div>
-                <div className="text-xs text-gray-500 mb-1">
-                  Primary Contact Person
-                </div>
-                <div className="font-medium text-sm mb-2">{row.name}</div>
-                <div className="text-xs text-gray-500 mb-1">VTS Number</div>
-                <div className="mb-2 text-sm">{row.vts}</div>
-                <div className="text-xs text-gray-500 mb-1">Email</div>
-                <div className="mb-2 text-sm">{row.email}</div>
-                <div className="text-xs text-gray-500 mb-1">Number</div>
-                <div className="mb-2 text-sm">{row.phone}</div>
-                <div className="text-xs text-gray-500 mb-1">Address</div>
-                <div className="mb-2 text-sm">{row.address}</div>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
-    },
-    {
-      key: "subscription_date",
-      label: "Subscription Date",
+      key: "garage_details",
+      label: "Garage Details",
       width: "15%",
+      render: (_: string, row: any) => <GarageDetailsDropdown garageId={row.id} />,
     },
+    { key: "primary_contact", label: "Primary Contact", width: "15%" },
+    { key: "phone_number", label: "Phone", width: "15%" },
+    { key: "email", label: "Email", width: "15%" },
     {
-      key: "subscription",
-      label: "Subscription",
+      key: "status",
+      label: "Status",
       width: "15%",
-      render: (value: string) => (
-        <span
-          className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${
-            value.toLowerCase() === "paid"
-              ? "bg-green-100 text-green-800 border border-green-300"
-              : "bg-red-100 text-red-800 border border-red-300"
-          }`}
-        >
-          {value}
-        </span>
-      ),
-    },
-    {
-      key: "listing",
-      label: "Listing",
-      width: "15%",
-      render: (value: string, row: any) => (
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${
-              value.toLowerCase() === "active"
-                ? "bg-green-100 text-green-800 border border-green-300"
-                : "bg-red-100 text-red-800 border border-red-300"
-            }`}
-          >
-            {value}
+      render: (value: any) => {
+        const status = typeof value === 'string' ? parseInt(value) : value;
+        return (
+          <span className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium ${status === 1 ? "bg-green-100 text-green-800 border border-green-300" : "bg-red-100 text-red-800 border border-red-300"
+            }`}>
+            {status === 1 ? "Approved" : "Pending"}
           </span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className=" space-y-2">
-              <div className="space-y-2">
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start ${
-                    value.toLowerCase() === "active" ? "bg-green-50" : ""
-                  }`}
-                  onClick={() => {
-                    // Add your status change logic here
-                    console.log("Set to Active");
-                  }}
-                >
-                  Active
-                </Button>
-                <Button
-                  variant="ghost"
-                  className={`w-full justify-start ${
-                    value.toLowerCase() === "deactive" ? "bg-red-50" : ""
-                  }`}
-                  onClick={() => {
-                    // Add your status change logic here
-                    console.log("Set to Deactive");
-                  }}
-                >
-                  Deactive
-                </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ),
+        );
+      },
     },
+    { key: "created_at", label: "Created At", width: "15%", render: formatDate },
+    { key: "approved_at", label: "Approved At", width: "15%", render: formatDate },
     {
-      key: "message",
-      label: "Message",
+      key: "actions",
+      label: "Actions",
       width: "15%",
-      render: (value: string, row: any) => (
-        <span
-          className={`inline-flex capitalize items-center justify-center w-24 px-3 py-1 rounded-full text-xs font-medium cursor-pointer ${
-            value.toLowerCase() === "send"
-              ? "bg-green-100 text-green-800 border border-green-300"
-              : "bg-[#F5F5F5] text-[#666666] border border-[#666666]"
-          }`}
-          onClick={() => {
-            if (value.toLowerCase() === "send") {
-              setSelectedGarage(row);
-              setOpenMessageModal(true);
-            }
-          }}
-        >
-          {value}
-        </span>
+      render: (_: string, row: any) => (
+        <ActionsDropdown
+          row={row}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
+        />
       ),
     },
   ];
-
-  const handleDelete = (row: any) => {
-    setSelectedGarage(row);
-    setOpenDeleteModal(true);
-  };
-
-  const actions = [
-    {
-      label: "",
-      render: (row: any) => (
-        <Button
-          variant="ghost"
-          className="h-8 w-8 p-0 flex items-center justify-center bg-red-100 border border-red-300 cursor-pointer text-red-600 hover:bg-red-100"
-          onClick={() => handleDelete(row)}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      ),
-    },
-  ];
-
-  // Send Message Handler
-  const handleSendMessage = () => {
-    setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      setOpenMessageModal(false);
-      setMessage("");
-      toast.success("Message sent successfully!");
-    }, 1500);
-  };
-
-  // Delete Garage Handler
-  const handleDeleteGarage = () => {
-    setIsDeleting(true);
-    setTimeout(() => {
-      setIsDeleting(false);
-      setOpenDeleteModal(false);
-      toast.success("Garage deleted successfully!");
-    }, 1500);
-  };
 
   return (
     <>
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold ">New Garages</h1>
-        <div>
-          <Link
-            href="/admin/manage-garages"
-            className="underline hover:text-green-600 cursor-pointer transition-all duration-300"
-          >
-            View All Garages
-          </Link>
-        </div>
+        <h1 className="text-2xl font-semibold">New Garages</h1>
+        <Link href="/admin/manage-garages" className="underline hover:text-green-600 cursor-pointer transition-all duration-300">
+          View All Garages
+        </Link>
       </div>
 
       <ReusableTable
-        data={data}
+        data={garagesData}
         columns={columns}
-        actions={actions}
         className="mt-4"
+        isLoading={garagesInfo.isLoading}
+        skeletonRows={5}
       />
 
-      {/* Send Message Modal */}
       <CustomReusableModal
-        isOpen={openMessageModal}
-        onClose={() => setOpenMessageModal(false)}
-        title="Send Message"
-        showHeader={false}
-        className="max-w-sm border-green-600"
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, garageId: null, action: null, garageName: null })}
+        title={confirmModal.action === 'approve' ? 'Approve Garage' : 'Reject Garage'}
+        variant={confirmModal.action === 'approve' ? 'success' : 'danger'}
+        icon={confirmModal.action === 'approve' ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+        description={`Are you sure you want to ${confirmModal.action} this garage?`}
+        className="max-w-md"
       >
-        <div className="bg-white rounded-lg overflow-hidden">
-          {/* Header */}
-          <div
-            className={`bg-[${BRAND_COLOR}] text-white p-4 flex items-center justify-between`}
-          >
-            <h2 className="text-lg font-semibold">Send Message</h2>
-          </div>
-          {/* Content */}
-          <div className="p-6">
-            <textarea
-              className="w-full border rounded-md p-2 mb-4"
-              placeholder="Input Message"
-              rows={4}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={isSending}
-            />
-            <button
-              className={`w-full bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
-              onClick={handleSendMessage}
-              disabled={isSending}
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            You are about to {confirmModal.action} the garage "{confirmModal.garageName}". This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button className="cursor-pointer" variant="outline" onClick={() => setConfirmModal({ isOpen: false, garageId: null, action: null, garageName: null })} disabled={isApproving || isRejecting}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirm}
+              disabled={isApproving || isRejecting}
+              className={confirmModal.action === 'approve' ? 'bg-green-600 cursor-pointer hover:bg-green-700 text-white' : 'bg-red-600 cursor-pointer hover:bg-red-700 text-white'}
             >
-              {isSending ? (
-                <Loader2 className="animate-spin w-5 h-5 mr-2" />
-              ) : null}
-              {isSending ? "Sending..." : "Send"}
-            </button>
-          </div>
-        </div>
-      </CustomReusableModal>
-
-      {/* Delete Garage Account Modal */}
-      <CustomReusableModal
-        isOpen={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
-        title="Delete Garage Account"
-        showHeader={false}
-        className="max-w-sm border-red-600"
-      >
-        <div className="bg-white rounded-lg overflow-hidden">
-          {/* Header */}
-          <div
-            className={`bg-[${DANGER_COLOR}] text-white p-4 flex items-center justify-between`}
-          >
-            <h2 className="text-lg font-semibold">Delete Garage Account</h2>
-          </div>
-          {/* Content */}
-          <div className="p-6 space-y-3">
-            {/* lebel name */}
-            <div className="text-sm font-medium text-gray-700">Garage Name</div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.name || ""}
-              readOnly
-              placeholder="Garage Name"
-            />
-            <div className="text-sm font-medium text-gray-700">
-              Vehicle Number
-            </div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.vts || ""}
-              readOnly
-              placeholder="VTS"
-            />
-            <div className="text-sm font-medium text-gray-700">Email</div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.email || ""}
-              readOnly
-              placeholder="Email"
-            />
-            <div className="text-sm font-medium text-gray-700">
-              Contact Number
-            </div>
-            <input
-              className="w-full border rounded-md p-2"
-              value={selectedGarage?.phone || ""}
-              readOnly
-              placeholder="Contact Number"
-            />
-            <button
-              className={`w-full bg-[${DANGER_COLOR}] hover:bg-red-700 text-white py-2 rounded-md font-semibold transition-all duration-200 flex items-center justify-center`}
-              onClick={handleDeleteGarage}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="animate-spin w-5 h-5 mr-2" />
-              ) : null}
-              {isDeleting ? "Deleting..." : "Delete"}
-            </button>
+              {isApproving || isRejecting ? 'Processing...' : confirmModal.action === 'approve' ? 'Approve' : 'Reject'}
+            </Button>
           </div>
         </div>
       </CustomReusableModal>

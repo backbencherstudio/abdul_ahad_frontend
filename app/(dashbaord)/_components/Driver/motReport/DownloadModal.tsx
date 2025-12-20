@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import Image from 'next/image'
 import { TiArrowSortedDown } from "react-icons/ti"
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
-import { MOTReport, Vehicle } from '../_types'
+import { MOTReport, Vehicle } from '@/app/(dashbaord)/driver/mot-reports/_types'
 
 interface DownloadModalProps {
     isOpen: boolean

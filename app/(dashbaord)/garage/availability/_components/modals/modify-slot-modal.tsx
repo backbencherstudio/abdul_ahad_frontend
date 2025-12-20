@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { X, Clock, AlertTriangle } from "lucide-react"
 import { apiClient, type SlotModifyRequest } from "../../../../../../rtk/api/garage/api"
 
@@ -110,7 +111,11 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
           setAffectedSlots((response as any).data.affected_slots)
           setShowConfirmation(true)
         } else {
-          setError(response.message || "Failed to modify slot")
+          const message =
+            typeof response.message === "string"
+              ? response.message
+              : (response as any)?.message?.message || "Failed to modify slot"
+          setError(message)
         }
       }
     } catch (error) {
@@ -145,7 +150,11 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
       if (response.success) {
         onSuccess()
       } else {
-        setError(response.message || "Failed to modify slot")
+        const message =
+          typeof response.message === "string"
+            ? response.message
+            : (response as any)?.message?.message || "Failed to modify slot"
+        setError(message)
       }
     } catch (error) {
       console.error("[v0] Error modifying slot with overlap:", error)
@@ -168,13 +177,13 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-lg w-full max-w-md">
-        <Card className="border-0 shadow-none">
-          <CardHeader className="border-b bg-gray-50">
-            <div className="flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[60] ">
+      <div className="bg-white rounded-lg w-full max-w-lg h-full max-h-[80vh] overflow-y-auto">
+        <Card className="border-0 shadow-none g ">
+          <CardHeader className="border-b bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between ">
               <div>
-                <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2 py-4">
                   <Clock className="w-5 h-5 text-blue-600" />
                   Modify Slot Time
                 </CardTitle>
@@ -233,26 +242,54 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
               </Alert>
             )}
 
+            {/* Allow Overlap toggle */}
+            <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50 flex items-start gap-3">
+              <div className="pt-0.5">
+                <Switch
+                  id="allow-overlap"
+                  checked={allowOverlap}
+                  onCheckedChange={(checked) => setAllowOverlap(checked)}
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <label htmlFor="allow-overlap" className="font-medium text-gray-900">
+                  Allow overlap / structural exception
+                </label>
+                <p className="text-sm text-gray-600">
+                  Turn on when the change conflicts with existing slots (e.g., moving the first slot start).
+                </p>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Time Inputs */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">New Start Time</label>
-                  <Input
-                    type="time"
-                    value={newStartTime}
-                    onChange={(e) => setNewStartTime(e.target.value)}
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="time"
+                      value={newStartTime}
+                      onChange={(e) => setNewStartTime(e.target.value)}
+                      disabled={loading}
+                      className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    />
+                    <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">New End Time</label>
-                  <Input
-                    type="time"
-                    value={newEndTime}
-                    onChange={(e) => setNewEndTime(e.target.value)}
-                    disabled={loading}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="time"
+                      value={newEndTime}
+                      onChange={(e) => setNewEndTime(e.target.value)}
+                      disabled={loading}
+                      className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    />
+                    <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
@@ -301,11 +338,11 @@ export default function ModifySlotModal({ isOpen, onClose, slot, date, onSuccess
                   variant="outline"
                   onClick={onClose}
                   disabled={loading}
-                  className="flex-1 bg-transparent"
+                  className="flex-1 bg-transparent cursor-pointer"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" disabled={loading} className="flex-1 cursor-pointer bg-blue-600 hover:bg-blue-700">
                   {loading ? (
                     <div className="flex items-center gap-2">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

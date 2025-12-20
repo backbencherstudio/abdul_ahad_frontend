@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCancelSubscriptionMutation, useGetCurrentSubscriptionQuery } from '@/rtk'
+import { useCancelSubscriptionMutation, useAppDispatch, subscriptionApi } from '@/rtk'
 import { useSubscriptionUpdate } from '@/hooks/useSubscriptionUpdate'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -13,12 +13,12 @@ interface CancelSubscriptionProps {
 
 export default function CancelSubscription({ currentSubscription }: CancelSubscriptionProps) {
     const router = useRouter()
+    const dispatch = useAppDispatch()
     const [showCancelModal, setShowCancelModal] = useState(false)
     const [isCancelLoading, setIsCancelLoading] = useState(false)
     const [cancelType, setCancelType] = useState<'immediate' | 'at_period_end'>('at_period_end')
     const [reason, setReason] = useState('')
     const [cancelSubscription] = useCancelSubscriptionMutation()
-    const { refetch: refetchCurrent } = useGetCurrentSubscriptionQuery()
     const { triggerUpdate } = useSubscriptionUpdate()
 
     const handleCancelSubscription = async () => {
@@ -28,16 +28,24 @@ export default function CancelSubscription({ currentSubscription }: CancelSubscr
                 cancel_type: cancelType,
                 reason: reason.trim() || undefined
             }).unwrap()
+            
             if (result.success) {
                 // Show success toast with API message or fallback text
                 toast.success(result.message || (cancelType === 'immediate' ? 'Subscription cancelled immediately.' : 'Subscription will cancel at period end.'))
+                
+                // Close modal and reset form
                 setShowCancelModal(false)
-                // Reset form
                 setCancelType('at_period_end')
                 setReason('')
-                await refetchCurrent()
-                router.refresh()
-                triggerUpdate()
+                
+                // Wait a moment for backend to process, then invalidate cache
+                setTimeout(() => {
+                    // Manually invalidate cache to force immediate update
+                    dispatch(subscriptionApi.util.invalidateTags(['Subscription', 'SubscriptionsMe']))
+                    
+                    // Trigger update hook
+                    triggerUpdate()
+                }, 500)
             }
         } catch (error) {
             const err: any = error

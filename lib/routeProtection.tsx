@@ -3,7 +3,7 @@
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import LoadingSpinner from '@/components/reusable/LoadingSpinner'
 
 interface RouteProtectionProps {
   children: React.ReactNode
@@ -56,14 +56,7 @@ export const RouteProtection: React.FC<RouteProtectionProps> = ({ children }) =>
 
   // Show loading while checking authentication
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#19CA32]" />
-          <div className="text-lg text-gray-600">Checking authentication...</div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading..." />
   }
 
   // Show loading while redirecting (for both login and unauthorized)
@@ -72,16 +65,7 @@ export const RouteProtection: React.FC<RouteProtectionProps> = ({ children }) =>
     (pathname.startsWith('/garage') && user.type !== 'GARAGE') ||
     (pathname.startsWith('/admin') && user.type !== 'ADMIN')
   ))) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#19CA32]" />
-          <div className="text-lg text-gray-600">
-            {!isAuthenticated ? 'Redirecting to login...' : 'Redirecting...'}
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingSpinner fullScreen text="Loading..." />
   }
 
   return <>{children}</>

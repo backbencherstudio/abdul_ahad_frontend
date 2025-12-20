@@ -203,6 +203,12 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     refetch: refetchSlots,
   } = useGetSlotDetailsQuery(date, { skip: !isOpen })
 
+  const safeRefetchSlots = () => {
+    // RTK Query throws if refetch called when the query was never started (skip=true)
+    if (!isOpen) return
+    refetchSlots()
+  }
+
   const slotData = slotResponse?.success ? (slotResponse.data as SlotData) : null
   const responseError =
     slotResponse && !slotResponse.success
@@ -323,8 +329,8 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
         })
       }
     } catch (error) {
-      console.error(` Error ${action.toLowerCase()}ing slot:`, error)
       const message = getMutationErrorMessage(error)
+      console.error(`Error ${action.toLowerCase()}ing slot: ${message}`, error)
       setActionError(message)
       toast({
         title: `Failed to ${action.toLowerCase()} slot`,
@@ -494,7 +500,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                       <p className="text-sm text-gray-600">Perform operations on multiple slots</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setShowBulkModal(true)} disabled={actionLoading}>
+                      <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setShowBulkModal(true)} disabled={actionLoading}>
                         Bulk Modify
                       </Button>
                       <Button
@@ -505,6 +511,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                           setShowConfirmRemove(true)
                         }}
                         disabled={actionLoading}
+                        className="cursor-pointer"
                       >
                         Remove All Manual
                       </Button>
@@ -547,6 +554,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="cursor-pointer"
                                   onClick={() => {
                                     const [start, end] = slot.time.split("-")
                                     const status: "AVAILABLE" | "BOOKED" | "BLOCKED" = slot.status.includes("BOOKED")
@@ -578,6 +586,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="cursor-pointer"
                                   onClick={() => handleToggleBlock(slot)}
                                   disabled={
                                     slot.status.includes("BOOKED") ||
@@ -604,6 +613,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                                 <Button
                                   variant="destructive"
                                   size="sm"
+                                  className="cursor-pointer"
                                   onClick={() => {
                                     if (!slot.id) return
                                     setSlotToClear(slot)
@@ -657,7 +667,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
           onSuccess={() => {
             setShowModifyModal(false)
             setSelectedSlot(null)
-            refetchSlots()
+            safeRefetchSlots()
             onSuccess()
           }}
         />
@@ -670,7 +680,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
           date={date}
           onSuccess={() => {
             setShowBulkModal(false)
-            refetchSlots()
+            safeRefetchSlots()
             onSuccess()
           }}
         />

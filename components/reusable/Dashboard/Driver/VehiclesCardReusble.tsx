@@ -20,6 +20,7 @@ interface VehiclesCardReusbleProps {
     motReports: MotReport[]
     onVehicleClick?: (vehicle: MotReport) => void
     selectedRegistration?: string | null
+    isLoading?: boolean
 }
 
 // Check if image URL is valid
@@ -102,11 +103,13 @@ const VehicleCard = memo(({
 const VehiclesCardReusble = memo(({
     motReports,
     onVehicleClick,
-    selectedRegistration
+    selectedRegistration,
+    isLoading = false
 }: VehiclesCardReusbleProps) => {
     // Memoize the cards to prevent unnecessary re-renders
     const vehicleCards = useMemo(() => {
-        if (motReports.length === 0) {
+        // Show skeleton only when loading
+        if (isLoading) {
             return (
                 <>
                     <SkeletonCard />
@@ -117,6 +120,17 @@ const VehiclesCardReusble = memo(({
             )
         }
 
+        // Show empty state when not loading and no data
+        if (motReports.length === 0) {
+            return (
+                <div className="col-span-full text-center py-12">
+                    <p className="text-gray-600 text-lg">No vehicles found.</p>
+                    <p className="text-gray-500 text-sm mt-2">Add vehicles to see MOT reports here.</p>
+                </div>
+            )
+        }
+
+        // Show vehicle cards when data is available
         return motReports.map((vehicle, index) => {
             const isSelected = selectedRegistration && vehicle.vehicleReg &&
                 selectedRegistration.toLowerCase() === vehicle.vehicleReg.toLowerCase()
@@ -130,7 +144,7 @@ const VehiclesCardReusble = memo(({
                 />
             )
         })
-    }, [motReports, selectedRegistration, onVehicleClick])
+    }, [motReports, selectedRegistration, onVehicleClick, isLoading])
 
     return (
         <div className="bg-white rounded-md shadow-sm p-4 sm:p-6">

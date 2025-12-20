@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { X, Plus, Trash2, Clock, Calendar } from "lucide-react"
+import { X, Plus, Trash2, Clock, Calendar, RotateCcw } from "lucide-react"
 import { apiClient, type ScheduleConfig } from "../../../../../../rtk/api/garage/api"
 
 interface DefaultRoutineModalProps {
@@ -17,14 +17,28 @@ interface DefaultRoutineModalProps {
   initialConfig?: ScheduleConfig
 }
 
-interface Restriction {
-  type: "BREAK" | "HOLIDAY"
-  start_time?: string
-  end_time?: string
-  description: string
-  is_recurring: boolean
-  day_of_week: number | number[]
-}
+type Restriction = ScheduleConfig["restrictions"][number]
+
+// Default values for new schedule
+const DEFAULT_START_TIME = "08:00"
+const DEFAULT_END_TIME = "18:00"
+const DEFAULT_SLOT_DURATION = 60
+const DEFAULT_RESTRICTIONS: Restriction[] = [
+  {
+    type: "BREAK",
+    start_time: "12:00",
+    end_time: "13:00",
+    description: "Lunch Break",
+    is_recurring: true,
+    day_of_week: [1, 2, 3, 4, 5, 6], // Monday to Saturday (excluding Sunday which is holiday)
+  },
+  {
+    type: "HOLIDAY",
+    day_of_week: 0, // Sunday
+    description: "Sunday Closure",
+    is_recurring: true,
+  },
+]
 
 /**
  * Default Routine Configuration Modal
@@ -39,30 +53,17 @@ interface Restriction {
  * - Holiday configuration with day-of-week selection
  * - Form validation and error handling
  * - API integration for schedule creation
+ * - Load existing configuration for editing
+ * - Restore to default values
  */
 export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initialConfig }: DefaultRoutineModalProps) {
   // Basic schedule configuration
-  const [startTime, setStartTime] = useState("08:00")
-  const [endTime, setEndTime] = useState("18:00")
-  const [slotDuration, setSlotDuration] = useState(60)
+  const [startTime, setStartTime] = useState(DEFAULT_START_TIME)
+  const [endTime, setEndTime] = useState(DEFAULT_END_TIME)
+  const [slotDuration, setSlotDuration] = useState(DEFAULT_SLOT_DURATION)
 
   // Restrictions (breaks and holidays)
-  const [restrictions, setRestrictions] = useState<Restriction[]>([
-    {
-      type: "BREAK",
-      start_time: "12:00",
-      end_time: "13:00",
-      description: "Lunch Break",
-      is_recurring: true,
-      day_of_week: [1, 2, 3, 4, 5, 6], // Monday to Saturday (excluding Sunday which is holiday)
-    },
-    {
-      type: "HOLIDAY",
-      day_of_week: 0, // Sunday
-      description: "Sunday Closure",
-      is_recurring: true,
-    },
-  ])
+  const [restrictions, setRestrictions] = useState<Restriction[]>(DEFAULT_RESTRICTIONS)
 
   // UI state
   const [loading, setLoading] = useState(false)
@@ -70,6 +71,95 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
 
   // Day names for display
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
+  /**
+   * Load initial configuration when modal opens
+   */
+  useEffect(() => {
+    if (!isOpen) return
+    if (initialConfig) {
+      // Populate form with existing configuration
+      setStartTime(initialConfig.start_time || DEFAULT_START_TIME)
+      setEndTime(initialConfig.end_time || DEFAULT_END_TIME)
+      setSlotDuration(initialConfig.slot_duration || DEFAULT_SLOT_DURATION)
+
+      // Base restrictions coming directly from API (if any)
+      const baseRestrictions: Restriction[] = Array.isArray(initialConfig.restrictions)
+        ? (initialConfig.restrictions as Restriction[])
+        : []
+
+      // Collect holiday days from existing HOLIDAY restrictions
+      const existingHolidayRestrictions = baseRestrictions.filter((r) => r.type === "HOLIDAY")
+      const existingHolidayDesc = existingHolidayRestrictions[0]?.description || "Holiday"
+      const holidayDaysFromRestrictions: number[] = existingHolidayRestrictions.flatMap((r) =>
+        Array.isArray(r.day_of_week) ? r.day_of_week : [r.day_of_week],
+      )
+
+      // Collect holiday days from daily_hours (days marked as closed)
+      const dailyHours = (initialConfig as any).daily_hours as
+        | Record<
+            string,
+            {
+              is_closed?: boolean
+            }
+          >
+        | undefined
+
+      const holidayDaysFromDailyHours: number[] = []
+      if (dailyHours) {
+        Object.entries(dailyHours).forEach(([dayKey, value]) => {
+          const dayIndex = Number(dayKey)
+          if (Number.isNaN(dayIndex)) return
+          if (value && value.is_closed) {
+            holidayDaysFromDailyHours.push(dayIndex)
+          }
+        })
+      }
+
+      // Merge and de-duplicate all holiday days
+      const allHolidayDays = Array.from(
+        new Set([...holidayDaysFromRestrictions, ...holidayDaysFromDailyHours]),
+      ).sort((a, b) => a - b)
+
+      // Keep all non-holiday restrictions as-is (BREAK etc.)
+      const nonHolidayRestrictions = baseRestrictions.filter((r) => r.type !== "HOLIDAY")
+
+      // Build a single HOLIDAY restriction that represents all holiday days
+      const mergedRestrictions: Restriction[] =
+        nonHolidayRestrictions.length === 0 && allHolidayDays.length === 0
+          ? DEFAULT_RESTRICTIONS
+          : [
+              ...nonHolidayRestrictions,
+              ...(allHolidayDays.length > 0
+                ? [
+                    {
+                      type: "HOLIDAY",
+                      day_of_week: allHolidayDays,
+                      description: existingHolidayDesc,
+                      is_recurring: true,
+                    } as Restriction,
+                  ]
+                : []),
+            ]
+
+      setRestrictions(mergedRestrictions)
+      setError("")
+    } else {
+      // Reset to defaults for new configuration
+      handleRestoreDefaults()
+    }
+  }, [initialConfig, isOpen])
+
+  /**
+   * Restore form to default values
+   */
+  const handleRestoreDefaults = () => {
+    setStartTime(DEFAULT_START_TIME)
+    setEndTime(DEFAULT_END_TIME)
+    setSlotDuration(DEFAULT_SLOT_DURATION)
+    setRestrictions(DEFAULT_RESTRICTIONS)
+    setError("")
+  }
 
   /**
    * Add new break restriction
@@ -292,7 +382,11 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
       if (response.success) {
         onSuccess()
       } else {
-        setError(response.message || "Failed to create schedule")
+        const message =
+          typeof response.message === "string"
+            ? response.message
+            : (response as any)?.message?.message || "Failed to create schedule"
+        setError(message)
       }
     } catch (error) {
       console.error("[v0] Error creating schedule:", error)
@@ -306,17 +400,24 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto py-4">
+      <div className="bg-white rounded-lg w-full !max-w-3xl max-h-[90vh] overflow-y-auto ">
         <Card className="border-0 shadow-none">
           <CardHeader className="border-b bg-gray-50">
             <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl font-bold text-gray-900">Setup Default Routine</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={onClose} disabled={loading}><X className="w-4 h-4" /></Button>
+              <div className="w-full">
+                <div className="flex items-center justify-between py-5">
+                  <CardTitle className="text-2xl font-bold text-gray-900">
+                    {initialConfig ? "Edit Default Routine" : "Setup Default Routine"}
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" className="cursor-pointer" onClick={onClose} disabled={loading}>
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
                 <CardDescription className="text-gray-600 mt-1">
-                  Configure your garage's working hours, breaks, and holidays to get started
+                  {initialConfig
+                    ? "Update your garage's working hours, breaks, and holidays"
+                    : "Configure your garage's working hours, breaks, and holidays to get started"
+                  }
                 </CardDescription>
                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
                   <p className="text-sm text-blue-800">
@@ -324,7 +425,6 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                   </p>
                 </div>
               </div>
-
             </div>
           </CardHeader>
 
@@ -340,21 +440,29 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                    <Input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        disabled={loading}
+                        className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-                    <Input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        disabled={loading}
+                        className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Slot Duration (minutes)</label>
@@ -379,11 +487,11 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                     <h3 className="text-lg font-semibold text-gray-900">Breaks & Holidays</h3>
                   </div>
                   <div className="flex gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={addBreak} disabled={loading}>
+                    <Button type="button" variant="outline" size="sm" className="cursor-pointer" onClick={addBreak} disabled={loading}>
                       <Plus className="w-4 h-4 mr-1" />
                       Add Break
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={addHoliday} disabled={loading}>
+                    <Button type="button" variant="outline" size="sm" className="cursor-pointer" onClick={addHoliday} disabled={loading}>
                       <Plus className="w-4 h-4 mr-1" />
                       Add Holiday
                     </Button>
@@ -419,6 +527,7 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                           type="button"
                           variant="ghost"
                           size="sm"
+                          className="cursor-pointer"
                           onClick={() => removeRestriction(index)}
                           disabled={loading}
                         >
@@ -441,21 +550,29 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                              <Input
-                                type="time"
-                                value={restriction.start_time || ""}
-                                onChange={(e) => updateRestriction(index, { start_time: e.target.value })}
-                                disabled={loading}
-                              />
+                              <div className="relative">
+                                <Input
+                                  type="time"
+                                  value={restriction.start_time || ""}
+                                  onChange={(e) => updateRestriction(index, { start_time: e.target.value })}
+                                  disabled={loading}
+                                  className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                />
+                                <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                              </div>
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-                              <Input
-                                type="time"
-                                value={restriction.end_time || ""}
-                                onChange={(e) => updateRestriction(index, { end_time: e.target.value })}
-                                disabled={loading}
-                              />
+                              <div className="relative">
+                                <Input
+                                  type="time"
+                                  value={restriction.end_time || ""}
+                                  onChange={(e) => updateRestriction(index, { end_time: e.target.value })}
+                                  disabled={loading}
+                                  className="pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                />
+                                <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                              </div>
                             </div>
                           </div>
                         )}
@@ -479,11 +596,12 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
                                 type="button"
                                 variant={isSelected ? "default" : "outline"}
                                 size="sm"
+
                                 onClick={() => toggleDay(index, dayIndex)}
                                 disabled={loading || (isBreakType && isHoliday)}
-                                className={`text-xs ${isBreakType && isHoliday
-                                    ? "opacity-50 cursor-not-allowed bg-gray-100"
-                                    : ""
+                                className={`text-xs cursor-pointer ${isBreakType && isHoliday
+                                  ? "opacity-50 cursor-not-allowed bg-gray-100"
+                                  : ""
                                   }`}
                                 title={
                                   isBreakType && isHoliday
@@ -545,20 +663,33 @@ export default function DefaultRoutineModal({ isOpen, onClose, onSuccess, initia
               )}
 
               {/* Submit Button */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-                  Cancel
+              <div className="flex justify-between items-center pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cursor-pointer text-orange-600 border-orange-300 hover:bg-orange-50"
+                  onClick={handleRestoreDefaults}
+                  disabled={loading}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Restore to Default
                 </Button>
-                <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={loading}>
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Creating Schedule...
-                    </div>
-                  ) : (
-                    "Create Default Routine"
-                  )}
-                </Button>
+
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" className="cursor-pointer" onClick={onClose} disabled={loading}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700 cursor-pointer" disabled={loading}>
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        {initialConfig ? "Updating..." : "Creating Schedule..."}
+                      </div>
+                    ) : (
+                      initialConfig ? "Update Default Routine" : "Create Default Routine"
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </CardContent>

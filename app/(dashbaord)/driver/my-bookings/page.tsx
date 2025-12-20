@@ -226,14 +226,6 @@ export default function MyBookings() {
         // Add your row click logic here
     }
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center min-h-96">
-                <div className="text-lg text-gray-600">Loading bookings...</div>
-            </div>
-        )
-    }
-
     if (error) {
         return (
             <div className="flex justify-center items-center min-h-96">
@@ -289,33 +281,39 @@ export default function MyBookings() {
                 </div>
             </div>
 
-            {bookingsData.length === 0 ? (
-                <div className="flex justify-center items-center min-h-96">
-                    <div className="text-center">
-                        <p className="text-lg text-gray-600 mb-2">No bookings found</p>
-                        <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
-                    </div>
-                </div>
-            ) : (
-                <>
-                    <ReusableTable
-                        data={bookingsData}
-                        columns={columns}
-                        onRowClick={handleRowClick}
-                        className=""
-                    />
+            <>
+                <ReusableTable
+                    data={bookingsData}
+                    columns={columns}
+                    onRowClick={handleRowClick}
+                    className=""
+                    isLoading={isLoading}
+                    skeletonRows={itemsPerPage}
+                />
 
-                    <ReusablePagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        itemsPerPage={itemsPerPage}
-                        totalItems={totalCount}
-                        onPageChange={handlePageChange}
-                        onItemsPerPageChange={handleItemsPerPageChange}
-                        className=""
-                    />
-                </>
-            )}
+                {!isLoading && (
+                    <>
+                        {bookingsData.length === 0 ? (
+                            <div className="flex justify-center items-center min-h-96">
+                                <div className="text-center">
+                                    <p className="text-lg text-gray-600 mb-2">No bookings found</p>
+                                    <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <ReusablePagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                itemsPerPage={itemsPerPage}
+                                totalItems={totalCount}
+                                onPageChange={handlePageChange}
+                                onItemsPerPageChange={handleItemsPerPageChange}
+                                className=""
+                            />
+                        )}
+                    </>
+                )}
+            </>
         </div>
     )
 }

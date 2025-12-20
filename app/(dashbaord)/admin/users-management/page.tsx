@@ -137,15 +137,14 @@ export default function UserManagement() {
       width: "16%",
       render: (value: string) => (
         <span
-          className={`inline-flex px-3 py-1 text-xs  rounded-full ${
-            value === "DRIVER"
+          className={`inline-flex px-3 py-1 text-xs  rounded-full ${value === "DRIVER"
               ? "bg-blue-100 text-blue-800 border border-blue-200"
               : value === "GARAGE"
-              ? "bg-green-100 text-green-800 border border-green-200"
-              : value === "ADMIN"
-              ? "bg-purple-100 text-purple-800 border border-purple-200"
-              : "bg-gray-100 text-gray-800 border border-gray-200"
-          }`}
+                ? "bg-green-100 text-green-800 border border-green-200"
+                : value === "ADMIN"
+                  ? "bg-purple-100 text-purple-800 border border-purple-200"
+                  : "bg-gray-100 text-gray-800 border border-gray-200"
+            }`}
         >
           {value?.charAt(0) + value?.slice(1).toLowerCase() || "Unknown"}
         </span>
@@ -171,9 +170,9 @@ export default function UserManagement() {
         const restTitles =
           restCount > 0
             ? roles
-                .slice(2)
-                .map((r: any) => r.title)
-                .join(", ")
+              .slice(2)
+              .map((r: any) => r.title)
+              .join(", ")
             : "";
 
         return (
@@ -216,11 +215,10 @@ export default function UserManagement() {
       width: "16%",
       render: (value: string) => (
         <span
-          className={`inline-flex px-3 py-1 text-xs  rounded-full ${
-            value
+          className={`inline-flex px-3 py-1 text-xs  rounded-full ${value
               ? "bg-green-100 text-green-800 border border-green-200"
               : "bg-red-100 text-red-800 border border-red-200"
-          }`}
+            }`}
         >
           {value ? "Unban" : "Ban"}
         </span>
@@ -288,14 +286,7 @@ export default function UserManagement() {
 
       {/* Table */}
       <div className="">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            <span className="ml-3 text-gray-600 font-medium">
-              Loading users...
-            </span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-16">
             <div className="text-red-600 mb-4 font-semibold">
               Error loading users
@@ -314,9 +305,11 @@ export default function UserManagement() {
               columns={columns}
               actions={actions}
               className="rounded-t-xl"
+              isLoading={isLoading}
+              skeletonRows={pagination.itemsPerPage}
             />
 
-            {usersData?.pagination && (
+            {!isLoading && usersData?.pagination && (
               <ReusablePagination
                 key={`pagination-${usersData.pagination.totalPages}`}
                 currentPage={usersData.pagination.page}

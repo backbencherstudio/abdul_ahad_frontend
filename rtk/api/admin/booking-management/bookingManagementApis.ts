@@ -51,17 +51,13 @@ export const bookingManagementApi = createApi({
             }),
             invalidatesTags: ["Bookings"],
         }),
-        // update a booking status /api/admin/booking/:id/status
-        // pass in body status (PENDING, ACCEPTED, REJECTED, COMPLETED, CANCELLED)
         updateBookingStatus: builder.mutation<any, { id: string; status: string }>({
             query: ({ id, status }) => {
-                // Ensure status is uppercase and trimmed
                 const statusValue = String(status).trim().toUpperCase();
-                console.log('API mutation - Status value:', statusValue, 'Original:', status);
+                
                 return {
-                    url: `/api/admin/booking/${id}/status`,
-                    method: "PATCH",
-                    body: { status: statusValue },
+                    url: `/api/admin/booking/${id}/status?status=${statusValue}`,
+                    method: 'PATCH',
                 };
             },
             invalidatesTags: ["Bookings"],

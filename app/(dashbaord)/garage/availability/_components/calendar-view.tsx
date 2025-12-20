@@ -171,7 +171,7 @@ export default function CalendarView({
       <CardContent className="p-5">
         {/* Month Navigation */}
         <div className="flex items-center justify-center gap-4 mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigateMonth("prev")}>
+          <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => navigateMonth("prev")}>
             <ChevronLeft className="w-5 h-5" />
           </Button>
 
@@ -201,7 +201,7 @@ export default function CalendarView({
             </select>
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => navigateMonth("next")}>
+          <Button variant="outline" size="sm" className="cursor-pointer"  onClick={() => navigateMonth("next")}>
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import React from 'react'
 
 interface GarageProfileCardProps {
@@ -38,20 +39,48 @@ interface GarageImageProps {
 
 // Reusable Components
 const GarageImage: React.FC<GarageImageProps> = ({ className, iconSize = 'md', imageUrl }) => {
+    const [imageError, setImageError] = React.useState(false);
+    const [imageLoading, setImageLoading] = React.useState(true);
+    
     const iconSizes = {
         sm: 'w-8 h-8',
         md: 'w-10 h-10',
         lg: 'w-12 h-12'
     };
 
-    if (imageUrl) {
+    // Validate and normalize image URL
+    const isValidUrl = imageUrl && typeof imageUrl === 'string' && imageUrl.trim().length > 0;
+
+    React.useEffect(() => {
+        if (isValidUrl) {
+            setImageError(false);
+            setImageLoading(true);
+        } else {
+            setImageError(true);
+            setImageLoading(false);
+        }
+    }, [isValidUrl]);
+
+    if (isValidUrl && !imageError) {
         return (
-            <div className={`rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden ${className}`}>
+            <div className={`rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden ${className} relative`}>
+                {imageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+                    </div>
+                )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src={imageUrl}
+                <Image
+                    width={100}
+                    height={100}
+                    src={imageUrl.trim()}
                     alt="Garage avatar"
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => {
+                        setImageError(true);
+                        setImageLoading(false);
+                    }}
                 />
             </div>
         );

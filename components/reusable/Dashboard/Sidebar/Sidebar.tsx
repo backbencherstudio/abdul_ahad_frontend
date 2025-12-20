@@ -33,7 +33,7 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetCurrentSubscriptionQuery } from "@/rtk/api/garage/subscriptionsMeApis";
+import { useGetCurrentSubscriptionQuery } from "@/rtk";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -41,7 +41,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -51,7 +51,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
     isLoading: isLoadingSubscription,
   } = useGetCurrentSubscriptionQuery(undefined, {
     skip: !user?.type || user.type.toLowerCase() !== "garage",
-    refetchOnMountOrArgChange: true,
   });
 
   const menuItems = [
@@ -158,6 +157,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
     },
     {
       icon: Truck,
+      label: "Vehicles Management",
+      href: "/admin/vehicles-management",
+      role: "admin",
+    },
+    {
+      icon: Users,
       label: "Drivers Management",
       href: "/admin/manage-drivers",
       role: "admin",
@@ -189,14 +194,24 @@ export default function Sidebar({ onClose }: SidebarProps) {
   ];
 
   const handleLogout = () => {
+    logout(); // Clear auth state
     router.push("/");
     toast.success("Logout successful");
   };
 
   const handleActivateAccount = () => {
     router.push("/garage/subscription");
-    toast.success("Redirecting to subscription page");
   };
+
+  // Check if subscription is active
+  const hasActiveSubscription = subscriptionData?.data?.status === 'ACTIVE'
+
+  // Protected routes that require active subscription
+  const protectedRoutes = ['/garage/pricing', '/garage/availability', '/garage/bookings']
+
+  const isRouteProtected = (href: string) => {
+    return protectedRoutes.includes(href)
+  }
 
   return (
     <div className="w-72 h-screen bg-white flex flex-col">
@@ -227,25 +242,43 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   item.href === "/driver/book-my-mot"
                     ? pathname.startsWith("/driver/book-my-mot")
                     : pathname === item.href;
+
+                // Check if route is protected and subscription is not active
+                const isLocked = user?.type?.toLowerCase() === 'garage' &&
+                  isRouteProtected(item.href) &&
+                  !hasActiveSubscription
+
                 return (
                   <li key={item.href}>
-                    <Link href={item.href}>
-                      <span
-                        className={`flex items-center px-4 py-2 transition-colors duration-200
-                                            ${
-                                              isActive
-                                                ? "bg-[#DDF7E0] text-[#19CA32] font-[400] rounded-[8px]"
-                                                : "text-gray-800 hover:bg-gray-100 hover:text-gray-700 rounded-[8px]"
-                                            }`}
+                    {isLocked ? (
+                      <div
+                        className="flex items-center justify-between px-4 py-2 text-gray-400 cursor-not-allowed rounded-[8px] bg-gray-50"
                       >
-                        <item.icon
-                          className={`h-5 w-5 mr-3 ${
-                            isActive ? "text-white]" : ""
-                          }`}
-                        />
-                        {item.label}
-                      </span>
-                    </Link>
+                        <div className="flex items-center">
+                          <item.icon className="h-5 w-5 mr-3" />
+                          {item.label}
+                        </div>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <Link href={item.href}>
+                        <span
+                          className={`flex items-center px-4 py-2 transition-colors duration-200
+                                              ${isActive
+                              ? "bg-[#DDF7E0] text-[#19CA32] font-[400] rounded-[8px]"
+                              : "text-gray-800 hover:bg-gray-100 hover:text-gray-700 rounded-[8px]"
+                            }`}
+                        >
+                          <item.icon
+                            className={`h-5 w-5 mr-3 ${isActive ? "text-white]" : ""
+                              }`}
+                          />
+                          {item.label}
+                        </span>
+                      </Link>
+                    )}
                   </li>
                 );
               })}
@@ -255,30 +288,32 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Bottom Section - Always at bottom */}
       <div className="mt-auto">
-        {/* role based alert - only show when no subscription exists */}
-        {user?.type && 
-         user.type.toLowerCase() === "garage" && 
-         !isLoadingSubscription && 
-         (!subscriptionData?.success || !subscriptionData?.data) && (
-          <div className="p-2">
-            <div
-              className="bg-red-500 text-white px-6 py-6 rounded-lg space-y-2"
-              role="alert"
-            >
-              <h1 className="font-bold text-md text-center font-Inter">
-                Account not active
-              </h1>
-              <p className="text-sm leading-relaxed text-center text-[#EDEDED]">
-                To activate your garage subscription and start receiving
-                bookings, please proceed to the payment page.
-              </p>
+        {/* role based alert - hide only when status is ACTIVE, show for all other cases */}
+        {user?.type &&
+          user.type.toLowerCase() === "garage" &&
+          !isLoadingSubscription &&
+          (!subscriptionData?.success ||
+            !subscriptionData?.data ||
+            subscriptionData?.data?.status !== "ACTIVE") && (
+            <div className="p-2">
+              <div
+                className="bg-red-500 text-white px-6 py-6 rounded-lg space-y-2"
+                role="alert"
+              >
+                <h1 className="font-bold text-md text-center font-Inter">
+                  Account not active
+                </h1>
+                <p className="text-sm leading-relaxed text-center text-[#EDEDED]">
+                  To activate your garage subscription and start receiving
+                  bookings, please proceed to the payment page.
+                </p>
 
-              <button onClick={handleActivateAccount} className="bg-white text-red-500 px-2 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors duration-200 w-full cursor-pointer font-Inter text-sm">
-                Activate Account
-              </button>
+                <button onClick={handleActivateAccount} className="bg-white text-red-500 px-2 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors duration-200 w-full cursor-pointer font-Inter text-sm">
+                  Activate Account
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Logout button */}
         <div className="p-4">
