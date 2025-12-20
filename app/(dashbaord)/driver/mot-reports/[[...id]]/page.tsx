@@ -78,14 +78,29 @@ export default function MotReports() {
                 // Show details immediately with initial data, update when detailed reports load
                 setIsLoadingDetails(false)
                 setShowDetails(true)
+            } else {
+                // Vehicle might not be in list yet, but we still want to show loading state
+                setIsLoadingDetails(true)
+                setShowDetails(true)
             }
+        } else if (!selectedVehicleReg) {
+            // No vehicle selected, hide details
+            setShowDetails(false)
+            setIsLoadingDetails(false)
         }
     }, [selectedVehicleReg, isLoadingVehicles, vehicles])
 
     // Event Handlers
     const handleVehicleClick = (vehicle: MotReportWithVehicle) => {
-        setSelectedVehicleForModal(vehicle)
-        setIsModalOpen(true)
+        if (vehicle.vehicleReg) {
+            // Set selected vehicle and navigate to its MOT reports
+            setSelectedVehicleReg(vehicle.vehicleReg)
+            router.push(`/driver/mot-reports/${vehicle.vehicleReg}`)
+        } else {
+            // Fallback to modal if no registration
+            setSelectedVehicleForModal(vehicle)
+            setIsModalOpen(true)
+        }
     }
 
     const handleCloseModal = () => {

@@ -225,6 +225,8 @@ export default function MyVehicles() {
 
     const handleMotReports = () => {
         if (selectedVehicle) {
+            // Close the modal before navigating
+            dispatch(closeDetailsModal())
             router.push(`/driver/mot-reports/${selectedVehicle.registrationNumber}`)
         }
     }

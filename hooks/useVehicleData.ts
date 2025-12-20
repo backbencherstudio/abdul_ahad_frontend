@@ -71,12 +71,30 @@ export const useVehicleData = (regFromURL: string | null) => {
             const transformedVehicles = vehiclesResponse.data.map(transformApiVehicle)
             setVehicles(transformedVehicles)
 
+            // Create motReports entries for ALL vehicles, not just those with MOT reports
             const processedReports: MotReportWithVehicle[] = []
             transformedVehicles.forEach(vehicle => {
                 if (vehicle.motReport && vehicle.motReport.length > 0) {
+                    // If vehicle has MOT reports, use the latest one
                     const latestReport = vehicle.motReport[0]
                     processedReports.push({
                         ...latestReport,
+                        vehicleReg: vehicle.registrationNumber,
+                        vehicleImage: vehicle.image,
+                        vehicleMake: vehicle.make,
+                        vehicleModel: vehicle.model
+                    })
+                } else {
+                    // If vehicle has no MOT reports, create a placeholder entry so it still shows in the list
+                    processedReports.push({
+                        id: vehicle.id,
+                        color: '',
+                        fuelType: '',
+                        registrationDate: '',
+                        motTestNumber: '',
+                        motPassDate: '',
+                        motExpiryDate: vehicle.expiryDate || '',
+                        motStatus: 'Pass' as const,
                         vehicleReg: vehicle.registrationNumber,
                         vehicleImage: vehicle.image,
                         vehicleMake: vehicle.make,
