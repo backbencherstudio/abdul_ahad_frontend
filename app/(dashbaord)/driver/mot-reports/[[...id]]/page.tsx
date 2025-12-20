@@ -9,6 +9,7 @@ import ErrorDisplay from '@/app/(dashbaord)/_components/Driver/motReport/ErrorDi
 import Header from '@/app/(dashbaord)/_components/Driver/motReport/Header'
 import LoadingSpinner from '@/app/(dashbaord)/_components/Driver/motReport/LoadingSpinner'
 import ReportCard from '@/app/(dashbaord)/_components/Driver/motReport/ReportCard'
+import ReportCardShimmer from '@/app/(dashbaord)/_components/Driver/motReport/ReportCardShimmer'
 import NoReportsMessage from '@/app/(dashbaord)/_components/Driver/motReport/NoReportsMessage'
 import NoVehicleSelected from '@/app/(dashbaord)/_components/Driver/motReport/NoVehicleSelected'
 import VehicleDetailsModal from '@/app/(dashbaord)/_components/Driver/motReport/VehicleDetailsModal'
@@ -199,11 +200,17 @@ export default function MotReports() {
 
                     {/* Details Section */}
                     <div>
-                        {isLoadingDetails && (
-                            <LoadingSpinner message="Loading vehicle details..." />
+                        {/* Show shimmer when loading MOT reports */}
+                        {(isLoadingMotReports || isLoadingDetails) && showDetails && (
+                            <div className="space-y-4 sm:space-y-6">
+                                {Array.from({ length: 3 }).map((_, index) => (
+                                    <ReportCardShimmer key={`shimmer-${index}`} />
+                                ))}
+                            </div>
                         )}
 
-                        {!isLoadingDetails && showDetails && selectedVehicle && (
+                        {/* Show actual reports when loaded */}
+                        {!isLoadingMotReports && !isLoadingDetails && showDetails && selectedVehicle && (
                             <div className="space-y-4 sm:space-y-6">
                                 {filteredReports.map((report) => (
                                     <ReportCard 
@@ -213,13 +220,14 @@ export default function MotReports() {
                                         onDownloadClick={handleDownloadClick} 
                                     />
                                 ))}
-                                {filteredReports.length === 0 && (
+                                {filteredReports.length === 0 && !isLoadingMotReports && (
                                     <NoReportsMessage activeTab={activeTab} />
                                 )}
                             </div>
                         )}
 
-                        {!isLoadingDetails && !showDetails && <NoVehicleSelected />}
+                        {/* Show message when no vehicle selected */}
+                        {!isLoadingDetails && !showDetails && !isLoadingMotReports && <NoVehicleSelected />}
                     </div>
                 </>
             )}
