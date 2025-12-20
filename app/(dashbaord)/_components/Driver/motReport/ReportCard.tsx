@@ -26,6 +26,11 @@ const ReportField = ({ label, value, className = "bg-gray-50 border-gray-300 tex
 export default function ReportCard({ report, vehicleData, onDownloadClick }: ReportCardProps) {
     const styles = getStatusStyles(report.motStatus)
 
+    // redirect download button 
+    const handleDownloadClick = () => {
+        window.open('https://www.gov.uk/check-mot-history', '_blank')
+    }
+
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {/* Header */}
@@ -49,9 +54,9 @@ export default function ReportCard({ report, vehicleData, onDownloadClick }: Rep
                             <IoNotifications className="text-lg sm:text-xl" />
                         </Button>
                         <Button
+                            onClick={handleDownloadClick}
                             size="sm"
                             className="bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white px-2 sm:px-3 py-1 flex items-center gap-1 text-xs sm:text-sm"
-                            onClick={() => onDownloadClick(report, vehicleData)}
                         >
                             <Download className="w-3 h-3" />
                             Download Reports
