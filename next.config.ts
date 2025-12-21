@@ -38,10 +38,10 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
 
-      // http://abdul_ahad.signalsmind.com
+      // https://abdulahad.signalsmind.com
       {
-        protocol: "http",
-        hostname: "abdul_ahad.signalsmind.com",
+        protocol: "https",
+        hostname: "abdulahad.signalsmind.com",
         pathname: "/**",
       },
       {
