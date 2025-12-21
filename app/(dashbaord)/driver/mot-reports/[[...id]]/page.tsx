@@ -21,7 +21,6 @@ export default function MotReports() {
     const router = useRouter()
     const params = useParams()
 
-    // Get vehicle ID from URL
     const getVehicleIdFromURL = useCallback(() => {
         if (!params?.id) return null
         if (Array.isArray(params.id)) return params.id[0] || null
