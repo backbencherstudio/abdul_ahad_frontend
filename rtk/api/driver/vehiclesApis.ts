@@ -101,7 +101,9 @@ export const vehiclesApis = createApi({
                 url: `/api/vehicles/${id}/mot-reports`,
                 method: "GET",
             }),
-            providesTags: ["Vehicles"],
+            providesTags: (result, error, id) => [{ type: "Vehicles", id }],
+            // Force refetch when vehicle ID changes by not keeping unused data
+            keepUnusedDataFor: 0,
         }),
 
     }),

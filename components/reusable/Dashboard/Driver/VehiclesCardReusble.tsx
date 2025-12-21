@@ -10,6 +10,7 @@ interface MotReport {
     motPassDate: string
     motExpiryDate: string
     motStatus: string
+    vehicleId?: string
     vehicleReg?: string
     vehicleImage?: string
     vehicleMake?: string
@@ -19,7 +20,8 @@ interface MotReport {
 interface VehiclesCardReusbleProps {
     motReports: MotReport[]
     onVehicleClick?: (vehicle: MotReport) => void
-    selectedRegistration?: string | null
+    selectedVehicleId?: string | null
+    selectedRegistration?: string | null // Keep for backward compatibility
     isLoading?: boolean
 }
 
@@ -65,11 +67,11 @@ const VehicleCard = memo(({
         >
             {/* Vehicle Image or Brand Name */}
             <div className="flex justify-center mb-4">
-                <div className="rounded-lg flex items-center justify-center min-h-[100px]">
+                <div className="rounded-lg flex items-center justify-center w-[120px] h-[120px]">
                     {imageError || !isValidImageUrl(vehicle.vehicleImage || '') ? (
-                        <div className="flex flex-col items-center justify-center">
-                            <div className="w-14 h-14 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
-                                <span className="text-white text-xl font-bold">
+                        <div className="flex flex-col items-center justify-center w-full h-full">
+                            <div className="w-16 h-16 bg-gradient-to-br from-[#19CA32] to-[#16b82e] rounded-full flex items-center justify-center mb-2 shadow-md">
+                                <span className="text-white text-2xl font-bold">
                                     {vehicle.vehicleMake?.charAt(0).toUpperCase() || 'V'}
                                 </span>
                             </div>
@@ -78,14 +80,17 @@ const VehicleCard = memo(({
                             </span>
                         </div>
                     ) : (
-                        <Image
-                            src={vehicle.vehicleImage || ''}
-                            alt={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`}
-                            width={100}
-                            height={100}
-                            className="object-contain w-full h-full"
-                            onError={handleImageError}
-                        />
+                        <div className="w-full h-full flex items-center justify-center">
+                            <Image
+                                src={vehicle.vehicleImage || ''}
+                                alt={`${vehicle.vehicleMake} ${vehicle.vehicleModel}`}
+                                width={120}
+                                height={120}
+                                className="object-contain w-full h-full"
+                                style={{ maxWidth: '70px', maxHeight: '70px' }}
+                                onError={handleImageError}
+                            />
+                        </div>
                     )}
                 </div>
             </div>
@@ -103,6 +108,7 @@ const VehicleCard = memo(({
 const VehiclesCardReusble = memo(({
     motReports,
     onVehicleClick,
+    selectedVehicleId,
     selectedRegistration,
     isLoading = false
 }: VehiclesCardReusbleProps) => {
@@ -132,19 +138,22 @@ const VehiclesCardReusble = memo(({
 
         // Show vehicle cards when data is available
         return motReports.map((vehicle, index) => {
-            const isSelected = selectedRegistration && vehicle.vehicleReg &&
-                selectedRegistration.toLowerCase() === vehicle.vehicleReg.toLowerCase()
+            // Check selection by vehicleId first, then fallback to registration
+            const isSelected = selectedVehicleId 
+                ? vehicle.vehicleId === selectedVehicleId
+                : selectedRegistration && vehicle.vehicleReg &&
+                  selectedRegistration.toLowerCase() === vehicle.vehicleReg.toLowerCase()
 
             return (
                 <VehicleCard
-                    key={`${vehicle.vehicleReg}-${vehicle.id}`}
+                    key={`${vehicle.vehicleId || vehicle.vehicleReg}-${vehicle.id}`}
                     vehicle={vehicle}
                     isSelected={!!isSelected}
                     onVehicleClick={onVehicleClick}
                 />
             )
         })
-    }, [motReports, selectedRegistration, onVehicleClick, isLoading])
+    }, [motReports, selectedVehicleId, selectedRegistration, onVehicleClick, isLoading])
 
     return (
         <div className="bg-white rounded-md shadow-sm p-4 sm:p-6">
