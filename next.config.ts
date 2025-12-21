@@ -37,9 +37,11 @@ const nextConfig: NextConfig = {
         port: "4080",
         pathname: "/**",
       },
+
+      // http://abdul_ahad.signalsmind.com
       {
-        protocol: "https",
-        hostname: "baseball-digit-system-livestock.trycloudflare.com",
+        protocol: "http",
+        hostname: "abdul_ahad.signalsmind.com",
         pathname: "/**",
       },
       {
