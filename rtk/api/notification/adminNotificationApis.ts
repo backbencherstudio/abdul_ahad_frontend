@@ -8,14 +8,18 @@ export const adminNotificationApis = createApi({
   baseQuery,
   tagTypes: ["AdminNotifications"],
   endpoints: (builder) => ({
-    getNotifications: builder.query<any, void>({
-      query: () => ({
+
+    // get all notification /api/admin/notifications?limit=&page=
+    getNotifications: builder.query<any, { page: number; limit: number }>({
+      query: ({ page, limit }) => ({
         url: "/api/admin/notifications",
         method: "GET",
+        params: { page, limit },
       }),
       providesTags: ["AdminNotifications"],
       keepUnusedDataFor: 0,
     }),
+    // unread
     getUnreadCount: builder.query<any, void>({
       query: () => ({
         url: "/api/admin/notifications/unread-count",
@@ -24,6 +28,7 @@ export const adminNotificationApis = createApi({
       providesTags: ["AdminNotifications"],
       keepUnusedDataFor: 0,
     }),
+    // read all
     readAllNotifications: builder.mutation<any, void>({
       query: () => ({
         url: "/api/admin/notifications/read-all",
@@ -31,6 +36,7 @@ export const adminNotificationApis = createApi({
       }),
       invalidatesTags: ["AdminNotifications"],
     }),
+    // read 
     readNotification: builder.mutation<any, string>({
       query: (id) => ({
         url: `/api/admin/notifications/${id}/read`,
@@ -38,7 +44,7 @@ export const adminNotificationApis = createApi({
       }),
       invalidatesTags: ["AdminNotifications"],
     }),
-    // /api/admin/notifications all notifications
+    // delete /api/admin/notifications all notifications
     deleteAllNotifications: builder.mutation<any, void>({
       query: () => ({
         url: "/api/admin/notifications/all",

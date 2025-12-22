@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import {
   useGetAdminNotificationsQuery,
   useGetAdminUnreadCountQuery,
@@ -25,15 +25,52 @@ export const useAdminNotifications = () => {
 
   const shouldSkip = !user || user.type !== "ADMIN";
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allNotifications, setAllNotifications] = useState<any[]>([]);
+  const limit = 10;
+
   const {
-    data: notifications,
+    data: notificationsResponse,
     refetch: refetchNotifications,
     isLoading: isLoadingNotifications,
-  } = useGetAdminNotificationsQuery(undefined, {
-    skip: shouldSkip,
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
-  });
+  } = useGetAdminNotificationsQuery(
+    { page: currentPage, limit },
+    {
+      skip: shouldSkip,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    }
+  );
+
+  // Accumulate notifications when new page loads
+  useEffect(() => {
+    // Admin API shape:
+    // { success, data: { notifications: [...], pagination: { page, limit, total, pages } } }
+    const container = notificationsResponse?.data;
+    const list =
+      container?.notifications ||
+      // Fallback for possible typo: "notificaitons"
+      container?.notificaitons ||
+      null;
+
+    if (list && Array.isArray(list)) {
+      const newNotifications = list;
+      if (currentPage === 1) {
+        // First page - replace all notifications
+        setAllNotifications(newNotifications);
+      } else {
+        // Subsequent pages - append new notifications, avoiding duplicates
+        setAllNotifications((prev) => {
+          const existingIds = new Set(prev.map((n: any) => n.id));
+          const uniqueNew = newNotifications.filter(
+            (n: any) => !existingIds.has(n.id)
+          );
+          return [...prev, ...uniqueNew];
+        });
+      }
+    }
+  }, [notificationsResponse, currentPage]);
 
   const {
     data: unreadCountData,
@@ -61,6 +98,8 @@ export const useAdminNotifications = () => {
       );
 
       if (!shouldSkip) {
+        // Reset to first page and refetch when new notification arrives
+        setCurrentPage(1);
         Promise.all([
           refetchNotifications(),
           refetchUnreadCount(),
@@ -135,6 +174,10 @@ export const useAdminNotifications = () => {
     try {
       await deleteAllNotifications().unwrap();
       
+      // Reset pagination and clear notifications
+      setCurrentPage(1);
+      setAllNotifications([]);
+      
       // Invalidate cache to refetch data
       dispatch(
         adminNotificationApis.util.invalidateTags(["AdminNotifications"])
@@ -155,6 +198,9 @@ export const useAdminNotifications = () => {
     try {
       await deleteNotification(id).unwrap();
       
+      // Remove from local state immediately for better UX
+      setAllNotifications((prev) => prev.filter((n: any) => n.id !== id));
+      
       // Invalidate cache to refetch data
       dispatch(
         adminNotificationApis.util.invalidateTags(["AdminNotifications"])
@@ -171,8 +217,18 @@ export const useAdminNotifications = () => {
     }
   };
 
+  // Check if there are more notifications to load (uses data.pagination for admin)
+  const pagination = notificationsResponse?.data?.pagination;
+  const hasMore = pagination ? pagination.page < pagination.pages : false;
+
+  const loadMore = () => {
+    if (hasMore && !isLoadingNotifications) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
   return {
-    notifications: notifications?.data ?? [],
+    notifications: allNotifications,
     unreadCount,
     isLoading:
       isLoadingNotifications || isLoadingUnread || isMarkingAllRead || isMarkingOneRead || isDeletingAll || isDeletingOne,
@@ -180,5 +236,7 @@ export const useAdminNotifications = () => {
     markOneRead: handleMarkOneRead,
     deleteAll: handleDeleteAll,
     deleteOne: handleDeleteOne,
+    hasMore,
+    loadMore,
   };
 };

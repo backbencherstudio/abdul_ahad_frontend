@@ -3,7 +3,12 @@ import { useGetVehiclesQuery, useGetVehicleMotReportsQuery, ApiVehicle, MotTest 
 import { getBrandLogo } from '@/helper/vehicle.helper'
 import { Vehicle, MOTReport, MotReportWithVehicle } from '../app/(dashbaord)/driver/mot-reports/_types'
 
-export const useVehicleData = (vehicleIdFromURL: string | null) => {
+export const useVehicleData = (
+    vehicleIdFromURL: string | null,
+    page: number = 1,
+    limit: number = 10,
+    status: string = ''
+) => {
     const { data: vehiclesResponse, isLoading: isLoadingVehicles, error: vehiclesError } = useGetVehiclesQuery()
     
     const foundVehicle = useMemo(() => {
@@ -16,7 +21,12 @@ export const useVehicleData = (vehicleIdFromURL: string | null) => {
     // Always make API call if vehicleIdFromURL is provided, even if foundVehicle is not yet available
     const vehicleIdForQuery = foundVehicle?.id || vehicleIdFromURL || ''
     const { data: motReportsData, isLoading: isLoadingMotReports, error: motReportsError } = useGetVehicleMotReportsQuery(
-        vehicleIdForQuery,
+        { 
+            id: vehicleIdForQuery,
+            page,
+            limit,
+            status
+        },
         { skip: !vehicleIdForQuery }
     )
 
@@ -133,16 +143,30 @@ export const useVehicleData = (vehicleIdFromURL: string | null) => {
                 return prevVehicles.map(vehicle => {
                     // Match by apiVehicleId instead of registrationNumber
                     if (vehicle.apiVehicleId === foundVehicle.id) {
-                        return {
-                            ...vehicle,
-                            motReport: transformedReports
+                        // If page is 1 or status filter changed, replace reports; otherwise append
+                        if (page === 1) {
+                            return {
+                                ...vehicle,
+                                motReport: transformedReports
+                            }
+                        } else {
+                            // Append new reports, avoiding duplicates
+                            const existingIds = new Set(vehicle.motReport.map(r => r.id))
+                            const newReports = transformedReports.filter(r => !existingIds.has(r.id))
+                            return {
+                                ...vehicle,
+                                motReport: [...vehicle.motReport, ...newReports]
+                            }
                         }
                     }
                     return vehicle
                 })
             })
         }
-    }, [motReportsData, foundVehicle, vehicles.length])
+    }, [motReportsData, foundVehicle, vehicles.length, page, status])
+
+    // Calculate if there are more reports to load
+    const hasMore = motReportsData ? motReportsData.motTests.length === limit : false
 
     return {
         vehicles,
@@ -151,6 +175,8 @@ export const useVehicleData = (vehicleIdFromURL: string | null) => {
         isLoadingVehicles,
         isLoadingMotReports,
         vehiclesError,
-        motReportsError
+        motReportsError,
+        hasMore,
+        totalReports: motReportsData?.motTests?.length || 0
     }
 }

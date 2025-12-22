@@ -9,10 +9,8 @@ interface HeaderProps {
 
 export default function Header({ showTabs = false, activeTab, onTabChange, tabs }: HeaderProps) {
     return (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
-            <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">MOT Reports</h1>
-            </div>
+        <div className="">
+           
 
             {showTabs && tabs && activeTab && onTabChange && (
                 <div className="bg-gray-100 p-1 rounded-full flex items-center gap-1 w-full sm:w-auto overflow-x-auto">
