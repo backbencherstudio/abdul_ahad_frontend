@@ -8,10 +8,12 @@ export const garageDriverApis = createApi({
     baseQuery,
     tagTypes: ["GarageDriverNotifications"],
     endpoints: (builder) => ({
-        getNotifications: builder.query<any, void>({
-            query: () => ({
+        // ?limit=&page=
+        getNotifications: builder.query<any, { page: number; limit: number }>({
+            query: ({ page, limit }) => ({
                 url: "/api/notification",
                 method: "GET",
+                params: { page, limit },
             }),
             providesTags: ["GarageDriverNotifications"],
             keepUnusedDataFor: 0,

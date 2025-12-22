@@ -93,18 +93,6 @@ export const vehiclesApis = createApi({
             }),
             invalidatesTags: ["Vehicles"],
         }),
-        // http://localhost:4080/api/vehicles/cmio2vx5o0001zz0m9ew7c7ok/mot-reports?limit=&page=&status=
-
-        // get mot report /api/vehicles/cmio2vx5o0001zz0m9ew7c7ok/mot-reports
-        // getVehicleMotReports: builder.query<MotReportsResponse, string>({
-        //     query: (id) => ({
-        //         url: `/api/vehicles/${id}/mot-reports`,
-        //         method: "GET",
-        //     }),
-        //     providesTags: (result, error, id) => [{ type: "Vehicles", id }],
-        //     // Force refetch when vehicle ID changes by not keeping unused data
-        //     keepUnusedDataFor: 0,
-        // }),
 
         getVehicleMotReports: builder.query<MotReportsResponse, { id: string; limit: number; page: number; status: string }>({
             query: ({ id, limit, page, status }) => ({
@@ -117,7 +105,17 @@ export const vehiclesApis = createApi({
             keepUnusedDataFor: 0,
         }),
 
+
+        // refresh mot reports api/vehicles/cmio2vx5o0001zz0m9ew7c7ok/mot-reports/refresh
+        refreshMotReports: builder.mutation<any, string>({
+            query: (id) => ({
+                url: `/api/vehicles/${id}/mot-reports/refresh`,
+                method: "PATCH",
+            }),
+            invalidatesTags: ["Vehicles"],
+        }),
+
     }),
 });
 
-export const { useAddVehicleMutation, useGetVehiclesQuery, useDeleteVehicleMutation, useGetVehicleMotReportsQuery } = vehiclesApis;
+export const { useAddVehicleMutation, useGetVehiclesQuery, useDeleteVehicleMutation, useGetVehicleMotReportsQuery, useRefreshMotReportsMutation } = vehiclesApis;
