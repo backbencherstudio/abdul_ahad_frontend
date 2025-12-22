@@ -14,6 +14,7 @@ import NoReportsMessage from '@/app/(dashbaord)/_components/Driver/motReport/NoR
 import NoVehicleSelected from '@/app/(dashbaord)/_components/Driver/motReport/NoVehicleSelected'
 import VehicleDetailsModal from '@/app/(dashbaord)/_components/Driver/motReport/VehicleDetailsModal'
 import DownloadModal from '@/app/(dashbaord)/_components/Driver/motReport/DownloadModal'
+import { Button } from '@/components/ui/button'
 
 
 // Main Component
@@ -28,6 +29,32 @@ export default function MotReports() {
     }, [params])
 
     const vehicleIdFromURL = getVehicleIdFromURL()
+    
+    // UI State
+    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null)
+    const [showDetails, setShowDetails] = useState(false)
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+    const [activeTab, setActiveTab] = useState<TabType>('All Reports')
+    
+    // Pagination and filter state
+    const [currentPage, setCurrentPage] = useState(1)
+    const [statusFilter, setStatusFilter] = useState<string>('')
+    const limit = 10
+
+    // Convert tab to status filter
+    const getStatusFromTab = (tab: TabType): string => {
+        if (tab === 'Pass') return 'PASSED'
+        if (tab === 'Fail') return 'FAILED'
+        return ''
+    }
+
+    // Update status filter when tab changes
+    useEffect(() => {
+        const status = getStatusFromTab(activeTab)
+        setStatusFilter(status)
+        setCurrentPage(1) // Reset to first page when filter changes
+    }, [activeTab])
+
     const { 
         vehicles, 
         motReports, 
@@ -35,14 +62,9 @@ export default function MotReports() {
         isLoadingVehicles,
         isLoadingMotReports,
         vehiclesError,
-        motReportsError
-    } = useVehicleData(vehicleIdFromURL)
-
-    // UI State
-    const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null)
-    const [showDetails, setShowDetails] = useState(false)
-    const [isLoadingDetails, setIsLoadingDetails] = useState(false)
-    const [activeTab, setActiveTab] = useState<TabType>('All Reports')
+        motReportsError,
+        hasMore
+    } = useVehicleData(vehicleIdFromURL, currentPage, limit, statusFilter)
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -58,6 +80,7 @@ export default function MotReports() {
             // Always update selectedVehicleId when URL changes, even if vehicles are still loading
             if (selectedVehicleId !== vehicleIdFromURL) {
                 setSelectedVehicleId(vehicleIdFromURL)
+                setCurrentPage(1) // Reset pagination when vehicle changes
             }
             
             // If vehicles are loaded, verify the vehicle exists
@@ -75,6 +98,7 @@ export default function MotReports() {
             // No vehicle ID in URL, reset selection
             if (selectedVehicleId) {
                 setSelectedVehicleId(null)
+                setCurrentPage(1) // Reset pagination
             }
         }
     }, [vehicleIdFromURL, isLoadingVehicles, vehicles, selectedVehicleId, foundVehicle])
@@ -150,6 +174,10 @@ export default function MotReports() {
         setSelectedReportForDownload(null)
     }
 
+    const handleLoadMore = () => {
+        setCurrentPage(prev => prev + 1)
+    }
+
     // Get selected vehicle - find by matching API vehicle ID
     // Use selectedVehicleId (from state) or vehicleIdFromURL (from URL) as fallback
     const vehicleIdToFind = selectedVehicleId || vehicleIdFromURL
@@ -157,12 +185,8 @@ export default function MotReports() {
         ? vehicles.find(v => v.apiVehicleId === vehicleIdToFind)
         : null
 
-    // Filter reports based on tab
-    const filteredReports = selectedVehicle?.motReport?.filter(report => {
-        if (activeTab === 'Pass') return report.motStatus === 'Pass'
-        if (activeTab === 'Fail') return report.motStatus === 'Fail'
-        return true
-    }) || []
+    // Reports are already filtered by API, so use them directly
+    const filteredReports = selectedVehicle?.motReport || []
 
     // Error message
     const errorMessage = vehiclesError && 'data' in vehiclesError 
@@ -221,6 +245,19 @@ export default function MotReports() {
                                 ))}
                                 {filteredReports.length === 0 && !isLoadingMotReports && (
                                     <NoReportsMessage activeTab={activeTab} />
+                                )}
+                                
+                                {/* Load More Button */}
+                                {hasMore && filteredReports.length > 0 && (
+                                    <div className="flex justify-center mt-6">
+                                        <Button
+                                            onClick={handleLoadMore}
+                                            disabled={isLoadingMotReports}
+                                            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-md cursor-pointer"
+                                        >
+                                            {isLoadingMotReports ? 'Loading...' : 'More'}
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                         )}
