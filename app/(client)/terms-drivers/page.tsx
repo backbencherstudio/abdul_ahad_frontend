@@ -2,14 +2,15 @@ import React from 'react'
 import HeroSectionReused from '../_components/Shared/HeroSectionReused'
 
 const driverTermsData = {
-    lastUpdated: "May 2025",
-    disclaimer: "Welcome to simplymot.co.uk! By accessing or using our website, you agree to the following Terms and Conditions. If you have any concerns or do not agree with these terms, we kindly ask that you refrain from using our services.",
+    lastUpdated: "Last Updated: December 2025 ",
+    disclaimer: "Welcome to simplymot.co.uk. By accessing or using our website, you agree to the following Terms and Conditions. If you have any concerns or do not agree with these terms, we kindly ask that you refrain from using our services. ",
     sections: [
         {
             id: 1,
             title: "About Us",
             content: [
-                "simplymot.co.uk (referred to as \"us\" or \"our\") is an online booking platform operated in the UK under the name simplymot.co.uk. We connect vehicle owners (\"users\") with local garages for the purpose of booking MOT tests. We provide a booking service, but we do not perform MOT tests or any other vehicle-related services ourselves."
+                "simplymot.co.uk (\"we\", \"us\", or \"our\") is an online booking platform operated in the UK under the name simplymot.co.uk. We connect vehicle owners (\"Users\", \"Customers\", or \"Drivers\") with local garages for the purpose of booking MOT tests. We provide a booking service, but we do not perform MOT tests or any other vehicle-related services ourselves."
+             
             ]
         },
         {
@@ -44,8 +45,9 @@ const driverTermsData = {
             title: "Limitation of Liability",
             content: [
                 "simplymot.co.uk accepts no responsibility or liability for:",
-                "• Loss or damage resulting from the use of our website or services",
-                "• Any disputes between users and garages",
+                "• The quality or timeliness of services provided by garages",
+                "• Loss or damage resulting from the use of our website or services ",
+                "• Any disputes between users and garages ",
                 "• Our total liability to you shall not exceed any amount paid by you to us (typically £0 for drivers)."
             ]
         },
@@ -53,63 +55,80 @@ const driverTermsData = {
             id: 6,
             title: "Data Protection and Privacy",
             content: [
-                "We collect and process your personal information in accordance with our Privacy Policy."
+                "We collect and process your personal information in accordance with our Privacy Policy. "
             ]
         },
         {
             id: 7,
             title: "Marketing and Communication",
             content: [
-                "By using our website, you agree to receive service-related communications and optional marketing emails. You can opt out of marketing at any time."
+                "By using our website, you agree to receive service-related communications. ",
+                "You may also receive optional marketing emails, which you can opt out of at any time. "
             ]
         },
         {
             id: 8,
-            title: "Intellectual Property",
+            title: "MOT Reminder Disclaimer ",
             content: [
-                "All website content (text, graphics, logos, software) is owned by or licensed to simplymot.co.uk. You may not copy, reproduce, or use our content without permission."
+                "simplymot.co.uk may provide MOT reminder notifications by email or other electronic means as a convenience only. While we make reasonable efforts to send reminders, we do not guarantee that reminders will be delivered, received, or read.",
+                "We accept no responsibility or liability if a user does not receive an MOT reminder for any reason, including technical issues, incorrect contact details, email filtering, or system outages. ",
+                "It remains the sole responsibility of the vehicle owner to ensure their vehicle has a valid MOT at all times and to comply with UK legal requirements. "
             ]
         },
         {
             id: 9,
-            title: "Third Party Links",
+            title: "Intellectual Property",
             content: [
-                "Our website may contain links to external websites. We are not responsible for the content or practices of those sites."
+                "All website content (text, graphics, logos, software) is owned by or licensed to simplymot.co.uk. You may not copy, reproduce, or use our content without permission. "
             ]
         },
         {
             id: 10,
-            title: "Changes to Terms",
+            title: "Third Party Links",
             content: [
-                "We may revise these Terms and Conditions from time to time. Continued use of the website indicates acceptance of any updated terms."
+                "Our website may contain links to external websites. We are not responsible for the content or practices of those sites. "
             ]
         },
         {
             id: 11,
-            title: "Governing Law",
+            title: "Changes to Terms",
             content: [
-                "These Terms are governed by the laws of England and Wales. Disputes shall be subject to the exclusive jurisdiction of the English courts."
+                "We may revise these Terms and Conditions from time to time. Continued use of the website indicates acceptance of any updated terms. "
             ]
         },
         {
             id: 12,
-            title: "User Responsibility",
+            title: "Governing Law",
             content: [
-                "simplymot.co.uk only lists garages that are officially registered with the DVSA (Driver and Vehicle Standards Agency), ensuring they meet required MOT testing standards.",
-                "While this registration verifies garages' legal qualifications, simplymot.co.uk does not guarantee or endorse the quality, customer service, or performance of any garage listed.",
-                "It remains the responsibility of the user (driver) to assess the suitability and trustworthiness of a garage before proceeding with a booking.",
-                "We recommend users carry out additional checks such as reading customer reviews or confirming garage reputation before booking."
+                "These Terms are governed by the laws of England and Wales. Disputes shall be subject to the exclusive jurisdiction of the English courts. "
             ]
         },
         {
             id: 13,
+            title: "User Responsibility",
+            content: [
+                "simplymot.co.uk only lists garages that are officially registered with the DVSA (Driver and Vehicle Standards Agency), ensuring they meet required MOT testing standards. ",
+                "While this registration verifies garages' legal qualifications, simplymot.co.uk does not guarantee or endorse the quality, customer service, or performance of any garage listed. ",
+                "It remains the responsibility of the user (driver) to assess the suitability and trustworthiness of a garage before proceeding with a booking. ",
+                "We recommend users carry out additional checks such as reading customer reviews or confirming garage reputation before booking. ."
+            ]
+        },
+        {
+            id: 14,
+            title: "Legal Information",
+            content: [
+                "Legal Entity: A. Ahad, Sole Trader, trading as simplymot.co.uk ",
+                "Registered Business Address: 124 City Road, London, EC1V 2NX  ",
+                "Email: info@simplymot.co.uk  "
+            ]
+        },
+        {
+            id: 15,
             title: "Contact Us",
             content: [
-                "If you have any questions or concerns, please contact us at:",
-                "Email Address:",
-                "info@simplymot.co.uk",
-                "Website:",
-                "https://www.simplymot.co.uk"
+                "If you have any questions or concerns, please contact us at: ",
+                "Email: info@simplymot.co.uk",
+                "Website: https://www.simplymot.co.uk"
             ]
         }
     ]
@@ -118,7 +137,7 @@ const driverTermsData = {
 export default function TermsDrivers() {
     return (
         <div>
-            <HeroSectionReused title="Terms and Conditions for Drivers" />
+            <HeroSectionReused title="Terms and Conditions for Customers" />
 
             {/* content section */}
             <div className="max-w-4xl mx-auto px-4 py-8">

@@ -11,7 +11,7 @@ export default function CreateAccountPage() {
         {
             id: 1,
             icon: <DriverIcon />,
-            title: 'Driver Sign Up',
+            title: 'Customer Sign Up',
             href: '/create-account/driver'
         },
         {
