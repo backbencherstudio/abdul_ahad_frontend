@@ -95,16 +95,11 @@ export default function BookMyMOT() {
     useEffect(() => {
         if (queryError) {
             let errorMessage = 'Failed to search data. Please try again.'
-
-            // RTK Query error structure
             if ('data' in queryError && queryError.data) {
                 const errorData = queryError.data as any
-
-                // Check for nested message structure: { success: false, message: { message: "...", error: "...", statusCode: 404 } }
                 if (errorData?.message?.message) {
                     errorMessage = errorData.message.message
                 } else if (errorData?.message) {
-                    // Handle if message is a string
                     errorMessage = typeof errorData.message === 'string'
                         ? errorData.message
                         : errorData.message.message || errorMessage
@@ -122,24 +117,20 @@ export default function BookMyMOT() {
     }, [queryError, dispatch])
 
     const onSubmit = async (data: FormData) => {
-        // Clear previous results
         dispatch(clearSearchResults())
         dispatch(setLoading(true))
         dispatch(setError(null))
 
-        // Clear URL parameter after using it
         if (registrationFromURL) {
             clearURLParams()
         }
 
-        // Set search params to trigger the query with new data
         setSearchParams({
             registration_number: data.registrationNumber,
             postcode: data.postcode
         })
     }
 
-    // Clear search results when component unmounts
     useEffect(() => {
         return () => {
             dispatch(clearSearchResults())
