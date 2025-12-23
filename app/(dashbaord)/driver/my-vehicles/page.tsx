@@ -240,6 +240,17 @@ export default function MyVehicles() {
         }
     }
 
+    const handleBookMyMOT = () => {
+        if (selectedVehicle) {
+            // Close the modal before navigating
+            dispatch(closeDetailsModal())
+            // Pass registration number as query parameter
+            router.push(`/driver/book-my-mot?registration=${encodeURIComponent(selectedVehicle.registrationNumber)}`)
+        } else {
+            toast.error('Vehicle not found. Please try again.')
+        }
+    }
+
     return (
         <div className="w-full mx-auto">
             {/* Header */}
@@ -445,6 +456,12 @@ export default function MyVehicles() {
                                 className={`w-full cursor-pointer bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white font-medium py-3 mt-6 rounded-lg`}
                             >
                                 MOT Reports
+                            </Button>
+                            <Button
+                                onClick={handleBookMyMOT}
+                                className={`w-full cursor-pointer bg-[${BRAND_COLOR}] hover:bg-[${BRAND_COLOR_HOVER}] text-white font-medium py-3 mt- rounded-lg`}
+                            >
+                               Book My MOT
                             </Button>
                         </div>
                     </div>

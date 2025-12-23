@@ -1,98 +1,53 @@
-import { Download } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { IoNotifications } from 'react-icons/io5'
-import { MOTReport, Vehicle } from '@/app/(dashbaord)/driver/mot-reports/_types'
+import { MOTReport } from '@/app/(dashbaord)/driver/mot-reports/_types'
 import { formatDate, getStatusStyles } from '@/app/(dashbaord)/driver/mot-reports/_utils'
 
 interface ReportCardProps {
     report: MOTReport
-    vehicleData: Vehicle
-    onDownloadClick: (report: MOTReport, vehicle: Vehicle) => void
 }
 
-const ReportField = ({ label, value, className = "bg-gray-50 border-gray-300 text-gray-900" }: {
-    label: string
-    value: string
-    className?: string
-}) => (
-    <div>
-        <Label className="text-sm font-medium text-gray-700 mb-2 block">{label}</Label>
-        <Input value={value} readOnly className={className} />
-    </div>
-)
-
-export default function ReportCard({ report, vehicleData, onDownloadClick }: ReportCardProps) {
+export default function ReportCard({ report }: ReportCardProps) {
     const styles = getStatusStyles(report.motStatus)
 
-    // redirect download button 
-    const handleDownloadClick = () => {
-        window.open('https://www.gov.uk/check-mot-history', '_blank')
-    }
-
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                    <div className="flex sm:items-center gap-2 sm:gap-4 justify-between w-full">
-                        <div className='flex gap-2 items-center'>
-                            <div className="text-base sm:text-lg font-bold text-gray-900">
-                                {vehicleData.make.toUpperCase()} {vehicleData.model.toUpperCase()}
-                            </div>
-                            <span className={`px-3 py-1 rounded text-sm font-medium ${styles.badge} w-fit`}>
-                                {report.motStatus}
-                            </span>
-                        </div>
-                        <div className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-bold block sm:hidden">
-                            {vehicleData.registrationNumber}
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <Button variant="outline" size="sm" className="flex items-center gap-1 px-2 sm:px-3 py-1">
-                            <IoNotifications className="text-lg sm:text-xl" />
-                        </Button>
-                        <Button
-                            onClick={handleDownloadClick}
-                            size="sm"
-                            className="bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white px-2 sm:px-3 py-1 flex items-center gap-1 text-xs sm:text-sm"
-                        >
-                            <Download className="w-3 h-3" />
-                            Download Reports
-                        </Button>
-                    </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                {/* Pass Badge */}
+                <div className="flex-shrink-0">
+                    <span className={`px-3 py-1.5 rounded-md text-sm font-medium ${styles.badge} whitespace-nowrap`}>
+                        {report.motStatus}
+                    </span>
                 </div>
-                <div className="mt-2 sm:mt-3 hidden sm:block">
-                    <div className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-bold inline-block">
-                        {vehicleData.registrationNumber}
-                    </div>
-                </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-4 sm:p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                    <div className="space-y-3 sm:space-y-4">
-                        <ReportField label="Colour" value={report.color} />
-                        <ReportField label="MOT test number" value={report.motTestNumber} />
-                    </div>
-                    <div className="space-y-3 sm:space-y-4">
-                        <ReportField label="Fuel type" value={report.fuelType} />
-                        <ReportField
-                            label="MOT Pass Date"
-                            value={formatDate(report.motPassDate)}
-                            className={`border-2 text-gray-900 ${styles.passDate}`}
-                        />
-                    </div>
-                    <div className="space-y-3 sm:space-y-4 sm:col-span-2 xl:col-span-1">
-                        <ReportField label="Date registered" value={formatDate(report.registrationDate)} />
-                        <ReportField
-                            label="MOT expired on"
-                            value={formatDate(report.motExpiryDate)}
-                            className={`border-2 text-gray-900 ${styles.expiryDate}`}
-                        />
-                    </div>
+                {/* MOT Test Number */}
+                <div className="flex-1 min-w-0">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block capitalize">MOT test number</Label>
+                    <Input 
+                        value={report.motTestNumber} 
+                        readOnly 
+                        className="bg-gray-50 border-gray-300 text-gray-900"
+                    />
+                </div>
+
+                {/* MOT Pass Date */}
+                <div className="flex-1 min-w-0">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block capitalize">MOT Pass Date</Label>
+                    <Input 
+                        value={formatDate(report.motPassDate)} 
+                        readOnly 
+                        className={`bg-green-50 border-green-300 text-gray-900 ${styles.passDate}`}
+                    />
+                </div>
+
+                {/* MOT Expired On */}
+                <div className="flex-1 min-w-0">
+                    <Label className="text-sm font-medium text-gray-700 mb-2 block capitalize">MOT expiry</Label>
+                    <Input 
+                        value={formatDate(report.motExpiryDate)} 
+                        readOnly 
+                        className="bg-gray-50 border-gray-300 text-gray-900"
+                    />
                 </div>
             </div>
         </div>

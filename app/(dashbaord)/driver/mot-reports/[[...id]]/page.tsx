@@ -4,20 +4,24 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import VehiclesCardReusble from '@/components/reusable/Dashboard/Driver/VehiclesCardReusble'
 import { useVehicleData } from '../../../../../hooks/useVehicleData'
-import { TabType, TABS, MOTReport, Vehicle, MotReportWithVehicle } from '../_types'
+import { MOTReport, Vehicle, MotReportWithVehicle } from '../_types'
 import ErrorDisplay from '@/app/(dashbaord)/_components/Driver/motReport/ErrorDisplay'
-import Header from '@/app/(dashbaord)/_components/Driver/motReport/Header'
-import LoadingSpinner from '@/app/(dashbaord)/_components/Driver/motReport/LoadingSpinner'
 import ReportCard from '@/app/(dashbaord)/_components/Driver/motReport/ReportCard'
 import ReportCardShimmer from '@/app/(dashbaord)/_components/Driver/motReport/ReportCardShimmer'
+import VehicleHeaderShimmer from '@/app/(dashbaord)/_components/Driver/motReport/VehicleHeaderShimmer'
 import NoReportsMessage from '@/app/(dashbaord)/_components/Driver/motReport/NoReportsMessage'
 import NoVehicleSelected from '@/app/(dashbaord)/_components/Driver/motReport/NoVehicleSelected'
 import VehicleDetailsModal from '@/app/(dashbaord)/_components/Driver/motReport/VehicleDetailsModal'
 import DownloadModal from '@/app/(dashbaord)/_components/Driver/motReport/DownloadModal'
 import { Button } from '@/components/ui/button'
-import { RotateCw } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { RotateCw, Download } from 'lucide-react'
+import { IoNotifications } from 'react-icons/io5'
 import { useRefreshMotReportsMutation } from '@/rtk/api/driver/vehiclesApis'
 import { toast } from 'react-toastify'
+import { formatDate } from '../_utils'
 
 
 // Main Component
@@ -37,27 +41,13 @@ export default function MotReports() {
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null)
     const [showDetails, setShowDetails] = useState(false)
     const [isLoadingDetails, setIsLoadingDetails] = useState(false)
-    const [activeTab, setActiveTab] = useState<TabType>('All Reports')
     const [isRefreshing, setIsRefreshing] = useState(false)
 
-    // Pagination and filter state
+    // Pagination state
     const [currentPage, setCurrentPage] = useState(1)
-    const [statusFilter, setStatusFilter] = useState<string>('')
     const limit = 10
-
-    // Convert tab to status filter
-    const getStatusFromTab = (tab: TabType): string => {
-        if (tab === 'Pass') return 'PASSED'
-        if (tab === 'Fail') return 'FAILED'
-        return ''
-    }
-
-    // Update status filter when tab changes
-    useEffect(() => {
-        const status = getStatusFromTab(activeTab)
-        setStatusFilter(status)
-        setCurrentPage(1) // Reset to first page when filter changes
-    }, [activeTab])
+    // No status filtering - always show all reports
+    const statusFilter = ''
 
     const {
         vehicles,
@@ -243,12 +233,71 @@ export default function MotReports() {
                         />
                     </div>
 
-                    {/* Header + Refresh Button */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                        {/* title */}
-                        <h2 className="text-lg sm:text-xl font-bold">MOT Reports</h2>
-                        <div className="flex items-center gap-2">
-                            {showDetails && selectedVehicle && (
+                    {/* Vehicle Header Section - Only show when vehicle is selected */}
+                    {showDetails && selectedVehicle && (
+                        <>
+                            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+                                {/* Header with Vehicle Info and Download Button */}
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className="text-lg sm:text-xl font-bold text-gray-900">
+                                            {selectedVehicle.make.toUpperCase()} {selectedVehicle.model.toUpperCase()}
+                                        </div>
+                                        <div className="bg-gray-900 text-white px-3 py-1 rounded text-sm font-bold">
+                                            {selectedVehicle.registrationNumber}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="flex items-center gap-1 px-2 sm:px-3 py-1"
+                                        >
+                                            <IoNotifications className="text-lg sm:text-xl" />
+                                        </Button>
+                                        <Button
+                                            onClick={() => window.open('https://www.gov.uk/check-mot-history', '_blank')}
+                                            size="sm"
+                                            className="bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white px-3 sm:px-4 py-1 flex items-center gap-2 text-xs sm:text-sm"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Download Reports
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Vehicle Details */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                                    <div>
+                                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Colour</Label>
+                                        <Input 
+                                            value={selectedVehicle.motReport[0]?.color || ''} 
+                                            readOnly 
+                                            className="bg-white border-gray-300 text-gray-900"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Fuel type</Label>
+                                        <Input 
+                                            value={selectedVehicle.motReport[0]?.fuelType || ''} 
+                                            readOnly 
+                                            className="bg-white border-gray-300 text-gray-900"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Date registered</Label>
+                                        <Input 
+                                            value={selectedVehicle.motReport[0]?.registrationDate ? formatDate(selectedVehicle.motReport[0].registrationDate) : ''} 
+                                            readOnly 
+                                            className="bg-white border-gray-300 text-gray-900"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Refresh Button */}
+                            <div className="flex items-center justify-between gap-2 mb-3">
+                                <h2 className="text-lg sm:text-xl font-bold">MOT Reports</h2>
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -263,41 +312,51 @@ export default function MotReports() {
                                         {isRefreshing ? 'Refreshing...' : 'Reload'}
                                     </span>
                                 </Button>
-                            )}
-                            <Header
-                                showTabs={showDetails && !!selectedVehicle}
-                                activeTab={activeTab}
-                                onTabChange={setActiveTab}
-                                tabs={TABS}
-                            />
+                            </div>
+                        </>
+                    )}
 
+                    {/* Title when no vehicle selected */}
+                    {!showDetails && (
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                            <h2 className="text-lg sm:text-xl font-bold">MOT Reports</h2>
                         </div>
-                    </div>
+                    )}
 
                     {/* Details Section */}
                     <div>
                         {/* Show shimmer when loading or refreshing MOT reports */}
                         {(isLoadingMotReports || isLoadingDetails || isRefreshing) && showDetails && (
-                            <div className="space-y-4 sm:space-y-6">
-                                {Array.from({ length: 3 }).map((_, index) => (
-                                    <ReportCardShimmer key={`shimmer-${index}`} />
-                                ))}
-                            </div>
+                            <>
+                                {/* Vehicle Header Shimmer */}
+                                <VehicleHeaderShimmer />
+                                
+                                {/* Title Shimmer */}
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                    <Skeleton className="h-6 sm:h-7 w-32 bg-gray-200" />
+                                    <Skeleton className="h-8 w-20 rounded bg-gray-200" />
+                                </div>
+
+                                {/* Report Cards Shimmer */}
+                                <div className="space-y-3 sm:space-y-4">
+                                    {Array.from({ length: 3 }).map((_, index) => (
+                                        <ReportCardShimmer key={`shimmer-${index}`} />
+                                    ))}
+                                </div>
+                            </>
                         )}
 
                         {/* Show actual reports when loaded */}
                         {!isLoadingMotReports && !isLoadingDetails && !isRefreshing && showDetails && selectedVehicle && (
-                            <div className="space-y-4 sm:space-y-6">
+                            <div className="space-y-3 sm:space-y-4">
                                 {filteredReports.map((report) => (
                                     <ReportCard
                                         key={report.id}
                                         report={report}
-                                        vehicleData={selectedVehicle}
-                                        onDownloadClick={handleDownloadClick}
                                     />
                                 ))}
                                 {filteredReports.length === 0 && !isLoadingMotReports && (
-                                    <NoReportsMessage activeTab={activeTab} />
+                                    <NoReportsMessage />
                                 )}
 
                                 {/* Load More Button */}

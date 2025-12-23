@@ -46,12 +46,12 @@ export default function Frequently() {
         },
         {
             id: 3,
-            question: 'How Do I Choose A Time For My Booking?',
+            question: 'Can I choose a date and time ?',
             answer: [
                 {
                     id: 1,
                     title: '',
-                    description: 'You can pick a preferred morning or afternoon slot, but not a specific time. Don\'t worry- most garages will reach out to confirm the exact time after you book.',
+                    description: 'Yes! You can select both the date and time that works best for you from the available slots',
                 },
             ]
         },
@@ -170,7 +170,7 @@ export default function Frequently() {
                                     value={`item-${item.id}`}
                                     className={` py-1.5 ${index !== faq.length - 1 ? 'border-b border-gray-200' : ''}`}
                                 >
-                                    <AccordionTrigger className="text-left cursor-pointer text-base md:text-lg font-medium text-gray-900 hover:no-underline [&>svg:last-child]:hidden [&[data-state=open]>svg:first-child]:rotate-45">
+                                    <AccordionTrigger className="text-left cursor-pointer text-base md:text-lg font-medium text-gray-900 hover:no-underline [&>svg:last-child]:hidden [&[data-state=open]>svg:first-child]:rotate-45 capitalize">
                                         {item.question}
                                         <Plus className="h-5 w-5 shrink-0 transition-transform duration-200" />
                                     </AccordionTrigger>
