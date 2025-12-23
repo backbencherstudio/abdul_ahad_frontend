@@ -4,9 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import VehiclesCardReusble from '@/components/reusable/Dashboard/Driver/VehiclesCardReusble'
 import { useVehicleData } from '../../../../../hooks/useVehicleData'
-import { TabType, TABS, MOTReport, Vehicle, MotReportWithVehicle } from '../_types'
+import { MOTReport, Vehicle, MotReportWithVehicle } from '../_types'
 import ErrorDisplay from '@/app/(dashbaord)/_components/Driver/motReport/ErrorDisplay'
-import Header from '@/app/(dashbaord)/_components/Driver/motReport/Header'
 import LoadingSpinner from '@/app/(dashbaord)/_components/Driver/motReport/LoadingSpinner'
 import ReportCard from '@/app/(dashbaord)/_components/Driver/motReport/ReportCard'
 import ReportCardShimmer from '@/app/(dashbaord)/_components/Driver/motReport/ReportCardShimmer'
@@ -37,27 +36,13 @@ export default function MotReports() {
     const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null)
     const [showDetails, setShowDetails] = useState(false)
     const [isLoadingDetails, setIsLoadingDetails] = useState(false)
-    const [activeTab, setActiveTab] = useState<TabType>('All Reports')
     const [isRefreshing, setIsRefreshing] = useState(false)
 
-    // Pagination and filter state
+    // Pagination state
     const [currentPage, setCurrentPage] = useState(1)
-    const [statusFilter, setStatusFilter] = useState<string>('')
     const limit = 10
-
-    // Convert tab to status filter
-    const getStatusFromTab = (tab: TabType): string => {
-        if (tab === 'Pass') return 'PASSED'
-        if (tab === 'Fail') return 'FAILED'
-        return ''
-    }
-
-    // Update status filter when tab changes
-    useEffect(() => {
-        const status = getStatusFromTab(activeTab)
-        setStatusFilter(status)
-        setCurrentPage(1) // Reset to first page when filter changes
-    }, [activeTab])
+    // No status filtering - always show all reports
+    const statusFilter = ''
 
     const {
         vehicles,
@@ -264,12 +249,7 @@ export default function MotReports() {
                                     </span>
                                 </Button>
                             )}
-                            <Header
-                                showTabs={showDetails && !!selectedVehicle}
-                                activeTab={activeTab}
-                                onTabChange={setActiveTab}
-                                tabs={TABS}
-                            />
+                            {/* Header tabs removed - only showing "View All" option */}
 
                         </div>
                     </div>
@@ -297,7 +277,7 @@ export default function MotReports() {
                                     />
                                 ))}
                                 {filteredReports.length === 0 && !isLoadingMotReports && (
-                                    <NoReportsMessage activeTab={activeTab} />
+                                    <NoReportsMessage />
                                 )}
 
                                 {/* Load More Button */}
