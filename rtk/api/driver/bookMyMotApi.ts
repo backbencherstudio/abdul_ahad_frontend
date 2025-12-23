@@ -129,7 +129,7 @@ export const bookMyMotApi = createApi({
                 },
             }),
             providesTags: ["BookMyMot"],
-            keepUnusedDataFor: 0, 
+            keepUnusedDataFor: 0,
         }),
 
         // garage details 
