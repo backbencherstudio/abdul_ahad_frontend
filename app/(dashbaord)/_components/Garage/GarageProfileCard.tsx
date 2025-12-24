@@ -221,7 +221,7 @@ export default function GarageProfileCard({
                 </div>
 
                 <div className="flex flex-col justify-between items-end min-w-[160px]">
-                    <ActionButtons {...actionButtonsProps} className="w-full" buttonSize="md" />
+                    {/* <ActionButtons {...actionButtonsProps} className="w-full" buttonSize="md" /> */}
                     <PriceDisplay price={price} className="text-2xl" />
                 </div>
             </div>
