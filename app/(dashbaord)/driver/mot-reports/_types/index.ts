@@ -30,6 +30,6 @@ export interface MotReportWithVehicle extends MOTReport {
     vehicleModel?: string
 }
 
-export type TabType = 'All Reports' | 'Pass' | 'Fail'
+export type TabType = 'View All'
 
-export const TABS: readonly TabType[] = ['All Reports', 'Pass', 'Fail'] as const
+export const TABS: readonly TabType[] = ['View All'] as const

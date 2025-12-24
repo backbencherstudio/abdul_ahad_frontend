@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        protocol: "http",
+        hostname: "abdulahad.signalsmind.com",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "marketing-backed-democracy-ranks.trycloudflare.com",
         pathname: "/**",

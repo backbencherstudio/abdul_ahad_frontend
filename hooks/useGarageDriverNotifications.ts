@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import {
   useGetNotificationsQuery,
   useGetUnreadCountQuery,
@@ -25,15 +25,43 @@ export const useGarageDriverNotifications = () => {
 
   const shouldSkip = !user || (user.type !== "DRIVER" && user.type !== "GARAGE");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allNotifications, setAllNotifications] = useState<any[]>([]);
+  const limit = 10;
+
   const {
-    data: notifications,
+    data: notificationsResponse,
     refetch: refetchNotifications,
     isLoading: isLoadingNotifications,
-  } = useGetNotificationsQuery(undefined, {
-    skip: shouldSkip,
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
-  });
+  } = useGetNotificationsQuery(
+    { page: currentPage, limit },
+    {
+      skip: shouldSkip,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
+    }
+  );
+
+  // Accumulate notifications when new page loads
+  useEffect(() => {
+    if (notificationsResponse?.data && Array.isArray(notificationsResponse.data)) {
+      const newNotifications = notificationsResponse.data;
+      if (currentPage === 1) {
+        // First page - replace all notifications
+        setAllNotifications(newNotifications);
+      } else {
+        // Subsequent pages - append new notifications, avoiding duplicates
+        setAllNotifications((prev) => {
+          const existingIds = new Set(prev.map((n: any) => n.id));
+          const uniqueNew = newNotifications.filter(
+            (n: any) => !existingIds.has(n.id)
+          );
+          return [...prev, ...uniqueNew];
+        });
+      }
+    }
+  }, [notificationsResponse, currentPage]);
 
   const {
     data: unreadCountData,
@@ -61,6 +89,8 @@ export const useGarageDriverNotifications = () => {
       );
 
       if (!shouldSkip) {
+        // Reset to first page and refetch when new notification arrives
+        setCurrentPage(1);
         Promise.all([
           refetchNotifications(),
           refetchUnreadCount(),
@@ -140,6 +170,10 @@ export const useGarageDriverNotifications = () => {
     try {
       await deleteAllNotifications().unwrap();
       
+      // Reset pagination and clear notifications
+      setCurrentPage(1);
+      setAllNotifications([]);
+      
       // Invalidate cache to refetch data
       dispatch(
         garageDriverApis.util.invalidateTags(["GarageDriverNotifications"])
@@ -160,6 +194,9 @@ export const useGarageDriverNotifications = () => {
     try {
       await deleteNotification(id).unwrap();
       
+      // Remove from local state immediately for better UX
+      setAllNotifications((prev) => prev.filter((n: any) => n.id !== id));
+      
       // Invalidate cache to refetch data
       dispatch(
         garageDriverApis.util.invalidateTags(["GarageDriverNotifications"])
@@ -176,8 +213,20 @@ export const useGarageDriverNotifications = () => {
     }
   };
 
+  // Check if there are more notifications to load
+  const meta = notificationsResponse?.meta;
+  const hasMore = meta
+    ? meta.page < meta.totalPages
+    : false;
+
+  const loadMore = () => {
+    if (hasMore && !isLoadingNotifications) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
   return {
-    notifications: notifications?.data ?? [],
+    notifications: allNotifications,
     unreadCount,
     isLoading:
       isLoadingNotifications || isLoadingUnread || isMarkingAllRead || isMarkingOneRead || isDeletingAll || isDeletingOne,
@@ -185,5 +234,7 @@ export const useGarageDriverNotifications = () => {
     markOneRead: handleMarkOneRead,
     deleteAll: handleDeleteAll,
     deleteOne: handleDeleteOne,
+    hasMore,
+    loadMore,
   };
 };

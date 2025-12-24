@@ -2,7 +2,7 @@ import React from 'react'
 import HeroSectionReused from '../_components/Shared/HeroSectionReused'
 
 const cookiePolicyData = {
-    lastUpdated: "May 2025",
+    lastUpdated: "December 2025",
     disclaimer: "This Cookie Policy explains how simplymot.co.uk (\"we\", \"us\", or \"our\") uses cookies and similar technologies on our website. By using our website, you consent to our use of cookies in accordance with this policy.",
     sections: [
         {
@@ -63,10 +63,7 @@ const cookiePolicyData = {
             title: "Contact Us",
             content: [
                 "If you have any questions about our use of cookies, please contact us:",
-                "",
-                "Email Address:",
-                "",
-                "info@simplymot.co.uk"
+                "Email: info@simplymot.co.uk"
             ]
         }
     ]

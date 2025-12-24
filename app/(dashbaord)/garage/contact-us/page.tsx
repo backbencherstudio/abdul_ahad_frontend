@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,10 +9,12 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'react-toastify'
 import { Loader2 } from 'lucide-react'
 import { useCreateContactMessageMutation } from '@/rtk/api/garage/contactApis'
+import { useAuth } from "@/hooks/useAuth"
+import { AuthMeApi } from '@/apis/auth/authApis'
 
 type ContactFormValues = {
-    first_name: string
-    last_name: string
+    garage_name: string
+    primary_contact_person_name: string
     email: string
     phone_number: string
     message: string
@@ -20,6 +22,8 @@ type ContactFormValues = {
 
 export default function ContactUs() {
     const [createContactMessage, { isLoading }] = useCreateContactMessageMutation()
+    const { user, isAuthenticated } = useAuth()
+    const [userData, setUserData] = useState<any>(null)
     
     const {
         register,
@@ -28,19 +32,43 @@ export default function ContactUs() {
         formState: { errors }
     } = useForm<ContactFormValues>({
         defaultValues: {
-            first_name: "",
-            last_name: "",
+            garage_name: "",
+            primary_contact_person_name: "",
             email: "",
             phone_number: "",
             message: "",
         },
     })
 
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (isAuthenticated) {
+                try {
+                    const response = await AuthMeApi()
+                    if (response.success && response.data) {
+                        setUserData(response.data)
+                        // Pre-fill form with user data
+                        reset({
+                            garage_name: response.data.garage_name || "",
+                            primary_contact_person_name: response.data.primary_contact || "",
+                            email: response.data.email || "",
+                            phone_number: response.data.phone_number || "",
+                            message: "",
+                        })
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch user data:', error)
+                }
+            }
+        }
+        fetchUserData()
+    }, [isAuthenticated, reset])
+
     const onSubmit = async (data: ContactFormValues) => {
         try {
-            // Combine first_name and last_name into name for API
             const apiData = {
-                name: `${data.first_name} ${data.last_name}`.trim(),
+                garage_name: data.garage_name,
+                primary_contact_person_name: data.primary_contact_person_name,
                 email: data.email,
                 phone_number: data.phone_number,
                 message: data.message,
@@ -66,44 +94,42 @@ export default function ContactUs() {
                 </div>
                 <div className="p-6 bg-white rounded-b-lg">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="first_name" className="text-gray-700 font-medium">First Name</Label>
-                                <Input
-                                    id="first_name"
-                                    placeholder=""
-                                    {...register("first_name", {
-                                        required: "First name is required",
-                                        minLength: {
-                                            value: 2,
-                                            message: "First name must be at least 2 characters"
-                                        }
-                                    })}
-                                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                                />
-                                {errors.first_name && (
-                                    <p className="text-red-500 text-sm">{errors.first_name.message}</p>
-                                )}
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="garage_name" className="text-gray-700 font-medium">Garage Name</Label>
+                            <Input
+                                id="garage_name"
+                                placeholder=""
+                                {...register("garage_name", {
+                                    required: "Garage name is required",
+                                    minLength: {
+                                        value: 2,
+                                        message: "Garage name must be at least 2 characters"
+                                    }
+                                })}
+                                className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                            />
+                            {errors.garage_name && (
+                                <p className="text-red-500 text-sm">{errors.garage_name.message}</p>
+                            )}
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="last_name" className="text-gray-700 font-medium">Last Name</Label>
-                                <Input
-                                    id="last_name"
-                                    placeholder=""
-                                    {...register("last_name", {
-                                        required: "Last name is required",
-                                        minLength: {
-                                            value: 2,
-                                            message: "Last name must be at least 2 characters"
-                                        }
-                                    })}
-                                    className="border-gray-300 focus:border-green-500 focus:ring-green-500"
-                                />
-                                {errors.last_name && (
-                                    <p className="text-red-500 text-sm">{errors.last_name.message}</p>
-                                )}
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="primary_contact_person_name" className="text-gray-700 font-medium">Primary Contact Person Name</Label>
+                            <Input
+                                id="primary_contact_person_name"
+                                placeholder=""
+                                {...register("primary_contact_person_name", {
+                                    required: "Primary contact person name is required",
+                                    minLength: {
+                                        value: 2,
+                                        message: "Primary contact person name must be at least 2 characters"
+                                    }
+                                })}
+                                className="border-gray-300 focus:border-green-500 focus:ring-green-500"
+                            />
+                            {errors.primary_contact_person_name && (
+                                <p className="text-red-500 text-sm">{errors.primary_contact_person_name.message}</p>
+                            )}
                         </div>
 
                         <div className="space-y-2">

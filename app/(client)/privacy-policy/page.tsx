@@ -2,8 +2,8 @@ import React from 'react'
 import HeroSectionReused from '../_components/Shared/HeroSectionReused'
 
 const privacyPolicyData = {
-    lastUpdated: "May 2025",
-    disclaimer: "simplymot.co.uk (\"we\", \"us\", or \"our\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and share your personal information when you use our website and services.",
+    lastUpdated: "December 2025",
+    disclaimer: "simplymot.co.uk (\"we,\" \"us,\" or \"our\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and share your personal information when you use our website and services.",
     sections: [
         {
             id: 1,
@@ -20,7 +20,8 @@ const privacyPolicyData = {
                 "From Garages:",
                 "• Garage name and contact details",
                 "• Profile information necessary to provide booking services",
-                "• Automatically collected:",
+                "",
+                "Automatically Collected:",
                 "• Cookies and similar tracking technologies",
                 "• IP address, browser type, device type, and pages visited"
             ]
@@ -76,14 +77,14 @@ const privacyPolicyData = {
                 "• Object to or limit data processing",
                 "• Withdraw consent (e.g., for marketing)",
                 "• Request data portability",
-                "• To exercise any of these rights, please contact us (see Section 11)."
+                "To exercise any of these rights, please contact us (see Section 12)."
             ]
         },
         {
             id: 7,
             title: "Data Security",
             content: [
-                "We take reasonable measures to protect your data from loss, misuse, and unauthorised access. However, no internet-based service is 100% secure."
+                "We take reasonable measures to protect your data from loss, misuse, and unauthorized access. However, no internet-based service is 100% secure."
             ]
         },
         {
@@ -112,13 +113,20 @@ const privacyPolicyData = {
         },
         {
             id: 11,
+            title: "Data Controller",
+            content: [
+                "simplymot.co.uk is a trading name of A. Ahad, Sole Trader.",
+                "Registered Business Address: 124 City Road, London, EC1V 2NX",
+                "Email: info@simplymot.co.uk"
+            ]
+        },
+        {
+            id: 12,
             title: "Contact Us",
             content: [
-                "If you have questions or concerns about this Privacy Policy or how we handle your data, please contact us.",
-                "Email Address:",
-                "info@simplymot.co.uk",
-                "Website:",
-                "https://www.simplymot.co.uk"
+                "If you have questions or concerns about this Privacy Policy or how we handle your data, please contact us:",
+                "Email: info@simplymot.co.uk",
+                "Website: https://www.simplymot.co.uk"
             ]
         }
     ]

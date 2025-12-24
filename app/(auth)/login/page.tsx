@@ -12,7 +12,7 @@ export default function Login() {
         {
             id: 1,
             icon: <DriverIcon />,
-            title: 'Driver Login',
+            title: 'Customer Login',
             href: '/login/driver'
         },
         {
@@ -31,7 +31,7 @@ export default function Login() {
             >
                 <div className='container px-5 2xl:px-0'>
                     <h1 className='text-white text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-medium font-inder text-center mb-8 md:mb-12'>
-                        Login to <span className='font-semibold'>simplymot.co.uk Account</span>
+                        Login to your <span className='font-semibold'>simplymot.co.uk Account</span>
                     </h1>
 
                     <div className='flex items-center justify-center gap-6 md:gap-10 flex-wrap md:flex-nowrap pt-10'>

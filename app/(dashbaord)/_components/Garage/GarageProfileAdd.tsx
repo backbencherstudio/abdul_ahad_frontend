@@ -273,7 +273,7 @@ export default function GarageProfileAdd({ profile }: GarageProfileAddProps) {
 
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium text-gray-700">
-                                    Zip / Postcode
+                                    Postcode
                                 </Label>
                                 <Input
                                     {...register('postcode', {

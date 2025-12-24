@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,10 +14,10 @@ import imgMot from '@/public/Image/admin/cardMot.png'
 import VehicleCard from '../../_components/Driver/VehicleCard'
 import GarageCard from '../../_components/Driver/GarageCard'
 import { useSearchVehiclesAndGaragesQuery } from '@/rtk/api/driver/bookMyMotApi'
-import { 
-    setSearchResults, 
-    setLoading, 
-    setError, 
+import {
+    setSearchResults,
+    setLoading,
+    setError,
     clearSearchResults,
     selectVehicle,
     selectGarages,
@@ -31,22 +32,40 @@ interface FormData {
 
 export default function BookMyMOT() {
     const dispatch = useDispatch()
-    const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
-    
+    const router = useRouter()
+    const searchParamsFromURL = useSearchParams()
+    const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<FormData>()
+
+    // Get registration number from URL query parameter
+    const registrationFromURL = searchParamsFromURL?.get('registration')
+
     // State to control when to trigger the search
     const [searchParams, setSearchParams] = useState<{ registration_number: string; postcode: string } | null>(null)
-    
+
+    // Auto-fill registration number from URL parameter
+    useEffect(() => {
+        if (registrationFromURL) {
+            setValue('registrationNumber', registrationFromURL)
+        }
+    }, [registrationFromURL, setValue])
+
+    // Function to clear URL parameters
+    const clearURLParams = () => {
+        router.replace('/driver/book-my-mot', { scroll: false })
+    }
+
     // Get state from Redux
     const vehicle = useSelector(selectVehicle)
     const garages = useSelector(selectGarages)
     const isLoading = useSelector(selectIsLoading)
     const error = useSelector(selectError)
-    
+
     // Query will execute when searchParams is set
-    const { data, isLoading: queryLoading, error: queryError } = useSearchVehiclesAndGaragesQuery(
+    const { data, isLoading: queryLoading, error: queryError, refetch } = useSearchVehiclesAndGaragesQuery(
         searchParams!,
         {
-            skip: !searchParams, // Skip until searchParams is set
+            skip: !searchParams,
+            refetchOnMountOrArgChange: true,
         }
     )
 
@@ -55,7 +74,7 @@ export default function BookMyMOT() {
         if (data) {
             dispatch(setSearchResults(data))
             dispatch(setLoading(false))
-            
+
             // Show success toast
             if (data.vehicle && data.garages.length > 0) {
                 toast.success(`Found vehicle and ${data.garages.length} garage(s)!`)
@@ -76,18 +95,13 @@ export default function BookMyMOT() {
     useEffect(() => {
         if (queryError) {
             let errorMessage = 'Failed to search data. Please try again.'
-            
-            // RTK Query error structure
             if ('data' in queryError && queryError.data) {
                 const errorData = queryError.data as any
-                
-                // Check for nested message structure: { success: false, message: { message: "...", error: "...", statusCode: 404 } }
                 if (errorData?.message?.message) {
                     errorMessage = errorData.message.message
                 } else if (errorData?.message) {
-                    // Handle if message is a string
-                    errorMessage = typeof errorData.message === 'string' 
-                        ? errorData.message 
+                    errorMessage = typeof errorData.message === 'string'
+                        ? errorData.message
                         : errorData.message.message || errorMessage
                 } else if (errorData?.error) {
                     errorMessage = errorData.error
@@ -95,7 +109,7 @@ export default function BookMyMOT() {
             } else if ('message' in queryError && queryError.message) {
                 errorMessage = queryError.message as string
             }
-            
+
             dispatch(setError(errorMessage))
             dispatch(setLoading(false))
             toast.error(errorMessage)
@@ -103,17 +117,25 @@ export default function BookMyMOT() {
     }, [queryError, dispatch])
 
     const onSubmit = async (data: FormData) => {
-        // Clear previous results
         dispatch(clearSearchResults())
         dispatch(setLoading(true))
         dispatch(setError(null))
-        
-        // Set search params to trigger the query
+
+        if (registrationFromURL) {
+            clearURLParams()
+        }
+
         setSearchParams({
             registration_number: data.registrationNumber,
             postcode: data.postcode
         })
     }
+
+    useEffect(() => {
+        return () => {
+            dispatch(clearSearchResults())
+        }
+    }, [dispatch])
 
     const showResults = vehicle !== null || garages.length > 0
 
@@ -223,6 +245,8 @@ export default function BookMyMOT() {
                             variant="outline"
                             onClick={() => {
                                 dispatch(clearSearchResults())
+                                reset() // Clear form
+                                clearURLParams() // Clear URL parameters
                             }}
                             className="px-6 py-2 cursor-pointer border-[#19CA32] text-[#19CA32] hover:bg-[#19CA32] hover:text-white"
                         >

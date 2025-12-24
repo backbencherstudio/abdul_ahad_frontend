@@ -36,6 +36,8 @@ export const NotificationBell: React.FC = () => {
     markOneRead,
     deleteAll,
     deleteOne,
+    hasMore,
+    loadMore,
   } = isAdmin ? adminNotifications : driverGarageNotifications;
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -222,17 +224,33 @@ export const NotificationBell: React.FC = () => {
           })}
         </div>
 
-        {/* Footer with mark all as read */}
+        {/* Footer with mark all as read and load more */}
         {notifications.length > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-center text-[#19CA32] font-medium cursor-pointer py-2.5"
-              onSelect={(e) => e.preventDefault()}
-              onClick={handleViewAll}
-            >
-              Mark all as read
-            </DropdownMenuItem>
+            <div className="flex flex-col">
+              {hasMore && (
+                <DropdownMenuItem
+                  className="text-center text-blue-600 font-medium cursor-pointer py-2.5 hover:bg-blue-50"
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    loadMore();
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : "More"}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                className="text-center text-[#19CA32] font-medium cursor-pointer py-2.5"
+                onSelect={(e) => e.preventDefault()}
+                onClick={handleViewAll}
+              >
+                Mark all as read
+              </DropdownMenuItem>
+            </div>
           </>
         )}
       </DropdownMenuContent>

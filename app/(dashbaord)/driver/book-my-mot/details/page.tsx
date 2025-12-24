@@ -37,12 +37,21 @@ function DetailsContent() {
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
 
     // Fetch garage services using RTK Query
-    const { data: garageData, isLoading, error } = useGetGarageServicesQuery(
+    const { data: garageData, isLoading, error, refetch } = useGetGarageServicesQuery(
         garageId || '',
         {
             skip: !garageId, // Skip query if no garageId
+            refetchOnMountOrArgChange: true, // Refetch when component mounts or argument changes
         }
     )
+
+    // Refetch data when garageId changes to ensure fresh data
+    useEffect(() => {
+        if (garageId) {
+            // Force refetch when garageId changes
+            refetch()
+        }
+    }, [garageId, refetch])
 
 
     useEffect(() => {

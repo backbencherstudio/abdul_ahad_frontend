@@ -1,34 +1,34 @@
 import React from 'react'
 import Link from 'next/link'
-import { FaFacebookF, FaInstagram, FaWhatsapp, FaLinkedinIn } from 'react-icons/fa'
+import { FaFacebookF, FaInstagram, FaWhatsapp, FaLinkedinIn, FaTiktok } from 'react-icons/fa'
 
 export default function Footer() {
     const socialMedia = [
         {
             name: 'Facebook',
             icon: <FaFacebookF />,
-            link: 'https://facebook.com'
+            link: 'https://www.facebook.com/profile.php?id=61577620696056'
         },
         {
             name: 'Instagram',
             icon: <FaInstagram />,
-            link: 'https://instagram.com'
+            link: 'https://www.instagram.com/simplymot.co.uk?igsh=MXdkOWd3YnBoNXVpZA%3D%3D&utm_source=qr'
         },
         {
-            name: 'WhatsApp',
-            icon: <FaWhatsapp />,
-            link: 'https://wa.me/1234567890'
+            name: 'Tiktok',
+            icon: <FaTiktok />,
+            link: 'https://www.tiktok.com/@simplymot.co.uk?_t=ZN-8zv8cvYmDiw&_r=1'
         },
         {
             name: 'LinkedIn',
             icon: <FaLinkedinIn />,
-            link: 'https://linkedin.com'
+            link: 'https://www.linkedin.com/company/simplymot-co-uk'
         }
     ]
 
     const footerLinks = [
         { name: 'Contact Us', href: '/contact-us' },
-        { name: 'Terms & Conditions for Drivers', href: '/terms-drivers' },
+        { name: 'Terms & Conditions for Customers', href: '/terms-drivers' },
         { name: 'Terms & Conditions for Garages', href: '/terms-garages' },
         { name: 'Privacy Policy', href: '/privacy-policy' },
         { name: 'Cookie Policy', href: '/cookies-policy' }
