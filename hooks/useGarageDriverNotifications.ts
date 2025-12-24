@@ -45,8 +45,11 @@ export const useGarageDriverNotifications = () => {
 
   // Accumulate notifications when new page loads
   useEffect(() => {
-    if (notificationsResponse?.data && Array.isArray(notificationsResponse.data)) {
-      const newNotifications = notificationsResponse.data;
+    const container = notificationsResponse?.data;
+    const notificationsList = container?.notifications;
+
+    if (notificationsList && Array.isArray(notificationsList)) {
+      const newNotifications = notificationsList;
       if (currentPage === 1) {
         // First page - replace all notifications
         setAllNotifications(newNotifications);
@@ -169,19 +172,19 @@ export const useGarageDriverNotifications = () => {
   const handleDeleteAll = async () => {
     try {
       await deleteAllNotifications().unwrap();
-      
+
       // Reset pagination and clear notifications
       setCurrentPage(1);
       setAllNotifications([]);
-      
+
       // Invalidate cache to refetch data
       dispatch(
         garageDriverApis.util.invalidateTags(["GarageDriverNotifications"])
       );
-      
+
       // Refetch to update UI immediately
       await Promise.all([refetchNotifications(), refetchUnreadCount()]);
-      
+
     } catch (error) {
       toast.error("Failed to clear notifications", {
         position: "top-right",
@@ -193,18 +196,18 @@ export const useGarageDriverNotifications = () => {
   const handleDeleteOne = async (id: string) => {
     try {
       await deleteNotification(id).unwrap();
-      
+
       // Remove from local state immediately for better UX
       setAllNotifications((prev) => prev.filter((n: any) => n.id !== id));
-      
+
       // Invalidate cache to refetch data
       dispatch(
         garageDriverApis.util.invalidateTags(["GarageDriverNotifications"])
       );
-      
+
       // Refetch to update UI immediately
       await Promise.all([refetchNotifications(), refetchUnreadCount()]);
-      
+
     } catch (error) {
       toast.error("Failed to delete notification", {
         position: "top-right",
@@ -214,9 +217,9 @@ export const useGarageDriverNotifications = () => {
   };
 
   // Check if there are more notifications to load
-  const meta = notificationsResponse?.meta;
-  const hasMore = meta
-    ? meta.page < meta.totalPages
+  const pagination = notificationsResponse?.data?.pagination;
+  const hasMore = pagination
+    ? pagination.page < pagination.pages
     : false;
 
   const loadMore = () => {
