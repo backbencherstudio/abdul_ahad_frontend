@@ -137,8 +137,8 @@ function DetailsContent() {
                         {/* Contact Information */}
                         <div className="space-y-2 text-gray-600 text-sm sm:text-base">
                             <div><strong>Postcode :</strong> {garage.zip_code}</div>
-                            <div><strong>Contact :</strong> {garage.primary_contact}</div>
-                            <div><strong>Phone :</strong> {garage.phone_number}</div>
+                            {/* <div><strong>Contact :</strong> {garage.primary_contact}</div> */}
+                            {/* <div><strong>Phone :</strong> {garage.phone_number}</div> */}
                             <div><strong>VTS Number :</strong> {garage.vts_number}</div>
                         </div>
                     </div>

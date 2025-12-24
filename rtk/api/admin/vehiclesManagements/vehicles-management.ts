@@ -118,10 +118,21 @@ export const vehiclesApi = createApi({
       keepUnusedDataFor: 0,
     }),
 
+
+    // detele /api/admin/vehicle/:vehicleId
+    deleteVehicle: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/api/admin/vehicle/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Vehicles"],
+    }),
+
   }),
 });
 
 export const {
   useGetAllVehiclesQuery,
   useGetAVehicleDetailsQuery,
+  useDeleteVehicleMutation,
 } = vehiclesApi;

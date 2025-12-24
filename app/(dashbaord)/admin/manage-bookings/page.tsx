@@ -5,7 +5,7 @@ import ReusableTable from '@/components/reusable/Dashboard/Table/ReuseableTable'
 import ReusablePagination from '@/components/reusable/Dashboard/Table/ReusablePagination'
 import CustomReusableModal from '@/components/reusable/Dashboard/Modal/CustomReusableModal'
 import { toast } from 'react-toastify'
-import { MoreVertical, Loader2, CheckCircle2, XCircle, Clock, Ban, Check } from 'lucide-react'
+import { MoreVertical, Loader2, CheckCircle2, XCircle, Clock, Ban, Check, CalendarIcon, X } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
 import {
     DropdownMenu,
@@ -14,6 +14,10 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
 import {
     useGetAllBookingsQuery,
     useUpdateBookingStatusMutation,
@@ -37,11 +41,11 @@ const STATUS_OPTIONS = [
 ] as const;
 
 // Actions Dropdown Component
-const ActionsDropdown = React.memo(({ 
-    row, 
+const ActionsDropdown = React.memo(({
+    row,
     onStatusUpdate,
     isUpdating
-}: { 
+}: {
     row: any;
     onStatusUpdate: (id: string, status: string) => void;
     isUpdating: boolean;
@@ -100,6 +104,68 @@ const ActionsDropdown = React.memo(({
 
 ActionsDropdown.displayName = 'ActionsDropdown';
 
+// DatePicker Component
+const DatePicker = ({ date, onDateChange, placeholder }: {
+    date: Date | undefined;
+    onDateChange: (date: Date | undefined) => void;
+    placeholder: string;
+}) => {
+    const [open, setOpen] = React.useState(false);
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left font-normal min-w-[200px]", !date && "text-muted-foreground")}
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{date ? format(date, "dd/MM/yyyy") : placeholder}</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(selectedDate) => {
+                        onDateChange(selectedDate);
+                        setOpen(false);
+                    }}
+                    initialFocus
+                />
+            </PopoverContent>
+        </Popover>
+    );
+};
+
+// DateFilter Component
+const DateFilter = ({ label, date, onDateChange }: {
+    label: string;
+    date: Date | undefined;
+    onDateChange: (date: Date | undefined) => void;
+}) => (
+    <div className="flex-1 min-w-0 max-w-full sm:max-w-[280px]">
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <div className="flex gap-3 items-center">
+            <div className="flex-1 min-w-0">
+                <DatePicker date={date} onDateChange={onDateChange} placeholder="mm/dd/yyyy" />
+            </div>
+            {date && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    onClick={() => onDateChange(undefined)}
+                    title={`Clear ${label.toLowerCase()}`}
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
+        </div>
+    </div>
+);
+
 export default function ManageBookings() {
     const dispatch = useAppDispatch();
     const { filters, pagination } = useAppSelector(
@@ -108,6 +174,8 @@ export default function ManageBookings() {
 
     const [searchTerm, setSearchTerm] = useState(filters.search);
     const [activeTab, setActiveTab] = useState<string>(filters.status || '');
+    const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
     const [confirmModal, setConfirmModal] = React.useState<{
         isOpen: boolean;
         bookingId: string | null;
@@ -127,10 +195,10 @@ export default function ManageBookings() {
         dispatch(setSearchFilter(debouncedSearch));
     }, [debouncedSearch, dispatch]);
 
-    // Reset to first page when search or tab changes
+    // Reset to first page when search, tab, or date changes
     useEffect(() => {
         dispatch(setCurrentPage(1));
-    }, [debouncedSearch, activeTab, dispatch]);
+    }, [debouncedSearch, activeTab, startDate, endDate, dispatch]);
 
     // Fetch bookings data
     const { data: bookingsData, isLoading, refetch } = useGetAllBookingsQuery({
@@ -138,6 +206,8 @@ export default function ManageBookings() {
         limit: pagination.itemsPerPage,
         search: debouncedSearch || undefined,
         status: activeTab || undefined,
+        startdate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
+        enddate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
     });
 
     const [updateStatus, { isLoading: isUpdating }] = useUpdateBookingStatusMutation();
@@ -181,18 +251,18 @@ export default function ManageBookings() {
 
         try {
             const statusToSend = String(confirmModal.newStatus).trim().toUpperCase();
-            
+
             const validStatuses = ['PENDING', 'ACCEPTED', 'REJECTED', 'COMPLETED', 'CANCELLED'];
             if (!validStatuses.includes(statusToSend)) {
                 toast.error(`Invalid status: ${statusToSend}`);
                 return;
             }
-            
+
             const response = await updateStatus({
                 id: confirmModal.bookingId,
                 status: statusToSend,
             }).unwrap();
-            
+
             toast.success(response?.message || 'Booking status updated successfully!');
             setConfirmModal({
                 isOpen: false,
@@ -375,23 +445,30 @@ export default function ManageBookings() {
 
     return (
         <>
-            <div className='mb-6'>
-                <h1 className='text-2xl font-semibold'>View All Bookings</h1>
+            <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4'>
+                <div className='mb-6'>
+                    <h1 className='text-2xl font-semibold'>View All Bookings</h1>
+                </div>
+
+                {/* Date Range Filters */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 mb-4">
+                    <DateFilter label="Start Date" date={startDate} onDateChange={setStartDate} />
+                    <DateFilter label="End Date" date={endDate} onDateChange={setEndDate} />
+                </div>
             </div>
 
             {/* Tabs and Search */}
-            <div className="flex flex-col w-full lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+            <div className="flex flex-col w-full xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
                 {/* Tabs on the left */}
                 <nav className="flex flex-wrap gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
                     {tabs.map((tab) => (
                         <button
                             key={tab.key}
                             onClick={() => handleTabChange(tab.key)}
-                            className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${
-                                (activeTab === '' && tab.key === 'all') || activeTab === tab.key
+                            className={`px-4 py-1 rounded-[6px] cursor-pointer font-medium text-sm transition-all duration-200 ${(activeTab === '' && tab.key === 'all') || activeTab === tab.key
                                     ? 'bg-white text-gray-900 shadow-sm'
                                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
+                                }`}
                         >
                             {tab.label}
                             {tab.count > 0 && (
@@ -404,7 +481,7 @@ export default function ManageBookings() {
                 </nav>
 
                 {/* Search on the right */}
-                <div className="relative w-full lg:w-auto lg:max-w-md">
+                <div className="relative w-full xl:w-auto xl:max-w-md">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -415,7 +492,7 @@ export default function ManageBookings() {
                         placeholder="Search bookings..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full lg:w-auto pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
+                        className="block w-full xl:w-auto pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm"
                     />
                 </div>
             </div>
@@ -471,13 +548,12 @@ export default function ManageBookings() {
                         <Button
                             onClick={handleConfirmStatusUpdate}
                             disabled={isUpdating}
-                            className={`cursor-pointer ${
-                                getStatusVariant(confirmModal.newStatus || '') === 'success'
+                            className={`cursor-pointer ${getStatusVariant(confirmModal.newStatus || '') === 'success'
                                     ? 'bg-green-600 hover:bg-green-700 text-white'
                                     : getStatusVariant(confirmModal.newStatus || '') === 'danger'
-                                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                                    : 'bg-gray-600 hover:bg-gray-700 text-white'
-                            }`}
+                                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                                        : 'bg-gray-600 hover:bg-gray-700 text-white'
+                                }`}
                         >
                             {isUpdating ? (
                                 <span className="flex items-center justify-center">
