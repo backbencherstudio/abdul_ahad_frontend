@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -36,18 +36,56 @@ export default function BookMyMOT() {
     const searchParamsFromURL = useSearchParams()
     const { register, handleSubmit, formState: { errors }, setValue, reset } = useForm<FormData>()
 
-    // Get registration number from URL query parameter
+    // Get registration number and postcode from URL query parameters
     const registrationFromURL = searchParamsFromURL?.get('registration')
+    const postcodeFromURL = searchParamsFromURL?.get('postcode')
 
     // State to control when to trigger the search
     const [searchParams, setSearchParams] = useState<{ registration_number: string; postcode: string } | null>(null)
+    const [hasAutoSearched, setHasAutoSearched] = useState(false)
+    const isManualClearRef = useRef(false) // Track manual clears to prevent auto-search
 
-    // Auto-fill registration number from URL parameter
+    // Reset manual clear flag when URL params are cleared
     useEffect(() => {
+        if (!registrationFromURL && !postcodeFromURL) {
+            isManualClearRef.current = false
+        }
+    }, [registrationFromURL, postcodeFromURL])
+
+    // Auto-fill registration number and postcode from URL parameters
+    useEffect(() => {
+        // Don't auto-fill if it's a manual clear
+        if (isManualClearRef.current) {
+            return
+        }
+        
         if (registrationFromURL) {
             setValue('registrationNumber', registrationFromURL)
         }
-    }, [registrationFromURL, setValue])
+        if (postcodeFromURL) {
+            setValue('postcode', postcodeFromURL)
+        }
+    }, [registrationFromURL, postcodeFromURL, setValue])
+
+    // Auto-trigger search when both registration and postcode are present in URL
+    useEffect(() => {
+        // Don't auto-search if it's a manual clear or if already searched
+        if (isManualClearRef.current) {
+            return
+        }
+        
+        if (registrationFromURL && postcodeFromURL && !hasAutoSearched) {
+            setHasAutoSearched(true)
+            dispatch(clearSearchResults())
+            dispatch(setLoading(true))
+            dispatch(setError(null))
+            
+            setSearchParams({
+                registration_number: registrationFromURL,
+                postcode: postcodeFromURL
+            })
+        }
+    }, [registrationFromURL, postcodeFromURL, hasAutoSearched, dispatch])
 
     // Function to clear URL parameters
     const clearURLParams = () => {
@@ -120,8 +158,9 @@ export default function BookMyMOT() {
         dispatch(clearSearchResults())
         dispatch(setLoading(true))
         dispatch(setError(null))
+        setHasAutoSearched(false)
 
-        if (registrationFromURL) {
+        if (registrationFromURL || postcodeFromURL) {
             clearURLParams()
         }
 
@@ -244,9 +283,16 @@ export default function BookMyMOT() {
                         <Button
                             variant="outline"
                             onClick={() => {
+                                isManualClearRef.current = true
+                                
                                 dispatch(clearSearchResults())
-                                reset() // Clear form
-                                clearURLParams() // Clear URL parameters
+                                dispatch(setLoading(false))
+                                dispatch(setError(null))
+                                reset()
+                                setSearchParams(null) 
+                                setHasAutoSearched(false)
+                                
+                                clearURLParams()
                             }}
                             className="px-6 py-2 cursor-pointer border-[#19CA32] text-[#19CA32] hover:bg-[#19CA32] hover:text-white"
                         >
