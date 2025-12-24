@@ -123,7 +123,7 @@ const ActionsDropdown = React.memo(({
           setDropdownOpen(false);
         }}
       >
-        <DropdownMenuItem
+        {/* <DropdownMenuItem
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -137,7 +137,7 @@ const ActionsDropdown = React.memo(({
         >
           <Eye className="mr-2 h-4 w-4" />
           View Details
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuItem
           onClick={(e) => {
             e.preventDefault();
