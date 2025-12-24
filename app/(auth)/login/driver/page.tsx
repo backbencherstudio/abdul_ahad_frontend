@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -43,7 +43,7 @@ const data = [
         title: 'Stay road-legal with zero stress',
     },
 ]
-export default function DriverSignInPage() {
+function DriverSignInForm() {
     const [showPassword, setShowPassword] = useState(false)
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
     const [isLoading, setIsLoading] = useState(false)
@@ -147,7 +147,7 @@ export default function DriverSignInPage() {
                 <div className="w-full max-w-full  lg:max-w-lg xl:max-w-xl">
                     <div className="bg-white rounded-xl border border-[#19CA32]  p-8 sm:p-10 lg:p-12">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 mb-8 sm:mb-10">
-                            Let’s get you signed in
+                            Let's get you signed in
                         </h2>
 
                         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
@@ -239,7 +239,7 @@ export default function DriverSignInPage() {
                             {/* Login Link */}
                             <div className="text-center pt-4">
                                 <span className="text-sm text-gray-600">
-                                    Don’t have account ?{' '}
+                                    Don't have account ?{' '}
                                     <Link href="/create-account/driver" className="text-[#19CA32] underline font-medium">
                                         Create Account
                                     </Link>
@@ -250,5 +250,17 @@ export default function DriverSignInPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function DriverSignInPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[#19CA32]" />
+            </div>
+        }>
+            <DriverSignInForm />
+        </Suspense>
     )
 }
