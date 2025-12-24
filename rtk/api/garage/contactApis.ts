@@ -3,7 +3,8 @@ import { baseQuery } from "../baseApi";
 
 // Contact message request interface
 export interface ContactMessageRequest {
-    name: string;
+    garage_name: string;
+    primary_contact_person_name: string;
     email: string;
     phone_number: string;
     message: string;
