@@ -62,7 +62,7 @@ export default function AdditionalServicesAdd() {
 
     // Initialize form with data from Redux on mount or when formVersion changes
     useEffect(() => {
-        const shouldReset = 
+        const shouldReset =
             // Initial load: we have data but haven't initialized yet
             (!hasInitializedRef.current && additionals.length > 0) ||
             // Form version changed (new data loaded from API)
@@ -72,12 +72,12 @@ export default function AdditionalServicesAdd() {
             prevFormVersionRef.current = formVersion
             hasInitializedRef.current = true
             isResettingRef.current = true
-            
+
             const newServices = buildDefaultServices(additionals)
             reset({
                 services: newServices
             })
-            
+
             // Reset flag after form updates (give form time to fully update)
             setTimeout(() => {
                 isResettingRef.current = false
@@ -151,7 +151,7 @@ export default function AdditionalServicesAdd() {
                     <div className="space-y-1">
                         <CardTitle>Additional Services</CardTitle>
                         <CardDescription>
-                            Add every extra service you offer so we can show them on your public garage profile.
+                            Add any extra services you offer so they can be displayed on your public garage profile.
                         </CardDescription>
                     </div>
                     <Button

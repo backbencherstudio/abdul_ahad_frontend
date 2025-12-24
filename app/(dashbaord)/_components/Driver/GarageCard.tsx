@@ -59,8 +59,8 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
 
                         <div className="space-y-1 text-sm xl:text-base text-gray-600">
                             <div>Postcode : {garage.postcode}</div>
-                            <div>Contact : {garage.primary_contact}</div>
-                            <div>Phone : {garage.phone_number}</div>
+                            {/* <div>Contact : {garage.primary_contact}</div> */}
+                            {/* <div>Phone : {garage.phone_number}</div> */}
                             <div>VTS Number : {garage.vts_number}</div>
                         </div>
                     </div>

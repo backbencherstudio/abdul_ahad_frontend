@@ -2,7 +2,6 @@
 
 import React from "react";
 import { ChevronDown, LogOut, User } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import Image from "next/image";
 
 export const UserMenu: React.FC = () => {
   const router = useRouter();
@@ -47,24 +47,19 @@ export const UserMenu: React.FC = () => {
           variant="ghost"
           className="flex items-center gap-2 px-2 cursor-pointer select-none"
         >
-          <Avatar className="h-10 w-10">
-            {user?.avatar_url ? (
-              <AvatarImage asChild>
-                <Image
-                  src={user.avatar_url}
-                  alt="User Avatar"
-                  width={100}
-                  height={100}
-                  className="rounded-full"
-                />
-              </AvatarImage>
-            ) : (
-              <AvatarFallback className="select-none">
-                {user?.type?.toLowerCase() === "garage"
-                  ? user?.garage_name?.charAt(0) ?? "G"
-                  : user?.name?.charAt(0) ?? "U"}
-              </AvatarFallback>
-            )}
+          <Avatar className="h-10 w-10 border">
+            <Image 
+              src={user?.avatar_url || ""} 
+              alt={user?.name || "User Avatar"}
+              className="rounded-full object-cover"
+              width={100}
+              height={100}
+            />
+            <AvatarFallback className="select-none">
+              {user?.type?.toLowerCase() === "garage"
+                ? user?.garage_name?.charAt(0) ?? "G"
+                : user?.name?.charAt(0) ?? "U"}
+            </AvatarFallback>
           </Avatar>
           <div className="hidden md:flex flex-col items-start select-none">
             <span className="text-sm font-medium text-gray-900">

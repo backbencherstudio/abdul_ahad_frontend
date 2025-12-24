@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
-import { MoreVertical, Loader2, CalendarIcon, X } from "lucide-react";
+import { MoreVertical, Loader2, CalendarIcon, X, Trash2, Eye } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 import {
   useGetAVehicleDetailsQuery,
   useGetAllVehiclesQuery,
+  useDeleteVehicleMutation,
 } from "@/rtk/api/admin/vehiclesManagements/vehicles-management";
 import { useSendReminderToDriversMutation } from "@/rtk/api/admin/vehiclesManagements/reminderApis";
 import {
@@ -29,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ConfirmationModal from "@/components/reusable/ConfirmationModal";
 import { toast } from "react-toastify";
 
 const DriverDetailsDropdown = React.memo(({ vehicleId }: { vehicleId: string }) => {
@@ -82,6 +85,81 @@ const DriverDetailsDropdown = React.memo(({ vehicleId }: { vehicleId: string }) 
 
 DriverDetailsDropdown.displayName = 'DriverDetailsDropdown';
 
+// Actions Dropdown Component
+const ActionsDropdown = React.memo(({
+  vehicleId,
+  onDeleteClick,
+  onViewDetails,
+  isDeleting
+}: {
+  vehicleId: string;
+  onDeleteClick: (id: string) => void;
+  onViewDetails: (id: string) => void;
+  isDeleting: boolean;
+}) => {
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  return (
+    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="h-8 cursor-pointer w-8 p-0"
+          disabled={isDeleting}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <span className="sr-only">Open menu</span>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={() => {
+          setDropdownOpen(false);
+        }}
+      >
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDropdownOpen(false);
+            setTimeout(() => {
+              onViewDetails(vehicleId);
+            }, 150);
+          }}
+          className="cursor-pointer"
+          disabled={isDeleting}
+        >
+          <Eye className="mr-2 h-4 w-4" />
+          View Details
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDropdownOpen(false);
+            setTimeout(() => {
+              onDeleteClick(vehicleId);
+            }, 150);
+          }}
+          className="cursor-pointer text-red-600 focus:text-red-600"
+          disabled={isDeleting}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+
+ActionsDropdown.displayName = 'ActionsDropdown';
+
 const DetailRow = ({ label, value }: { label: string; value: string | null }) => (
   <>
     <div className="text-xs text-gray-500 mb-1">{label}</div>
@@ -131,15 +209,32 @@ export default function VehiclesManagement() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    vehicleId: string | null;
+    vehicleRegistration: string | null;
+  }>({
+    isOpen: false,
+    vehicleId: null,
+    vehicleRegistration: null,
+  });
+  const [viewDetailsModal, setViewDetailsModal] = useState<{
+    isOpen: boolean;
+    vehicleId: string | null;
+  }>({
+    isOpen: false,
+    vehicleId: null,
+  });
 
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [sendReminder, { isLoading: isSending }] = useSendReminderToDriversMutation();
+  const [deleteVehicle, { isLoading: isDeleting }] = useDeleteVehicleMutation();
 
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearch, startDate, endDate]);
 
-  const { data: apiData, isLoading } = useGetAllVehiclesQuery({
+  const { data: apiData, isLoading, refetch } = useGetAllVehiclesQuery({
     page: currentPage,
     limit: itemsPerPage,
     search: debouncedSearch || undefined,
@@ -202,6 +297,62 @@ export default function VehiclesManagement() {
     }
   };
 
+  const handleDeleteClick = (vehicleId: string) => {
+    const vehicle = vehiclesData.find((v: any) => v.id === vehicleId);
+    setDeleteModal({
+      isOpen: true,
+      vehicleId,
+      vehicleRegistration: vehicle?.registration_number || 'Vehicle',
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModal.vehicleId) return;
+
+    try {
+      await deleteVehicle(deleteModal.vehicleId).unwrap();
+      toast.success('Vehicle deleted successfully!');
+      setDeleteModal({
+        isOpen: false,
+        vehicleId: null,
+        vehicleRegistration: null,
+      });
+      refetch();
+    } catch (error: any) {
+      const errorMessage = Array.isArray(error?.data?.message)
+        ? error.data.message.join(', ')
+        : error?.data?.message || 'Failed to delete vehicle';
+      toast.error(errorMessage);
+      setDeleteModal({
+        isOpen: false,
+        vehicleId: null,
+        vehicleRegistration: null,
+      });
+    }
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModal({
+      isOpen: false,
+      vehicleId: null,
+      vehicleRegistration: null,
+    });
+  };
+
+  const handleViewDetails = (vehicleId: string) => {
+    setViewDetailsModal({
+      isOpen: true,
+      vehicleId,
+    });
+  };
+
+  const handleCloseViewDetailsModal = () => {
+    setViewDetailsModal({
+      isOpen: false,
+      vehicleId: null,
+    });
+  };
+
   const columns = [
     {
       key: "checkbox",
@@ -223,12 +374,6 @@ export default function VehiclesManagement() {
       ),
     },
     { key: "name", label: "Driver Name", width: "20%" },
-    {
-      key: "driver_details",
-      label: "Driver Details",
-      width: "15%",
-      render: (_: string, row: any) => <DriverDetailsDropdown vehicleId={row.id} />,
-    },
     { key: "email", label: "Email", width: "20%" },
     { key: "phone_number", label: "Phone", width: "15%", render: (value: any) => value || "—" },
     { key: "vehicle_registration_number", label: "Vehicle Number", width: "15%", render: (value: any) => value || "—" },
@@ -244,6 +389,19 @@ export default function VehiclesManagement() {
           return "—";
         }
       },
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      width: "10%",
+      render: (_: string, row: any) => (
+        <ActionsDropdown
+          vehicleId={row.id}
+          onDeleteClick={handleDeleteClick}
+          onViewDetails={handleViewDetails}
+          isDeleting={isDeleting}
+        />
+      ),
     },
   ];
 
@@ -370,9 +528,99 @@ export default function VehiclesManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        open={deleteModal.isOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Vehicle"
+        description={`Are you sure you want to delete vehicle with registration number ${deleteModal.vehicleRegistration}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
+      {/* View Details Modal */}
+      <Dialog open={viewDetailsModal.isOpen} onOpenChange={handleCloseViewDetailsModal}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vehicle Details</DialogTitle>
+            <DialogDescription>
+              View detailed information about the vehicle
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {viewDetailsModal.vehicleId && (
+              <VehicleDetailsContent vehicleId={viewDetailsModal.vehicleId} />
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCloseViewDetailsModal}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
+// Vehicle Details Content Component
+const VehicleDetailsContent = ({ vehicleId }: { vehicleId: string }) => {
+  const { data: vehicleData, isLoading, isError } = useGetAVehicleDetailsQuery(vehicleId);
+
+  const vehicle = vehicleData?.data;
+  const singleDriver = vehicle?.user;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <span className="ml-2 text-sm text-gray-500">Loading vehicle details...</span>
+      </div>
+    );
+  }
+
+  if (isError || !vehicle) {
+    return (
+      <div className="text-sm text-red-500 py-4">Failed to load vehicle details</div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Vehicle Information</h3>
+        <div className="space-y-2">
+          <DetailRow label="Vehicle Registration" value={vehicle.registration_number} />
+          <DetailRow label="Make" value={vehicle.make} />
+          <DetailRow label="Model" value={vehicle.model} />
+          <DetailRow label="Color" value={vehicle.color} />
+          <DetailRow
+            label="MOT Expiry Date"
+            value={vehicle.mot_expiry_date ? format(new Date(vehicle.mot_expiry_date), "dd/MM/yyyy") : "N/A"}
+          />
+        </div>
+      </div>
+      {singleDriver && (
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Driver Information</h3>
+          <div className="space-y-2">
+            <DetailRow label="Driver Name" value={singleDriver.name} />
+            <DetailRow label="Email" value={singleDriver.email} />
+            <DetailRow label="Phone Number" value={singleDriver.phone_number || "N/A"} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const DateFilter = ({ label, date, onDateChange }: {
   label: string;
