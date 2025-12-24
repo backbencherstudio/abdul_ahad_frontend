@@ -10,8 +10,19 @@ import Image from 'next/image'
 import LogoStart from '../Icon/LogoStart'
 import GroupStart from '../Icon/GroupStart'
 import { useCountUp } from 'react-countup'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { useAuth } from '@/hooks/useAuth'
+
+interface FormData {
+    registration: string
+    postcode: string
+}
 
 export default function HomeBanner() {
+    const router = useRouter()
+    const { isAuthenticated, isDriver } = useAuth()
+    const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
     const countUpRef = useRef(null);
     const { start } = useCountUp({
         ref: countUpRef,
@@ -43,6 +54,24 @@ export default function HomeBanner() {
         },
 
     ]
+
+    const handleFreeMOTReminder = () => {
+        router.push('/create-account')
+    }
+
+    const onSubmit = (data: FormData) => {
+        const { registration, postcode } = data
+        
+        // Check if driver is logged in
+        if (isAuthenticated && isDriver()) {
+            // Driver is logged in - redirect to book-my-mot page with form data
+            router.push(`/driver/book-my-mot?registration=${encodeURIComponent(registration)}&postcode=${encodeURIComponent(postcode)}`)
+        } else {
+            // Driver is not logged in - redirect to login page with form data and redirect URL
+            const redirectUrl = `/driver/book-my-mot?registration=${encodeURIComponent(registration)}&postcode=${encodeURIComponent(postcode)}`
+            router.push(`/login/driver?registration=${encodeURIComponent(registration)}&postcode=${encodeURIComponent(postcode)}&redirect=${encodeURIComponent(redirectUrl)}`)
+        }
+    }
     return (
         <div
             style={{ backgroundImage: `url(${bgImg.src})` }}
@@ -117,7 +146,7 @@ export default function HomeBanner() {
                             <div className=' bg-[#14A228] text-white rounded-t-lg py-5 px-6'>
                                 <h1 className='text-xl font-bold'>Book Your Vehicle In</h1>
                             </div>
-                            <div className='p-6 space-y-4'>
+                            <form onSubmit={handleSubmit(onSubmit)} className='p-6 space-y-4'>
                                 <div className='space-y-2'>
                                     <Label htmlFor="registration" className='text-sm font-medium text-[#14A228]'>
                                         Registration number (number plate)
@@ -127,7 +156,17 @@ export default function HomeBanner() {
                                         type="text"
                                         placeholder=""
                                         className='h-12 bg-[#14A228]/10 border-[#14A228]/20 focus:border-[#14A228] placeholder:text-[#14A228]/60'
+                                        {...register('registration', {
+                                            required: 'Registration number is required',
+                                            pattern: {
+                                                value: /^[A-Z0-9\s]{2,8}$/i,
+                                                message: 'Invalid registration number format'
+                                            }
+                                        })}
                                     />
+                                    {errors.registration && (
+                                        <p className="text-red-500 text-sm">{errors.registration.message}</p>
+                                    )}
                                 </div>
 
                                 <div className='space-y-2'>
@@ -139,14 +178,21 @@ export default function HomeBanner() {
                                         type="text"
                                         placeholder=""
                                         className='h-12 bg-[#14A228]/10 border-[#14A228]/20 focus:border-[#14A228] placeholder:text-[#14A228]/60'
+                                        {...register('postcode', {
+                                            required: 'Postcode is required'
+                                        })}
                                     />
+                                    {errors.postcode && (
+                                        <p className="text-red-500 text-sm">{errors.postcode.message}</p>
+                                    )}
                                 </div>
 
-                                <Button className='w-full cursor-pointer h-12 bg-[#14A228] hover:bg-[#14A228]/90 text-white font-semibold text-base'>
+                                <Button type="submit" className='w-full cursor-pointer h-12 bg-[#14A228] hover:bg-[#14A228]/90 text-white font-semibold text-base'>
                                     Book My MOT
                                 </Button>
 
                                 <Button
+                                    onClick={handleFreeMOTReminder}
                                     variant="outline"
                                     className='w-full cursor-pointer h-12 border-[#14A228] text-[#14A228] hover:bg-[#14A228]/10 font-semibold text-base'
                                 >
@@ -154,7 +200,7 @@ export default function HomeBanner() {
                                     Free MOT Reminder
                                     <Bell className='w-4 h-4 mr-2' />
                                 </Button>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>

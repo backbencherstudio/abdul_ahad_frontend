@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import bgImage from "@/public/Image/register/bgImage.png"
 import carImage from "@/public/Image/register/registerLargeImg.png"
 import { toast } from 'react-toastify'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 
 interface FormData {
@@ -48,6 +48,7 @@ export default function DriverSignInPage() {
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>()
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { loginWithType } = useAuth()
 
     const onSubmit = async (data: FormData) => {
@@ -56,7 +57,22 @@ export default function DriverSignInPage() {
             const result = await loginWithType(data.email, data.password, 'DRIVER')
             if (result.success) {
                 toast.success(result.message)
-                router.push('/driver/book-my-mot')
+                
+                // Check if there's a redirect URL with form data
+                const redirectUrl = searchParams?.get('redirect')
+                const registration = searchParams?.get('registration')
+                const postcode = searchParams?.get('postcode')
+                
+                if (redirectUrl) {
+                    // Redirect to the specified URL (which already contains the form data)
+                    router.push(redirectUrl)
+                } else if (registration && postcode) {
+                    // If no redirect URL but form data exists, redirect to book-my-mot with data
+                    router.push(`/driver/book-my-mot?registration=${encodeURIComponent(registration)}&postcode=${encodeURIComponent(postcode)}`)
+                } else {
+                    // Default redirect
+                    router.push('/driver/book-my-mot')
+                }
             } else {
                 toast.error(result.message)
             }
