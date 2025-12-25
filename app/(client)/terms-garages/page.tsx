@@ -2,7 +2,7 @@ import React from 'react'
 import HeroSectionReused from '../_components/Shared/HeroSectionReused'
 
 const termsData = {
-    lastUpdated: "Last Updated: December 2025",
+    lastUpdated: "December 2025",
     disclaimer: "By subscribing to and using the simplymot.co.uk platform, you agree to the following terms: ",
     sections: [
         {
