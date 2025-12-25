@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Plus, Clock } from 'lucide-react'
 import BreaksModal from './BreaksModal'
+import DefultCalanderViewShimmer from './DefultCalanderViewShimmer'
 
 interface DaySchedule {
     day: string
@@ -33,7 +34,11 @@ const DAYS = [
     'Sunday'
 ]
 
-export default function DefultCalanderView() {
+interface DefultCalanderViewProps {
+    isLoading?: boolean
+}
+
+export default function DefultCalanderView({ isLoading = false }: DefultCalanderViewProps) {
     const [openBreaksModalIndex, setOpenBreaksModalIndex] = useState<number | null>(null)
 
     const [schedules, setSchedules] = useState<DaySchedule[]>(() => {
@@ -111,6 +116,11 @@ export default function DefultCalanderView() {
 
     const handleCloseBreaksModal = () => {
         setOpenBreaksModalIndex(null)
+    }
+
+    // Show shimmer when loading
+    if (isLoading) {
+        return <DefultCalanderViewShimmer />
     }
 
     return (

@@ -234,7 +234,7 @@ export default function AvailabilityPage() {
             /> */}
 
             {/* <WeekView weekData={calendarData?.week_schedule} onManageSlots={handleManageSlots} /> */}
-            <DefultCalanderView />
+            <DefultCalanderView isLoading={isScheduleLoading} />
           </div>
 
           {/* Right Panel - Calendar View */}

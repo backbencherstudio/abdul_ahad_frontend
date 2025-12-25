@@ -31,8 +31,8 @@ interface WeekDay {
   is_today: boolean
   is_holiday: boolean
   day_of_week?: number
-  start_time?: string
-  end_time?: string
+  start_time?: string | null
+  end_time?: string | null
   breaks: Array<{
     start_time: string
     end_time: string
@@ -128,19 +128,37 @@ export default function CalendarView({
   }
 
   /**
-   * Check if date is a special holiday (month_holidays)
+   * Check if date is a special holiday (month_holidays with type: "HOLIDAY")
    */
   const isSpecialHoliday = (dateStr: string): MonthHoliday | null => {
-    return monthHolidays.find((holiday) => holiday.date === dateStr) || null
+    const holiday = monthHolidays.find((h) => h.date === dateStr)
+    // Only return if type is "HOLIDAY" (not "CLOSED")
+    if (holiday && holiday.type === "HOLIDAY") {
+      return holiday
+    }
+    return null
   }
 
   /**
-   * Check if date is an office holiday (is_holiday: true)
+   * Check if date is an office holiday
+   * Priority: month_holidays with type "CLOSED" > weekSchedule is_holiday
    */
   const isOfficeHoliday = (dateStr: string): boolean => {
-    if (!weekSchedule?.days) return false
-    const day = weekSchedule.days.find((d) => d.date === dateStr)
-    return day?.is_holiday === true
+    // First check month_holidays for CLOSED type (primary source)
+    const monthHoliday = monthHolidays.find((h) => h.date === dateStr)
+    if (monthHoliday?.type === "CLOSED") {
+      return true
+    }
+    
+    // Fallback: check weekSchedule days for is_holiday
+    if (weekSchedule?.days) {
+      const day = weekSchedule.days.find((d) => d.date === dateStr)
+      if (day?.is_holiday === true) {
+        return true
+      }
+    }
+    
+    return false
   }
 
   /**
@@ -180,7 +198,16 @@ export default function CalendarView({
       const dateStr = formatLocalISO(currentDate)
 
       const isCurrentMonth = currentDate.getMonth() === month - 1
-      const isToday = dateStr === todayStr
+      
+      // Check if today from weekSchedule or compare with current date
+      let isToday = dateStr === todayStr
+      if (weekSchedule?.days) {
+        const day = weekSchedule.days.find((d) => d.date === dateStr)
+        if (day?.is_today === true) {
+          isToday = true
+        }
+      }
+      
       const isSelected = selectedDate === dateStr
       const specialHoliday = isSpecialHoliday(dateStr)
       const officeHoliday = isOfficeHoliday(dateStr)
@@ -287,9 +314,9 @@ export default function CalendarView({
 
             <div className="grid grid-cols-7 gap-2">
               {calendarDays.map((day, index) => {
-                // Office holiday (is_holiday: true) - red circle
+                // Office holiday (month_holidays type: "CLOSED" or is_holiday: true) - red border circle
                 const isOfficeOff = day.officeHoliday && day.isCurrentMonth
-                // Special holiday (month_holidays) - blue circle
+                // Special holiday (month_holidays type: "HOLIDAY") - blue border circle with dot
                 const isSpecial = day.specialHoliday && day.isCurrentMonth
                 
                 return (

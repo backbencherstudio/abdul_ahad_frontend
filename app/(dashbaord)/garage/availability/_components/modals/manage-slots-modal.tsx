@@ -215,13 +215,26 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
 
 
   const handleToggleBlock = async (slot: Slot) => {
-    if (slot.status.includes("BOOKED")) {
+    if (!slot.time) {
+      setActionError("Invalid slot time")
+      return
+    }
+
+    if (slot.status?.includes("BOOKED")) {
       setActionError("Cannot modify booked slots")
       return
     }
 
-    const [startTime, endTime] = slot.time.split("-")
-    const isBlocked = slot.status.includes("BLOCKED")
+    const timeParts = slot.time.split("-")
+    const startTime = timeParts[0]
+    const endTime = timeParts[1]
+
+    if (!startTime || !endTime) {
+      setActionError("Invalid slot time format")
+      return
+    }
+
+    const isBlocked = slot.status?.includes("BLOCKED") || false
     const action = isBlocked ? "UNBLOCK" : "BLOCK"
 
     try {
@@ -282,14 +295,27 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     }
   }
 
-  const formatTime = (time: string): string => {
-    const [hours, minutes] = time.split(":").map(Number)
-    const period = hours >= 12 ? "PM" : "AM"
-    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
-    return `${displayHours}:${minutes.toString().padStart(2, "0")}${period}`
+  const formatTime = (time: string | null | undefined): string => {
+    if (!time) return "--:--"
+    try {
+      const [hours, minutes] = time.split(":").map(Number)
+      if (isNaN(hours) || isNaN(minutes)) return "--:--"
+      const period = hours >= 12 ? "PM" : "AM"
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
+      return `${displayHours}:${minutes.toString().padStart(2, "0")}${period}`
+    } catch (error) {
+      return "--:--"
+    }
   }
 
-  const getStatusBadge = (status: string[]) => {
+  const getStatusBadge = (status: string[] | null | undefined) => {
+    if (!status || status.length === 0) {
+      return (
+        <Badge variant="outline" className="bg-gray-100 text-gray-800">
+          Unknown
+        </Badge>
+      )
+    }
     const primaryStatus = status[0]
     switch (primaryStatus) {
       case "AVAILABLE":
@@ -345,7 +371,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500">Working Hours:</span>
                       <span className="font-medium text-gray-900">
-                        {formatTime(slotData.working_hours.start)} - {formatTime(slotData.working_hours.end)}
+                        {formatTime(slotData.working_hours?.start)} - {formatTime(slotData.working_hours?.end)}
                       </span>
                     </div>
                     <div className="h-4 w-px bg-gray-300"></div>
@@ -432,10 +458,12 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {slotData.slots.map((slot, index) => {
-                      const [startTime, endTime] = slot.time.split("-")
-                      const isBlocked = slot.status.includes("BLOCKED")
-                      const isBooked = slot.status.includes("BOOKED")
-                      const isBreak = slot.status.includes("BREAK")
+                      const timeParts = slot.time?.split("-") || []
+                      const startTime = timeParts[0] || null
+                      const endTime = timeParts[1] || null
+                      const isBlocked = slot.status?.includes("BLOCKED") || false
+                      const isBooked = slot.status?.includes("BOOKED") || false
+                      const isBreak = slot.status?.includes("BREAK") || false
                       
                       return (
                         <div
