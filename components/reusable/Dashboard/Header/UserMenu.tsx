@@ -16,13 +16,18 @@ import {
 import {
   Avatar,
   AvatarFallback,
-  AvatarImage,
 } from "@/components/ui/avatar";
 import Image from "next/image";
 
 export const UserMenu: React.FC = () => {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const [imageError, setImageError] = React.useState(false);
+
+  // Reset image error when avatar_url changes
+  React.useEffect(() => {
+    setImageError(false);
+  }, [user?.avatar_url]);
 
   const handleLogout = () => {
     logout();
@@ -48,13 +53,16 @@ export const UserMenu: React.FC = () => {
           className="flex items-center gap-2 px-2 cursor-pointer select-none"
         >
           <Avatar className="h-10 w-10 border">
-            <Image 
-              src={user?.avatar_url || ""} 
-              alt={user?.name || "User Avatar"}
-              className="rounded-full object-cover"
-              width={100}
-              height={100}
-            />
+            {user?.avatar_url && !imageError ? (
+              <Image 
+                src={user.avatar_url} 
+                alt={user?.name || "User Avatar"}
+                width={40}
+                height={40}
+                className="rounded-full object-cover w-full h-full"
+                onError={() => setImageError(true)}
+              />
+            ) : null}
             <AvatarFallback className="select-none">
               {user?.type?.toLowerCase() === "garage"
                 ? user?.garage_name?.charAt(0) ?? "G"
