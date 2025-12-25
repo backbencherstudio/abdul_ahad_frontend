@@ -10,20 +10,14 @@ import {
   type ScheduleConfig,
   useGetScheduleQuery,
   useGetCalendarViewQuery,
+  garageAvailabilityApi,
 } from "../../../../rtk/api/garage/api"
+import { useAppDispatch } from "@/rtk/hooks"
+import DefultCalanderView from "./_components/DefultCalanderView"
+import ManageHolidaysModal from "./_components/ManageHolidaysModal"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "lucide-react"
 
-/**
- * Main Availability Management Page
- *
- * This page handles the complete availability management system for garage users.
- * It includes default routine setup and comprehensive slot management with API integration.
- *
- * Flow:
- * 1. Check if default schedule is configured on page load
- * 2. Show default routine modal if not configured
- * 3. Display main calendar interface with week/calendar views
- * 4. Provide slot management capabilities through modals
- */
 export default function AvailabilityPage() {
   // Schedule configuration state
   const [hasDefaultSchedule, setHasDefaultSchedule] = useState<boolean | null>(null)
@@ -41,6 +35,9 @@ export default function AvailabilityPage() {
   // Default routine edit state
   const [showEditDefaultRoutine, setShowEditDefaultRoutine] = useState(false)
 
+  // Manage holidays modal state
+  const [showManageHolidaysModal, setShowManageHolidaysModal] = useState(false)
+
   /**
    * RTK Query – check if garage has default schedule configured
    */
@@ -51,14 +48,10 @@ export default function AvailabilityPage() {
     refetch: refetchSchedule,
   } = useGetScheduleQuery()
 
-  /**
-   * RTK Query – load calendar data for specified year and month
-   * Automatically detects current week if no week number specified
-   * Skips fetching when default schedule is not configured yet
-   */
   const {
     data: calendarResponse,
     isFetching: isCalendarFetching,
+    isLoading: isCalendarLoading,
     refetch: refetchCalendar,
   } = useGetCalendarViewQuery(
     {
@@ -68,6 +61,8 @@ export default function AvailabilityPage() {
     },
     {
       skip: hasDefaultSchedule === false || hasDefaultSchedule === null,
+      // Keep previous data visible while fetching new data
+      refetchOnMountOrArgChange: true,
     },
   )
 
@@ -123,6 +118,37 @@ export default function AvailabilityPage() {
     [],
   )
 
+  const dispatch = useAppDispatch()
+
+  /**
+   * Prefetch next/previous month data for faster loading
+   */
+  useEffect(() => {
+    if (hasDefaultSchedule === false || hasDefaultSchedule === null) return
+
+    // Prefetch next month
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1
+    const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear
+    dispatch(
+      garageAvailabilityApi.util.prefetch(
+        "getCalendarView",
+        { year: nextYear, month: nextMonth },
+        { force: false }
+      )
+    )
+
+    // Prefetch previous month
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1
+    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear
+    dispatch(
+      garageAvailabilityApi.util.prefetch(
+        "getCalendarView",
+        { year: prevYear, month: prevMonth },
+        { force: false }
+      )
+    )
+  }, [currentYear, currentMonth, hasDefaultSchedule, dispatch])
+
   /**
    * Handle month navigation
    * Resets to current week of new month
@@ -176,26 +202,39 @@ export default function AvailabilityPage() {
   }
 
   return (
-    <div className="">
+    <>
       <div className="">
         {/* Page Header */}
-        {/* <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Garage Availability Manager</h1>
-          <p className="text-gray-600">Manage your schedule, slots, and availability preferences</p>
-        </div> */}
+        <div className="flex items-center justify-between">
+          <div className="mb-4">
+            <h1 className="text-xl font-bold text-gray-900">Garage Availability Manager</h1>
+            <p className="text-gray-600 text-sm">Update your garage's opening hours, breaks and holidays</p>
+          </div>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="cursor-pointer flex items-center gap-2"
+            onClick={() => setShowManageHolidaysModal(true)}
+          >
+            <Calendar className="w-4 h-4" />
+            Manage Holidays
+          </Button>
+        </div>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Week View */}
           <div className="space-y-4">
-            <WeekNavigation
+            {/* <WeekNavigation
               currentWeek={currentWeekNumber || 1}
               onWeekChange={handleWeekChange}
               weekData={calendarData?.week_schedule}
               onEditDefaultRoutine={handleEditDefaultRoutine}
-            />
+            /> */}
 
-            <WeekView weekData={calendarData?.week_schedule} onManageSlots={handleManageSlots} />
+            {/* <WeekView weekData={calendarData?.week_schedule} onManageSlots={handleManageSlots} /> */}
+            <DefultCalanderView isLoading={isScheduleLoading} />
           </div>
 
           {/* Right Panel - Calendar View */}
@@ -205,6 +244,8 @@ export default function AvailabilityPage() {
               month={currentMonth}
               monthHolidays={calendarData?.month_holidays || []}
               currentWeek={calendarData?.current_week}
+              weekSchedule={calendarData?.week_schedule}
+              isLoading={isCalendarFetching && !calendarData}
               onMonthChange={handleMonthChange}
               onDateSelect={(date: string) => {
                 console.log("[v0] Date selected:", date)
@@ -222,24 +263,24 @@ export default function AvailabilityPage() {
       </div>
 
       {/* Default Routine Configuration Modal */}
-      {showDefaultRoutineModal && (
+      {/* {showDefaultRoutineModal && (
         <DefaultRoutineModal
           isOpen={showDefaultRoutineModal}
           onClose={() => setShowDefaultRoutineModal(false)}
           onSuccess={handleDefaultRoutineSuccess}
           initialConfig={scheduleResponse?.data as ScheduleConfig | undefined}
         />
-      )}
+      )} */}
 
       {/* Default Routine Edit Modal */}
-      {showEditDefaultRoutine && (
+      {/* {showEditDefaultRoutine && (
         <DefaultRoutineModal
           isOpen={showEditDefaultRoutine}
           onClose={() => setShowEditDefaultRoutine(false)}
           onSuccess={handleDefaultRoutineEditSuccess}
           initialConfig={scheduleResponse?.data as ScheduleConfig | undefined}
         />
-      )}
+      )} */}
 
       {/* Manage Slots Modal */}
       {showManageSlotsModal && selectedSlotDate && (
@@ -253,6 +294,19 @@ export default function AvailabilityPage() {
           onSuccess={handleSlotManagementSuccess}
         />
       )}
-    </div>
+
+      {/* Manage Holidays Modal */}
+      {showManageHolidaysModal && (
+        <ManageHolidaysModal
+          isOpen={showManageHolidaysModal}
+          onClose={() => setShowManageHolidaysModal(false)}
+          onSuccess={() => {
+            setShowManageHolidaysModal(false)
+            // Refresh calendar data if needed
+            refetchCalendar()
+          }}
+        />
+      )}
+    </>
   )
 }
