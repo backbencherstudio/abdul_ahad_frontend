@@ -3,6 +3,13 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface MonthHoliday {
@@ -212,7 +219,7 @@ export default function CalendarView({
             <Button 
               variant="outline" 
               size="sm" 
-              className="cursor-pointer hover:bg-gray-50 border-gray-300 shadow-sm transition-all disabled:opacity-50" 
+              className="cursor-pointer hover:bg-gray-50 border-gray-300  transition-all disabled:opacity-50" 
               onClick={() => navigateMonth("prev")}
               disabled={isLoading}
             >
@@ -220,35 +227,43 @@ export default function CalendarView({
             </Button>
 
             <div className="flex items-center gap-3">
-              <select
-                value={month - 1}
-                onChange={(e) => onMonthChange(year, Number.parseInt(e.target.value) + 1)}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-lg font-semibold bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm cursor-pointer"
+              <Select
+                value={String(month - 1)}
+                onValueChange={(value) => onMonthChange(year, Number.parseInt(value) + 1)}
               >
-                {months.map((monthName, index) => (
-                  <option key={index} value={index}>
-                    {monthName}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[140px] px-4 py-2 text-sm font-semibold bg-white border border-gray-300 rounded-lg  hover:border-gray-400 focus:outline-none focus:ring-0 focus:border-gray-300 cursor-pointer">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {months.map((monthName, index) => (
+                    <SelectItem key={index} value={String(index)}>
+                      {monthName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-              <select
-                value={year}
-                onChange={(e) => onMonthChange(Number.parseInt(e.target.value), month)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm cursor-pointer"
+              <Select
+                value={String(year)}
+                onValueChange={(value) => onMonthChange(Number.parseInt(value), month)}
               >
-                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i - 5).map((yearOption) => (
-                  <option key={yearOption} value={yearOption}>
-                    {yearOption}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[100px] px-4 py-2 text-sm font-semibold bg-white border border-gray-300 rounded-lg  hover:border-gray-400 focus:outline-none focus:ring-0 focus:border-gray-300 cursor-pointer">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i - 5).map((yearOption) => (
+                    <SelectItem key={yearOption} value={String(yearOption)}>
+                      {yearOption}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Button 
               variant="outline" 
               size="sm" 
-              className="cursor-pointer hover:bg-gray-50 border-gray-300 shadow-sm transition-all disabled:opacity-50" 
+              className="cursor-pointer hover:bg-gray-50 border-gray-300 transition-all disabled:opacity-50" 
               onClick={() => navigateMonth("next")}
               disabled={isLoading}
             >
@@ -284,7 +299,7 @@ export default function CalendarView({
                     className={`
                       h-12 w-full flex items-center justify-center text-sm cursor-pointer transition-all relative rounded-lg
                       ${!day.isCurrentMonth ? "text-gray-300" : "text-gray-700"}
-                      ${day.isCurrentMonth && !day.isToday && !day.isSelected && !isOfficeOff && !isSpecial ? "hover:bg-gray-50 rounded-lg" : ""}
+                      ${day.isCurrentMonth && !day.isToday && !day.isSelected && !isOfficeOff && !isSpecial ? " rounded-lg" : ""}
                       ${day.inCurrentWeek && day.isCurrentMonth && !day.isToday && !day.isSelected && !isOfficeOff && !isSpecial ? "bg-green-50" : ""}
                     `}
                   >
