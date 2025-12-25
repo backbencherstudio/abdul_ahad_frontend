@@ -16,6 +16,7 @@ interface Break {
   id: string
   fromTime: string
   toTime: string
+  description?: string
 }
 
 interface BreaksModalProps {
@@ -38,6 +39,7 @@ export default function BreaksModal({
       id: `break-${Date.now()}`,
       fromTime: '12:00',
       toTime: '13:00',
+      description: '',
     }
     onBreaksChange([...breaks, newBreak])
   }
@@ -56,13 +58,26 @@ export default function BreaksModal({
     )
   }
 
+  const handleDescriptionChange = (
+    breakId: string,
+    value: string
+  ) => {
+    onBreaksChange(
+      breaks.map((breakItem) =>
+        breakItem.id === breakId
+          ? { ...breakItem, description: value }
+          : breakItem
+      )
+    )
+  }
+
   const handleRemoveBreak = (breakId: string) => {
     onBreaksChange(breaks.filter((b) => b.id !== breakId))
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             Manage Breaks - {dayName}
@@ -78,10 +93,30 @@ export default function BreaksModal({
                   key={breakItem.id}
                   className="bg-gray-50 border border-gray-200 rounded-lg p-4"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                    <div className="flex-1">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Description Field */}
+                    <div className="md:col-span-4">
                       <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        From
+                        Description
+                      </Label>
+                      <Input
+                        type="text"
+                        placeholder="e.g., Lunch Break"
+                        value={breakItem.description || ''}
+                        onChange={(e) =>
+                          handleDescriptionChange(
+                            breakItem.id,
+                            e.target.value
+                          )
+                        }
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* From Time */}
+                    <div className="md:col-span-3">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Start Time
                       </Label>
                       <div className="relative">
                         <Input
@@ -94,14 +129,19 @@ export default function BreaksModal({
                               e.target.value
                             )
                           }
-                          className="w-full pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                          onClick={(e) => {
+                            e.currentTarget.showPicker?.()
+                          }}
+                          className="w-full pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                         />
                         <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-                    <div className="flex-1">
+
+                    {/* To Time */}
+                    <div className="md:col-span-3">
                       <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        To
+                        End Time
                       </Label>
                       <div className="relative">
                         <Input
@@ -114,21 +154,28 @@ export default function BreaksModal({
                               e.target.value
                             )
                           }
-                          className="w-full pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                          onClick={(e) => {
+                            e.currentTarget.showPicker?.()
+                          }}
+                          className="w-full pr-10 cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                         />
                         <Clock className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveBreak(breakItem.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 sm:w-auto w-full"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove
-                    </Button>
+
+                    {/* Remove Button */}
+                    <div className="md:col-span-2 flex items-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveBreak(breakItem.id)}
+                        className="text-red-600 cursor-pointer hover:text-red-700 hover:bg-red-50 w-full text-xs h-9"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 " />
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -19,6 +19,7 @@ interface DaySchedule {
         id: string
         fromTime: string
         toTime: string
+        description?: string
     }>
 }
 
@@ -31,18 +32,6 @@ const DAYS = [
     'Saturday',
     'Sunday'
 ]
-
-// Helper function to format time for display (HH:mm -> HH : mm)
-const formatTimeDisplay = (time: string): string => {
-    if (!time) return ''
-    const [hours, minutes] = time.split(':')
-    return `${hours} : ${minutes}`
-}
-
-// Helper function to parse time from display format
-const parseTimeDisplay = (display: string): string => {
-    return display.replace(/\s/g, '')
-}
 
 export default function DefultCalanderView() {
     const [openBreaksModalIndex, setOpenBreaksModalIndex] = useState<number | null>(null)
@@ -125,9 +114,7 @@ export default function DefultCalanderView() {
     }
 
     return (
-        <div className="w-full">
-
-
+        <>
             <Card className="w-full">
                 <CardContent className="p-4 sm:p-5">
                     <div className="space-y-2">
@@ -249,9 +236,9 @@ export default function DefultCalanderView() {
                                                 size="sm"
                                                 onClick={() => handleOpenBreaksModal(index)}
                                                 disabled={schedule.isClosed}
-                                                className={`w-full cursor-pointer whitespace-nowrap h-9 ${schedule.isClosed
+                                                className={`w-full cursor-pointer whitespace-nowrap h-9 text-xs ${schedule.isClosed
                                                     ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                                    : 'border-gray-300 hover:bg-gray-50 text-xs'
+                                                    : 'border-gray-300 hover:bg-gray-50 '
                                                     }`}
                                             >
                                                 <Clock className="w-4 h-4 " />
@@ -278,6 +265,6 @@ export default function DefultCalanderView() {
                     onBreaksChange={(breaks) => handleBreaksChange(openBreaksModalIndex, breaks)}
                 />
             )}
-        </div>
+        </>
     )
 }
