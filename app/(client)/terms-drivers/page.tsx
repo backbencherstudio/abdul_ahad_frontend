@@ -2,7 +2,7 @@ import React from 'react'
 import HeroSectionReused from '../_components/Shared/HeroSectionReused'
 
 const driverTermsData = {
-    lastUpdated: "Last Updated: December 2025 ",
+    lastUpdated: "December 2025 ",
     disclaimer: "Welcome to simplymot.co.uk. By accessing or using our website, you agree to the following Terms and Conditions. If you have any concerns or do not agree with these terms, we kindly ask that you refrain from using our services. ",
     sections: [
         {
