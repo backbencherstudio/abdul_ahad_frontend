@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { X, Edit, Trash2, Lock, Unlock, AlertTriangle, Eraser } from "lucide-react"
+import { X, Lock, Unlock, AlertTriangle } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,12 +24,8 @@ import {
   type ApiResponse,
   garageAvailabilityApi,
   useBulkSlotOperationMutation,
-  useDeleteSlotMutation,
   useGetSlotDetailsQuery,
-  useRemoveAllManualSlotsMutation,
 } from "../../../../../../rtk/api/garage/api"
-import ModifySlotModal from "./modify-slot-modal"
-import BulkModifyModal from "./bulk-modify-modal"
 
 interface Slot {
   id?: string
@@ -73,14 +69,6 @@ interface ManageSlotsModalProps {
   onClose: () => void
   date: string
   onSuccess: () => void
-}
-
-interface SelectedSlotForModify {
-  id: string
-  start_time: string
-  end_time: string
-  status: "AVAILABLE" | "BOOKED" | "BLOCKED"
-  source: "DATABASE" | "TEMPLATE"
 }
 
 const recalcSummary = (slots: Slot[]): SlotData["summary"] => {
@@ -188,12 +176,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
   const { toast } = useToast()
   const [actionError, setActionError] = useState("")
 
-  const [showModifyModal, setShowModifyModal] = useState(false)
-  const [showBulkModal, setShowBulkModal] = useState(false)
-  const [selectedSlot, setSelectedSlot] = useState<SelectedSlotForModify | null>(null)
-  const [showConfirmRemove, setShowConfirmRemove] = useState(false)
-  const [showConfirmClear, setShowConfirmClear] = useState(false)
-  const [slotToClear, setSlotToClear] = useState<Slot | null>(null)
 
   const {
     data: slotResponse,
@@ -218,10 +200,8 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
   const displayError = actionError || responseError || fetchErrorMessage
 
   const [bulkSlotOperation, { isLoading: isBulkLoading }] = useBulkSlotOperationMutation()
-  const [deleteSlotMutation, { isLoading: isDeleteLoading }] = useDeleteSlotMutation()
-  const [removeManualSlotsMutation, { isLoading: isRemoveManualLoading }] = useRemoveAllManualSlotsMutation()
 
-  const actionLoading = isBulkLoading || isDeleteLoading || isRemoveManualLoading
+  const actionLoading = isBulkLoading
 
   const updateSlotsCache = (updateFn: (draft: ApiResponse<SlotData>) => void) => {
     dispatch(
@@ -233,44 +213,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     )
   }
 
-  const handleDeleteSlot = async (slot: Slot) => {
-    if (!slot.id) {
-      setActionError("Cannot delete template slots - no ID available")
-      return
-    }
-
-    if (slot.status.includes("BOOKED")) {
-      setActionError("Cannot delete booked slots")
-      return
-    }
-
-    try {
-      setActionError("")
-      const response = await deleteSlotMutation(slot.id).unwrap()
-
-      if (response.success) {
-        updateSlotsCache((draft) => {
-          if (!draft.data) return
-          draft.data.slots = draft.data.slots.filter((s) => !slotsMatch(s, slot))
-        })
-
-        const [s, e] = slot.time.split("-")
-        toast({ title: "Cleared slot", description: `${formatTime(s)} - ${formatTime(e)} cleared successfully.` })
-        onSuccess()
-      } else {
-        const message = normalizeApiMessage(response.message, "Failed to delete slot")
-        setActionError(message)
-        toast({ title: "Failed to clear slot", description: message, variant: "destructive" })
-      }
-    } catch (error) {
-      const message = getMutationErrorMessage(error)
-      setActionError(message)
-      toast({ title: "Error", description: message, variant: "destructive" })
-    } finally {
-      setShowConfirmClear(false)
-      setSlotToClear(null)
-    }
-  }
 
   const handleToggleBlock = async (slot: Slot) => {
     if (slot.status.includes("BOOKED")) {
@@ -340,50 +282,6 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     }
   }
 
-  const handleRemoveAllManual = async () => {
-    if (!slotData) return
-
-    const manualSlots = slotData.slots.filter((slot) => slot.source === "DATABASE" && !slot.status.includes("BOOKED"))
-
-    if (manualSlots.length === 0) {
-      setActionError("No manual slots to remove")
-      toast({ title: "Nothing to remove", description: "No removable manual slots for this date." })
-      setShowConfirmRemove(false)
-      return
-    }
-
-    try {
-      setActionError("")
-
-      const response = await removeManualSlotsMutation(date).unwrap()
-
-      if (response.success) {
-        updateSlotsCache((draft) => {
-          if (!draft.data) return
-          draft.data.slots = draft.data.slots.filter(
-            (slot) => !(slot.source === "DATABASE" && !slot.status.includes("BOOKED")),
-          )
-        })
-        toast({
-          title: "Removed manual slots",
-          description: `${manualSlots.length} manual slots removed for ${new Date(date).toLocaleDateString()}.`,
-        })
-        onSuccess()
-      } else {
-        const message = normalizeApiMessage(response.message, "Failed to remove manual slots")
-        setActionError(message)
-        toast({ title: "Failed to remove manual slots", description: message, variant: "destructive" })
-      }
-    } catch (error) {
-      console.error(" Error removing manual slots:", error)
-      const message = getMutationErrorMessage(error)
-      setActionError(message)
-      toast({ title: "Error", description: message, variant: "destructive" })
-    } finally {
-      setShowConfirmRemove(false)
-    }
-  }
-
   const formatTime = (time: string): string => {
     const [hours, minutes] = time.split(":").map(Number)
     const period = hours >= 12 ? "PM" : "AM"
@@ -425,312 +323,209 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
     }
   }
 
-  const getSourceBadge = (source: string) => {
-    return source === "TEMPLATE" ? (
-      <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-        Template
-      </Badge>
-    ) : (
-      <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700">
-        Manual
-      </Badge>
-    )
-  }
 
   if (!isOpen) return null
 
-  const manualSlots =
-    slotData?.slots.filter((slot) => slot.source === "DATABASE" && !slot.status.includes("BOOKED")) || []
-  const manualSlotsCount = manualSlots.length
-  const bookedSlotsCount = slotData?.slots.filter((slot) => slot.status.includes("BOOKED")).length || 0
-
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 ">
-        <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-4">
-          <Card className="border-0 shadow-none">
-            <CardHeader className="border-b bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl font-bold text-gray-900">
-                    Manage Slots - {new Date(date).toLocaleDateString()}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 mt-1">
-                    Modify, block, unblock, or delete individual slots for this date
-                  </CardDescription>
-                  {slotData && (
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                      <span>
-                        Working Hours: {formatTime(slotData.working_hours.start)} - {formatTime(slotData.working_hours.end)}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+          {/* Header */}
+          <div className="border-b bg-gradient-to-r from-gray-50 to-white px-6 py-5">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Manage Slots
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  {new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+                {slotData && (
+                  <div className="flex flex-wrap items-center gap-4 mt-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Working Hours:</span>
+                      <span className="font-medium text-gray-900">
+                        {formatTime(slotData.working_hours.start)} - {formatTime(slotData.working_hours.end)}
                       </span>
-                      <span>Total Slots: {slotData.summary.total_slots}</span>
-                      <span>Modifications: {slotData.summary.modifications}</span>
                     </div>
-                  )}
-                  {isSlotsFetching && !isSlotsLoading && (
-                    <p className="text-xs text-blue-600 mt-2">Refreshing slots…</p>
-                  )}
-                </div>
-                <Button variant="ghost" size="sm" onClick={onClose} disabled={actionLoading}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardHeader>
-
-            <CardContent className="p-6">
-              {displayError && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertTriangle className="w-4 h-4" />
-                  <AlertDescription>{displayError}</AlertDescription>
-                </Alert>
-              )}
-
-              {isSlotsLoading && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading slots...</p>
-                </div>
-              )}
-
-              {!isSlotsLoading && slotData && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <h3 className="font-medium text-gray-900">Bulk Operations</h3>
-                      <p className="text-sm text-gray-600">Perform operations on multiple slots</p>
+                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Total Slots:</span>
+                      <span className="font-semibold text-gray-900">{slotData.summary.total_slots}</span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => setShowBulkModal(true)} disabled={actionLoading}>
-                        Bulk Modify
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          if (!slotData) return
-                          setShowConfirmRemove(true)
-                        }}
-                        disabled={actionLoading}
-                        className="cursor-pointer"
-                      >
-                        Remove All Manual
-                      </Button>
+                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Available:</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {slotData.summary.by_status.available}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Booked:</span>
+                      <Badge variant="destructive">
+                        {slotData.summary.by_status.booked}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Blocked:</span>
+                      <Badge variant="outline" className="bg-red-100 text-red-800">
+                        {slotData.summary.by_status.blocked}
+                      </Badge>
+                    </div>
+                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Breaks:</span>
+                      <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                        {slotData.summary.by_status.breaks}
+                      </Badge>
                     </div>
                   </div>
+                )}
+                {isSlotsFetching && !isSlotsLoading && (
+                  <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                    <span className="animate-spin">⟳</span>
+                    Refreshing slots…
+                  </p>
+                )}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose} 
+                disabled={actionLoading}
+                className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
 
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-gray-900">Individual Slots</h3>
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {displayError && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertTriangle className="w-4 h-4" />
+                <AlertDescription>{displayError}</AlertDescription>
+              </Alert>
+            )}
 
-                    {slotData.slots.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">No slots found for this date</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {slotData.slots.map((slot, index) => {
-                          const [startTime, endTime] = slot.time.split("-")
-                          return (
-                            <div
-                              key={slot.id || `slot-${index}`}
-                              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
-                            >
-                              <div className="flex items-center gap-4">
-                                <div>
-                                  <div className="font-medium text-gray-900">
-                                    {formatTime(startTime)} - {formatTime(endTime)}
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {getStatusBadge(slot.status)}
-                                    {getSourceBadge(slot.source)}
-                                  </div>
-                                  {slot.description && (
-                                    <div className="text-xs text-gray-500 mt-1">{slot.description}</div>
-                                  )}
-                                  {slot.modification_reason && (
-                                    <div className="text-xs text-blue-600 mt-1">Reason: {slot.modification_reason}</div>
-                                  )}
+            {isSlotsLoading && (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-600 font-medium">Loading slots...</p>
+              </div>
+            )}
+
+            {!isSlotsLoading && slotData && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Time Slots</h3>
+                  <span className="text-sm text-gray-500">
+                    {slotData.slots.length} {slotData.slots.length === 1 ? 'slot' : 'slots'}
+                  </span>
+                </div>
+
+                {slotData.slots.length === 0 ? (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <p className="text-gray-500 font-medium">No slots found for this date</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {slotData.slots.map((slot, index) => {
+                      const [startTime, endTime] = slot.time.split("-")
+                      const isBlocked = slot.status.includes("BLOCKED")
+                      const isBooked = slot.status.includes("BOOKED")
+                      const isBreak = slot.status.includes("BREAK")
+                      
+                      return (
+                        <div
+                          key={slot.id || `slot-${index}`}
+                          className={`group relative p-4 border rounded-lg transition-all duration-200 ${
+                            isBlocked 
+                              ? 'bg-red-50 border-red-200 hover:border-red-300' 
+                              : isBooked
+                              ? 'bg-orange-50 border-orange-200 hover:border-orange-300'
+                              : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="font-semibold text-gray-900 text-base">
+                                  {formatTime(startTime)} - {formatTime(endTime)}
                                 </div>
                               </div>
-
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="cursor-pointer"
-                                  onClick={() => {
-                                    const [start, end] = slot.time.split("-")
-                                    const status: "AVAILABLE" | "BOOKED" | "BLOCKED" = slot.status.includes("BOOKED")
-                                      ? "BOOKED"
-                                      : slot.status.includes("BLOCKED")
-                                        ? "BLOCKED"
-                                        : "AVAILABLE"
-                                    setSelectedSlot({
-                                      id: slot.id as string,
-                                      start_time: start,
-                                      end_time: end,
-                                      status,
-                                      source: slot.source,
-                                    })
-                                    setShowModifyModal(true)
-                                  }}
-                                  disabled={slot.status.includes("BOOKED") || !slot.id || actionLoading}
-                                  title={
-                                    slot.status.includes("BOOKED")
-                                      ? "Cannot modify booked slots"
-                                      : !slot.id
-                                        ? "Cannot modify template slots"
-                                        : "Modify slot time"
-                                  }
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="cursor-pointer"
-                                  onClick={() => handleToggleBlock(slot)}
-                                  disabled={
-                                    slot.status.includes("BOOKED") ||
-                                    slot.status.includes("BREAK") ||
-                                    actionLoading
-                                  }
-                                  title={
-                                    slot.status.includes("BOOKED")
-                                      ? "Cannot modify booked slots"
-                                      : slot.status.includes("BREAK")
-                                        ? "Cannot modify break slots"
-                                        : slot.status.includes("BLOCKED")
-                                          ? "Unblock slot"
-                                          : "Block slot"
-                                  }
-                                >
-                                  {slot.status.includes("BLOCKED") ? (
-                                    <Lock className="w-4 h-4" />
-                                  ) : (
-                                    <Unlock className="w-4 h-4" />
-                                  )}
-                                </Button>
-
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  className="cursor-pointer"
-                                  onClick={() => {
-                                    if (!slot.id) return
-                                    setSlotToClear(slot)
-                                    setShowConfirmClear(true)
-                                  }}
-                                  disabled={
-                                    slot.status.includes("BOOKED") ||
-                                    slot.source === "TEMPLATE" ||
-                                    !slot.id ||
-                                    actionLoading
-                                  }
-                                  title={
-                                    slot.status.includes("BOOKED")
-                                      ? "Cannot clear booked slots"
-                                      : slot.source === "TEMPLATE" || !slot.id
-                                        ? "Cannot clear template slots"
-                                        : "Clear"
-                                  }
-                                >
-                                  <Eraser className="w-4 h-4" />
-                                </Button>
+                              
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                {getStatusBadge(slot.status)}
                               </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              <div className="flex justify-end pt-6 border-t mt-6">
-                <Button variant="outline" onClick={onClose} disabled={actionLoading}>
-                  Close
-                </Button>
+                              {slot.description && (
+                                <p className="text-xs text-gray-600 mt-2 line-clamp-1">
+                                  {slot.description}
+                                </p>
+                              )}
+                              
+                              {slot.modification_reason && (
+                                <p className="text-xs text-blue-600 mt-1 line-clamp-1">
+                                  <span className="font-medium">Reason:</span> {slot.modification_reason}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex-shrink-0">
+                              <Button
+                                variant={isBlocked ? "destructive" : "outline"}
+                                size="sm"
+                                className={`cursor-pointer transition-all ${
+                                  isBlocked 
+                                    ? 'bg-red-600 hover:bg-red-700 text-white border-red-600' 
+                                    : 'hover:bg-gray-100'
+                                }`}
+                                onClick={() => handleToggleBlock(slot)}
+                                disabled={isBooked || isBreak || actionLoading}
+                                title={
+                                  isBooked
+                                    ? "Cannot modify booked slots"
+                                    : isBreak
+                                    ? "Cannot modify break slots"
+                                    : isBlocked
+                                    ? "Unblock slot"
+                                    : "Block slot"
+                                }
+                              >
+                                {isBlocked ? (
+                                  <Lock className="w-4 h-4" />
+                                ) : (
+                                  <Unlock className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="border-t bg-gray-50 px-6 py-4">
+            <div className="flex justify-end">
+              <Button 
+                variant="outline" 
+                onClick={onClose} 
+                disabled={actionLoading}
+                className="min-w-[100px]"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-
-      {showModifyModal && selectedSlot && (
-        <ModifySlotModal
-          isOpen={showModifyModal}
-          onClose={() => {
-            setShowModifyModal(false)
-            setSelectedSlot(null)
-          }}
-          slot={selectedSlot}
-          date={date}
-          onSuccess={() => {
-            setShowModifyModal(false)
-            setSelectedSlot(null)
-            safeRefetchSlots()
-            onSuccess()
-          }}
-        />
-      )}
-
-      {showBulkModal && (
-        <BulkModifyModal
-          isOpen={showBulkModal}
-          onClose={() => setShowBulkModal(false)}
-          date={date}
-          onSuccess={() => {
-            setShowBulkModal(false)
-            safeRefetchSlots()
-            onSuccess()
-          }}
-        />
-      )}
-
-      <AlertDialog open={showConfirmRemove} onOpenChange={setShowConfirmRemove}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove all manual slots?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {manualSlotsCount > 0
-                ? `This will remove ${manualSlotsCount} manual slots${
-                    bookedSlotsCount > 0 ? `; ${bookedSlotsCount} booked slots will remain.` : "."
-                  }`
-                : "There are no removable manual slots for this date."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveAllManual} disabled={actionLoading}>
-              {actionLoading ? "Removing..." : "Yes, remove all"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={showConfirmClear} onOpenChange={setShowConfirmClear}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear this slot?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {slotToClear
-                ? (() => {
-                    const [s, e] = slotToClear.time.split("-")
-                    return `${formatTime(s)} - ${formatTime(e)} will be cleared. This cannot be undone.`
-                  })()
-                : "Are you sure you want to clear this slot?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => slotToClear && handleDeleteSlot(slotToClear)}
-              disabled={actionLoading}
-            >
-              {actionLoading ? "Clearing..." : "Yes, clear"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   )
 }
