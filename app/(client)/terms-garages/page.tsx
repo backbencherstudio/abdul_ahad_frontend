@@ -10,7 +10,7 @@ const termsData = {
             title: "Garage Eligibility and Responsibilities",
             content: [
                 "You confirm that your garage is fully registered and authorized by the DVSA (Driver and Vehicle Standards Agency) to carry out MOT tests. ",
-                "You agree to provide MOT services in accordance with all applicable laws, regulations, and professional standards. .",
+                "You agree to provide MOT services in accordance with all applicable laws, regulations, and professional standards.",
                 "You are responsible for the accuracy and completeness of the information provided on your garage profile. ",
                 "You agree to respond promptly to booking requests and notify customers of any cancellations or rescheduling. "
             ]
@@ -19,8 +19,8 @@ const termsData = {
             id: 2,
             title: "Subscription and Payment",
             content: [
-                "Garages pay a monthly subscription fee to be listed and receive booking requests through simplymot.co.uk.",
-                "Subscription fees are payable in advance and are non-refundable unless otherwise agreed in writing. ",
+                "Garages pay a monthly subscription fee to be listed and receive booking requests through simplymot.co.uk. ",
+                "Subscription fees are payable in advance and are non-refundable unless otherwise agreed in writing.",
                 "The billing cycle is monthly, beginning on the date the garage account is opened, and will renew automatically each month unless cancelled in accordance with these Terms. ",
                 "simplymot.co.uk reserves the right to revise subscription fees periodically. Any price increases will take effect with a minimum of 30 days prior notice, which will be provided by email and/or postal mail.",
                 "simplymot.co.uk does not take any commission on MOT service fees charged by the garage to customers. "
@@ -61,6 +61,15 @@ const termsData = {
         },
         {
             id: 7,
+            title: "Legal Information",
+            content: [
+                "Legal Entity: A. Ahad, Sole Trader, trading as simplymot.co.uk ",
+                "Registered Business Address: 124 City Road, London, EC1V 2NX",
+                "Email: info@simplymot.co.uk "
+            ]
+        },
+        {
+            id: 8,
             title: "Contact Us",
             content: [
                 "If you have any questions or concerns regarding these terms or your subscription, please contact us at: ",
@@ -71,7 +80,7 @@ const termsData = {
     ]
 }
 
-export default function TermsDrivers() {
+export default function TermsGarages() {
     return (
         <div>
             <HeroSectionReused title="Terms and Conditions for Garages" />
