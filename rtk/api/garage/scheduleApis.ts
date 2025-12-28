@@ -91,6 +91,24 @@ export interface BulkSlotRequest {
     reason?: string;
 }
 
+export interface Holiday {
+    type: string;
+    month: number;
+    day: number;
+    description: string;
+    is_recurring: boolean;
+    date?: string; // For display purposes
+    id?: string; // For local state management (temp IDs for new holidays)
+}
+
+export interface AddHolidayRequest {
+    type: string;
+    month: number;
+    day: number;
+    description: string;
+    is_recurring: boolean;
+}
+
 export const scheduleApi = createApi({
     reducerPath: "scheduleApi",
     baseQuery,
@@ -110,6 +128,7 @@ export const scheduleApi = createApi({
             invalidatesTags: ["Schedule", "Calendar"],
         }),
 
+        
         getScheduleList: builder.query<ScheduleApiResponse[], void>({
             query: () => "/api/garage-dashboard/schedule",
             providesTags: ["Schedule"],
@@ -148,6 +167,31 @@ export const scheduleApi = createApi({
             }),
             invalidatesTags: ["Slots", "Calendar"],
         }),
+        // /api/garage-dashboard/schedule/holiday add holiday
+        addHoliday: builder.mutation<ApiResponse, AddHolidayRequest>({
+            query: (request) => ({
+                url: "/api/garage-dashboard/schedule/holiday",
+                method: "POST",
+                body: request,
+            }),
+            invalidatesTags: ["Schedule", "Calendar"],
+        }),
+        // get holidays /api/garage-dashboard/schedule/holidays
+        getHolidays: builder.query<ApiResponse<Holiday[]>, void>({
+            query: () => "/api/garage-dashboard/schedule/holidays",
+            providesTags: ["Schedule"],
+            keepUnusedDataFor: 0,
+        }),
+        // delete holiday by month and day
+        deleteHoliday: builder.mutation<ApiResponse, { month: number; day: number }>({
+            query: (body) => ({
+                url: `/api/garage-dashboard/schedule/holiday`,
+                method: "DELETE",
+                body,
+            }),
+            invalidatesTags: ["Schedule", "Calendar"],
+        }),
+
     }),
 });
 
@@ -158,4 +202,7 @@ export const {
     useGetCalendarViewQuery,
     useGetSlotDetailsQuery,
     useBulkSlotOperationMutation,
+    useAddHolidayMutation,
+    useGetHolidaysQuery,
+    useDeleteHolidayMutation,
 } = scheduleApi;

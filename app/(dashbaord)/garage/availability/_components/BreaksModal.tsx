@@ -198,7 +198,7 @@ export default function BreaksModal({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveBreak(breakItem.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full text-xs h-9"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full text-xs h-9 cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5 mr-1" />
                         Remove
@@ -220,7 +220,7 @@ export default function BreaksModal({
             type="button"
             variant="outline"
             onClick={handleAddBreak}
-            className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+            className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300 cursor-pointer"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Break
@@ -228,7 +228,7 @@ export default function BreaksModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} className="cursor-pointer">
             Close
           </Button>
           {hasChanges && (
@@ -236,8 +236,9 @@ export default function BreaksModal({
               type="button"
               onClick={handleSave}
               disabled={isSaving}
+              className="cursor-pointer"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-4 h-4 mr-2 " />
               {isSaving ? 'Saving...' : 'Save'}
             </Button>
           )}
