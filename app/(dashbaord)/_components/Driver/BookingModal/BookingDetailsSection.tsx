@@ -83,7 +83,7 @@ export default function BookingDetailsSection({
                                 <p className="font-medium">Loading available slots...</p>
                             </div>
                         ) : slots && Array.isArray(slots) && slots.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto p-3 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 scrollbar-hide">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 ">
                                 {slots.map((slot) => (
                                     <button
                                         key={slot.id}
@@ -91,7 +91,7 @@ export default function BookingDetailsSection({
                                         onClick={(e) => onSlotSelect(slot, e)}
                                         disabled={isBooking}
                                         className={cn(
-                                            "group relative px-4 py-4 rounded-lg border-2 transition-all duration-200 text-sm font-medium flex flex-col items-center justify-center gap-2.5 min-h-[100px]",
+                                            "group relative cursor-pointer px-4 py-4 rounded-lg border-2 transition-all duration-200 text-sm font-medium flex flex-col items-center justify-center gap-2.5 min-h-[100px]",
                                             "hover:border-[#19CA32] hover:bg-[#19CA32]/10 hover:shadow-md hover:scale-105",
                                             "active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#19CA32] focus:ring-offset-2",
                                             selectedSlotId === slot.id

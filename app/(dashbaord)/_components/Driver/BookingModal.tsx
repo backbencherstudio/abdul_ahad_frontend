@@ -199,11 +199,15 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
             const result = await bookSlot(bookingBody).unwrap()
 
             if (result.success) {
-                const successMessage = typeof result.message === 'string' 
-                    ? result.message 
-                    : (typeof result.message === 'object' && result.message?.message && typeof result.message.message === 'string')
-                        ? result.message.message
-                        : 'Slot booked successfully!'
+                let successMessage = 'Slot booked successfully!'
+                if (typeof result.message === 'string') {
+                    successMessage = result.message
+                } else if (result.message && typeof result.message === 'object' && 'message' in result.message) {
+                    const msgObj = result.message as { message?: string }
+                    if (typeof msgObj.message === 'string') {
+                        successMessage = msgObj.message
+                    }
+                }
                 toast.success(successMessage)
                 setSubmittedBooking(bookingForm)
                 onClose()
@@ -221,11 +225,15 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
                 setSelectedSlotId(null)
                 dispatch(setSelectedSlot(null))
             } else {
-                const errorMessage = typeof result.message === 'string' 
-                    ? result.message 
-                    : (typeof result.message === 'object' && result.message?.message && typeof result.message.message === 'string')
-                        ? result.message.message
-                        : 'Failed to book slot'
+                let errorMessage = 'Failed to book slot'
+                if (typeof result.message === 'string') {
+                    errorMessage = result.message
+                } else if (result.message && typeof result.message === 'object' && 'message' in result.message) {
+                    const msgObj = result.message as { message?: string }
+                    if (typeof msgObj.message === 'string') {
+                        errorMessage = msgObj.message
+                    }
+                }
                 toast.error(errorMessage)
             }
         } catch (error: any) {
