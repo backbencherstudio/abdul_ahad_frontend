@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../baseApi";
-import { ApiResponse } from "./api";
+import { ApiResponse } from "./scheduleApis";
 
 export interface PricingService {
   id?: string;
@@ -36,22 +36,32 @@ export const pricingApi = createApi({
   baseQuery,
   tagTypes: ["Pricing"],
   endpoints: (builder) => ({
-    createPricing: builder.mutation<CreatePricingResponse, CreatePricingRequest>(
-      {
-        query: (body) => ({
-          url: "/api/garage-dashboard/service-price",
-          method: "POST",
-          body,
-        }),
-        invalidatesTags: ["Pricing"],
-      }
-    ),
-    // get pricing /api/garage-dashboard/service-price
+    // Create or Update Pricing - POST /api/garage-dashboard/service-price
+    createPricing: builder.mutation<CreatePricingResponse, CreatePricingRequest>({
+      query: (body) => ({
+        url: "/api/garage-dashboard/service-price",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Pricing"],
+    }),
+
+    // Get All Pricing - GET /api/garage-dashboard/services
     getPricing: builder.query<PricingResponsePayload, void>({
       query: () => "/api/garage-dashboard/services",
       transformResponse: (response: any): PricingResponsePayload => {
-        // API returns: { success: true, data: [...] } where data is an array of services
-        const servicesArray = response?.data || response || [];
+        // API returns: { success: true, data: { mot, retest, additionals } }
+        if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+          // Response is already in the correct format
+          return {
+            mot: response.data.mot || { name: "MOT Test", price: null, type: "MOT" },
+            retest: response.data.retest || { name: "MOT Retest", price: null, type: "RETEST" },
+            additionals: response.data.additionals || [],
+          };
+        }
+        
+        // Fallback: if response is an array (old format)
+        const servicesArray = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);
         
         // Find MOT service
         const motService = servicesArray.find((s: PricingService) => s.type === "MOT");
@@ -68,8 +78,10 @@ export const pricingApi = createApi({
         };
       },
       providesTags: ["Pricing"],
+      keepUnusedDataFor: 0,
     }),
-    //delete service /garage-dashboard/services/:id
+
+    // Delete Service - DELETE /api/garage-dashboard/services/:id
     deleteService: builder.mutation<ApiResponse, string>({
       query: (id) => ({
         url: `/api/garage-dashboard/services/${id}`,
@@ -78,7 +90,10 @@ export const pricingApi = createApi({
       invalidatesTags: ["Pricing"],
     }),
   }),
-
 });
 
-export const { useCreatePricingMutation, useGetPricingQuery, useDeleteServiceMutation } = pricingApi;
+export const { 
+  useCreatePricingMutation, 
+  useGetPricingQuery, 
+  useDeleteServiceMutation 
+} = pricingApi;

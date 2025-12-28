@@ -22,10 +22,10 @@ import type { FetchBaseQueryError } from "@reduxjs/toolkit/query"
 import type { SerializedError } from "@reduxjs/toolkit"
 import {
   type ApiResponse,
-  garageAvailabilityApi,
+  scheduleApi,
   useBulkSlotOperationMutation,
   useGetSlotDetailsQuery,
-} from "../../../../../../rtk/api/garage/api"
+} from "../../../../../../rtk/api/garage/scheduleApis"
 
 interface Slot {
   id?: string
@@ -205,7 +205,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
 
   const updateSlotsCache = (updateFn: (draft: ApiResponse<SlotData>) => void) => {
     dispatch(
-      garageAvailabilityApi.util.updateQueryData("getSlotDetails", date, (draft: ApiResponse<SlotData>) => {
+      scheduleApi.util.updateQueryData("getSlotDetails", date, (draft: ApiResponse<SlotData>) => {
         if (!draft.data) return
         updateFn(draft)
         draft.data.summary = recalcSummary(draft.data.slots)

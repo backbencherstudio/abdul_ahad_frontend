@@ -8,7 +8,7 @@ import { dashboardApi } from "@/rtk/api/admin/dashboard/dashboardApi";
 import { vehiclesApi } from "@/rtk/api/admin/vehiclesManagements/vehicles-management";
 import { driversApi } from "@/rtk/api/admin/driverManagement/driver-managementApis";
 import { reminderApis } from "@/rtk/api/admin/vehiclesManagements/reminderApis";
-import { garageAvailabilityApi } from "@/rtk/api/garage/api";
+import { scheduleApi } from "@/rtk/api/garage/scheduleApis";
 import { profileApi } from "@/rtk/api/garage/profileApis";
 import { pricingApi } from "@/rtk/api/garage/pricingApis";
 import { bookingsApi } from "@/rtk/api/garage/bookingsApis";
@@ -36,7 +36,7 @@ export const resetReduxStore = (): void => {
   store.dispatch(vehiclesApi.util.resetApiState());
   store.dispatch(driversApi.util.resetApiState());
   store.dispatch(reminderApis.util.resetApiState());
-  store.dispatch(garageAvailabilityApi.util.resetApiState());
+  store.dispatch(scheduleApi.util.resetApiState());
   store.dispatch(profileApi.util.resetApiState());
   store.dispatch(pricingApi.util.resetApiState());
   store.dispatch(bookingsApi.util.resetApiState());

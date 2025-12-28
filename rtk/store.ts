@@ -11,9 +11,8 @@ import { dashboardApi } from "./api/admin/dashboard/dashboardApi";
 import { vehiclesApi } from "./api/admin/vehiclesManagements/vehicles-management";
 import { driversApi } from "./api/admin/driverManagement/driver-managementApis";
 import { reminderApis } from "./api/admin/vehiclesManagements/reminderApis";
-import { garageAvailabilityApi } from "./api/garage/api";
 import { profileApi } from "./api/garage/profileApis";
-import { apiClient } from "./api/garage/api";
+import { scheduleApi } from "./api/garage/scheduleApis";
 import { pricingApi } from "./api/garage/pricingApis";
 import { bookingsApi } from "./api/garage/bookingsApis";
 import { contactApis } from "./api/garage/contactApis";
@@ -44,7 +43,7 @@ const appReducer = combineReducers({
   [vehiclesApi.reducerPath]: vehiclesApi.reducer,
   [driversApi.reducerPath]: driversApi.reducer,
   [reminderApis.reducerPath]: reminderApis.reducer,
-  [garageAvailabilityApi.reducerPath]: garageAvailabilityApi.reducer,
+  [scheduleApi.reducerPath]: scheduleApi.reducer,
   [profileApi.reducerPath]: profileApi.reducer,
   [pricingApi.reducerPath]: pricingApi.reducer,
   [bookingsApi.reducerPath]: bookingsApi.reducer,
@@ -88,7 +87,7 @@ export const store = configureStore({
       reminderApis.middleware,
       subscriptionsManagementApi.middleware,
       dashboardApi.middleware,
-      garageAvailabilityApi.middleware,
+      scheduleApi.middleware,
       profileApi.middleware,
       pricingApi.middleware,
       bookingsApi.middleware,
@@ -103,9 +102,6 @@ export const store = configureStore({
       adminNotificationApis.middleware
     ),
 });
-
-// Initialize apiClient with store
-apiClient.setStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

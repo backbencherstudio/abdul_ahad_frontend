@@ -9,12 +9,14 @@ import { useAppDispatch, setPricingFromResponse } from '@/rtk'
 import { Loader2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'react-toastify'
+import { getPricingLoadingState } from '../../_components/Garage/MotFeeAdd'
 
 export default function Pricing() {
     const dispatch = useAppDispatch()
     const { data, isLoading, isError, refetch } = useGetPricingQuery()
     const prevDataRef = React.useRef<string | null>(null)
     const hasLoadedRef = React.useRef(false)
+    const [isSaving, setIsSaving] = React.useState(false)
 
     // Load data into Redux store when fetched
     useEffect(() => {
@@ -31,8 +33,24 @@ export default function Pricing() {
     }, [data, dispatch])
 
     const handleGlobalSave = () => {
+        setIsSaving(true)
         const btn = document.getElementById('pricing-main-save') as HTMLButtonElement | null
         btn?.click()
+        
+        // Check loading state periodically until it's done
+        const checkInterval = setInterval(() => {
+            const loading = getPricingLoadingState()
+            if (!loading) {
+                setIsSaving(false)
+                clearInterval(checkInterval)
+            }
+        }, 200)
+
+        // Fallback: clear after 15 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval)
+            setIsSaving(false)
+        }, 15000)
     }
 
     if (isLoading) {
@@ -105,9 +123,17 @@ export default function Pricing() {
                 <Button
                     type="button"
                     onClick={handleGlobalSave}
-                    className="w-full h-10 bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white font-medium text-base"
+                    disabled={isSaving}
+                    className="w-full h-10 bg-[#19CA32] cursor-pointer hover:bg-[#16b82e] text-white font-medium text-base disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    Save
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin inline-block" />
+                            Saving...
+                        </>
+                    ) : (
+                        'Save'
+                    )}
                 </Button>
             </div>
         </>

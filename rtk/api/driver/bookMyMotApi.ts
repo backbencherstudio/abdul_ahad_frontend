@@ -1,6 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "../baseApi";
-import { ApiResponse } from "../garage/api";
+import { ApiResponse } from "../garage/scheduleApis";
 
 // Vehicle interface matching API response
 export interface VehicleData {

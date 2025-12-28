@@ -15,6 +15,12 @@ import {
     useAppSelector,
     useCreatePricingMutation
 } from '@/rtk'
+import { store } from '@/rtk/store'
+import { syncAdditionalServicesForm } from './AdditionalServicesAdd'
+
+// Shared loading state for Save button
+let isLoadingState = false
+export const getPricingLoadingState = () => isLoadingState
 
 interface MotFeeFormData {
     motFee: string
@@ -27,6 +33,11 @@ export default function MotFeeAdd() {
     const [createPricing, { isLoading }] = useCreatePricingMutation()
     const prevFormVersionRef = React.useRef(formVersion)
     const hasInitializedRef = React.useRef(false)
+
+    // Update shared loading state
+    React.useEffect(() => {
+        isLoadingState = isLoading
+    }, [isLoading])
 
     const {
         register,
@@ -44,32 +55,26 @@ export default function MotFeeAdd() {
     const motFeeValue = watch('motFee')
     const retestFeeValue = watch('motRetestFee')
 
-    // Initialize form with Redux data on mount or when formVersion changes
+    // Initialize form when data changes
     useEffect(() => {
-        const motPrice = mot.price ?? ''
-        const retestPrice = retest.price ?? ''
-        
-        // If formVersion changed (new data loaded) or form hasn't been initialized yet
         if (prevFormVersionRef.current !== formVersion || !hasInitializedRef.current) {
             prevFormVersionRef.current = formVersion
             hasInitializedRef.current = true
             reset({
-                motFee: motPrice,
-                motRetestFee: retestPrice
+                motFee: mot.price ?? '',
+                motRetestFee: retest.price ?? ''
             })
         }
     }, [formVersion, reset, mot.price, retest.price])
 
-    // Sync user input to Redux (only when user actually types, not when loading from API)
+    // Sync form values to Redux
     useEffect(() => {
-        // Only sync if the form value is different from Redux value (user typed something)
         if (motFeeValue !== (mot.price ?? '')) {
             dispatch(setMot({ price: motFeeValue ?? '' }))
         }
     }, [motFeeValue, dispatch, mot.price])
 
     useEffect(() => {
-        // Only sync if the form value is different from Redux value (user typed something)
         if (retestFeeValue !== (retest.price ?? '')) {
             dispatch(setRetest({ price: retestFeeValue ?? '' }))
         }
@@ -81,17 +86,26 @@ export default function MotFeeAdd() {
     }
 
     const onSubmit = async (data: MotFeeFormData) => {
-        if (!additionals.length) {
-            toast.error('Please add at least one additional service before saving.')
-            return
+        // Sync and get latest additional services from form
+        const syncedServices = syncAdditionalServicesForm()
+        let currentAdditionals = syncedServices
+
+        // Fallback to Redux if no synced services
+        if (currentAdditionals.length === 0) {
+            const reduxState = store.getState().pricing.additionals || additionals
+            currentAdditionals = reduxState.map(service => ({
+                id: service.id ?? null,
+                name: service.name
+            }))
         }
 
+        // Build payload
         const payload = {
             mot: { name: mot.name || 'MOT Test', price: parsePrice(data.motFee) },
             retest: { name: retest.name || 'MOT Retest', price: parsePrice(data.motRetestFee) },
-            additionals: additionals.map(service => ({
-                name: service.name
-            }))
+            additionals: currentAdditionals
+                .filter(service => service.name?.trim())
+                .map(service => ({ name: service.name.trim() }))
         }
 
         try {
@@ -99,8 +113,7 @@ export default function MotFeeAdd() {
             dispatch(setPricingFromResponse(response.data))
             toast.success(response.message || 'Service prices updated successfully')
         } catch (error: any) {
-            const errorMessage = error?.data?.message || 'Error updating service prices. Please try again.'
-            toast.error(errorMessage)
+            toast.error(error?.data?.message || 'Error updating service prices. Please try again.')
         }
     }
 

@@ -1,14 +1,16 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Plus, Clock } from 'lucide-react'
+import { Clock, Save } from 'lucide-react'
 import BreaksModal from './BreaksModal'
 import DefultCalanderViewShimmer from './DefultCalanderViewShimmer'
+import { useGetScheduleQuery, useCreateScheduleMutation, type ScheduleRequest } from '@/rtk/api/garage/scheduleApis'
+import { useToast } from '@/hooks/use-toast'
 
 interface DaySchedule {
     day: string
@@ -25,58 +27,105 @@ interface DaySchedule {
 }
 
 const DAYS = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday'
+    'Sunday',    // index 0 -> API day 0
+    'Monday',    // index 1 -> API day 1
+    'Tuesday',   // index 2 -> API day 2
+    'Wednesday', // index 3 -> API day 3
+    'Thursday',  // index 4 -> API day 4
+    'Friday',    // index 5 -> API day 5
+    'Saturday'   // index 6 -> API day 6
 ]
+
+// Map component day index to API day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+const getApiDayOfWeek = (componentIndex: number): number => {
+    // componentIndex directly maps to API day (0=Sunday, 1=Monday, etc.)
+    return componentIndex
+}
 
 interface DefultCalanderViewProps {
     isLoading?: boolean
+    onScheduleUpdate?: () => void
 }
 
-export default function DefultCalanderView({ isLoading = false }: DefultCalanderViewProps) {
+export default function DefultCalanderView({ isLoading = false, onScheduleUpdate }: DefultCalanderViewProps) {
+    const { toast } = useToast()
     const [openBreaksModalIndex, setOpenBreaksModalIndex] = useState<number | null>(null)
+    const originalSchedulesRef = useRef<DaySchedule[] | null>(null)
 
+    // Fetch schedule data from API
+    const { data: scheduleResponse, isLoading: isFetching, refetch: refetchSchedule } = useGetScheduleQuery()
+    const [createSchedule, { isLoading: isSaving }] = useCreateScheduleMutation()
+
+    // Initialize schedules state
     const [schedules, setSchedules] = useState<DaySchedule[]>(() => {
-        // Initialize with default values matching the image
-        return DAYS.map((day, index) => {
-            if (index === 6) {
-                // Sunday - closed
-                return {
-                    day,
-                    isClosed: true,
-                    fromTime: '08:00',
-                    toTime: '17:00',
-                    duration: 60,
-                    breaks: []
-                }
-            } else if (index === 5) {
-                // Saturday
-                return {
-                    day,
-                    isClosed: false,
-                    fromTime: '09:00',
-                    toTime: '16:30',
-                    duration: 60,
-                    breaks: []
-                }
-            } else {
-                // Monday to Friday
-                return {
-                    day,
-                    isClosed: false,
-                    fromTime: '08:30',
-                    toTime: '17:30',
-                    duration: 60,
-                    breaks: []
-                }
-            }
-        })
+        return DAYS.map((day) => ({
+            day,
+            isClosed: false,
+            fromTime: '09:00',
+            toTime: '17:00',
+            duration: 60,
+            breaks: []
+        }))
     })
+
+    // Load data from API when it's available
+    useEffect(() => {
+        if (scheduleResponse?.success && scheduleResponse.data) {
+            const apiData = scheduleResponse.data
+            const dailyHours = apiData.daily_hours || {}
+            const restrictions = apiData.restrictions || []
+
+            // Transform API data to component state
+            const newSchedules: DaySchedule[] = DAYS.map((day, componentIndex) => {
+                const apiDay = getApiDayOfWeek(componentIndex).toString()
+                const dayConfig = dailyHours[apiDay]
+
+                if (dayConfig?.is_closed) {
+                    return {
+                        day,
+                        isClosed: true,
+                        fromTime: dayConfig.intervals?.[0]?.start_time || '09:00',
+                        toTime: dayConfig.intervals?.[0]?.end_time || '17:00',
+                        duration: dayConfig.slot_duration || 60,
+                        breaks: []
+                    }
+                }
+
+                // Get breaks for this day
+                const dayBreaks = restrictions
+                    .filter(restriction => 
+                        restriction.type === 'BREAK' && 
+                        Array.isArray(restriction.day_of_week) &&
+                        restriction.day_of_week.includes(getApiDayOfWeek(componentIndex))
+                    )
+                    .map((restriction, idx) => ({
+                        id: `break-${componentIndex}-${idx}`,
+                        fromTime: restriction.start_time || '',
+                        toTime: restriction.end_time || '',
+                        description: restriction.description || ''
+                    }))
+
+                return {
+                    day,
+                    isClosed: false,
+                    fromTime: dayConfig?.intervals?.[0]?.start_time || '09:00',
+                    toTime: dayConfig?.intervals?.[0]?.end_time || '17:00',
+                    duration: dayConfig?.slot_duration || 60,
+                    breaks: dayBreaks
+                }
+            })
+
+            setSchedules(newSchedules)
+            // Store original data for change detection
+            originalSchedulesRef.current = JSON.parse(JSON.stringify(newSchedules))
+        }
+    }, [scheduleResponse])
+
+    // Check if there are any changes
+    const hasChanges = () => {
+        if (!originalSchedulesRef.current) return false
+        return JSON.stringify(schedules) !== JSON.stringify(originalSchedulesRef.current)
+    }
 
     const handleClosedToggle = (index: number, checked: boolean) => {
         setSchedules(prev =>
@@ -118,8 +167,80 @@ export default function DefultCalanderView({ isLoading = false }: DefultCalander
         setOpenBreaksModalIndex(null)
     }
 
+    // Transform form data to API format
+    const transformToApiFormat = (): ScheduleRequest => {
+        const daily_hours: Record<string, any> = {}
+        const restrictions: any[] = []
+
+        schedules.forEach((schedule, componentIndex) => {
+            const apiDay = getApiDayOfWeek(componentIndex).toString()
+
+            if (schedule.isClosed) {
+                daily_hours[apiDay] = {
+                    is_closed: true
+                }
+            } else {
+                daily_hours[apiDay] = {
+                    intervals: [
+                        {
+                            start_time: schedule.fromTime,
+                            end_time: schedule.toTime
+                        }
+                    ],
+                    slot_duration: schedule.duration
+                }
+
+                // Add breaks as restrictions
+                schedule.breaks.forEach((breakItem) => {
+                    restrictions.push({
+                        type: "BREAK",
+                        day_of_week: [getApiDayOfWeek(componentIndex)],
+                        start_time: breakItem.fromTime,
+                        end_time: breakItem.toTime,
+                        description: breakItem.description || "Break"
+                    })
+                })
+            }
+        })
+
+        return {
+            daily_hours,
+            restrictions
+        }
+    }
+
+    // Handle save
+    const handleSave = async () => {
+        try {
+            const requestData = transformToApiFormat()
+            const result = await createSchedule(requestData).unwrap()
+
+            if (result.success) {
+                toast({
+                    title: "Success",
+                    description: result.message || "Schedule updated successfully",
+                })
+                originalSchedulesRef.current = JSON.parse(JSON.stringify(schedules))
+                await refetchSchedule()
+                onScheduleUpdate?.()
+            } else {
+                toast({
+                    title: "Error",
+                    description: result.message || "Failed to update schedule",
+                    variant: "destructive",
+                })
+            }
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error?.data?.message || error?.message || "Failed to update schedule",
+                variant: "destructive",
+            })
+        }
+    }
+
     // Show shimmer when loading
-    if (isLoading) {
+    if (isLoading || isFetching) {
         return <DefultCalanderViewShimmer />
     }
 
@@ -262,6 +383,21 @@ export default function DefultCalanderView({ isLoading = false }: DefultCalander
                             </div>
                         ))}
                     </div>
+
+                    {/* Save Button - Only show when there are changes */}
+                    {hasChanges() && (
+                        <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
+                            <Button
+                                type="button"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="cursor-pointer"
+                            >
+                                <Save className="w-4 h-4 mr-2" />
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -271,8 +407,13 @@ export default function DefultCalanderView({ isLoading = false }: DefultCalander
                     isOpen={openBreaksModalIndex !== null}
                     onClose={handleCloseBreaksModal}
                     dayName={schedules[openBreaksModalIndex]?.day || ''}
+                    dayIndex={openBreaksModalIndex}
                     breaks={schedules[openBreaksModalIndex]?.breaks || []}
                     onBreaksChange={(breaks) => handleBreaksChange(openBreaksModalIndex, breaks)}
+                    onSaveSuccess={async () => {
+                        await refetchSchedule()
+                        onScheduleUpdate?.()
+                    }}
                 />
             )}
         </>
