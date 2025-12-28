@@ -409,6 +409,7 @@ function DetailsContent() {
                 isOpen={isBookingModalOpen}
                 onClose={() => setIsBookingModalOpen(false)}
                 garage={transformedGarage}
+                vehicleId={vehicleId || undefined}
             />
         </div>
     )

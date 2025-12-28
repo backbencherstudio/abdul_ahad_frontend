@@ -94,6 +94,7 @@ export default function GarageCard({ foundGarages }: GarageCardProps) {
                 isOpen={isBookingModalOpen}
                 onClose={() => setIsBookingModalOpen(false)}
                 garage={selectedGarage}
+                vehicleId={vehicle?.vehicle_id}
             />
         </div>
     )

@@ -31,15 +31,19 @@ interface BookingModalProps {
     isOpen: boolean
     onClose: () => void
     garage: GarageData | null
+    vehicleId?: string // Optional vehicle_id prop for cases where vehicle is not in Redux
 }
 
-export default function BookingModal({ isOpen, onClose, garage }: BookingModalProps) {
+export default function BookingModal({ isOpen, onClose, garage, vehicleId: propVehicleId }: BookingModalProps) {
     const router = useRouter()
     const dispatch = useDispatch()
     const vehicle = useSelector(selectVehicle)
     const selectedSlot = useSelector(selectSelectedSlot)
     const { user } = useAuth()
     const { profile } = useProfile()
+    
+    // Use vehicle_id from prop if vehicle is not in Redux
+    const vehicleId = vehicle?.vehicle_id || propVehicleId || null
 
     
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
@@ -152,11 +156,11 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
         })
 
         // Dispatch to slice if garage and vehicle are available
-        if (garage?.id && vehicle?.vehicle_id) {
+        if (garage?.id && vehicleId) {
             dispatch(setSelectedSlot({
                 slot_id: slot.id,
                 garage_id: garage.id,
-                vehicle_id: vehicle.vehicle_id,
+                vehicle_id: vehicleId,
                 date: slot.date,
                 start_time: slot.start_time,
                 end_time: slot.end_time,
@@ -173,15 +177,15 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
             return
         }
 
-        // Get garage_id and vehicle_id from search results (Redux state)
-        // vehicle_id comes from the search response after searching with registration number
+        // Get garage_id and vehicle_id
+        // vehicle_id can come from Redux state (from search) or from prop (from URL params)
         const garageId = garage?.id
-        const vehicleId = vehicle?.vehicle_id
+        const finalVehicleId = vehicleId
 
-        if (!selectedSlotId || !garageId || !vehicleId || !selectedSlotData) {
+        if (!selectedSlotId || !garageId || !finalVehicleId || !selectedSlotData) {
             if (!garageId) {
                 toast.error('Garage information is missing. Please search again.')
-            } else if (!vehicleId) {
+            } else if (!finalVehicleId) {
                 toast.error('Vehicle information is missing. Please search again.')
             } else if (!selectedSlotData) {
                 toast.error('Slot information is missing. Please select a time slot.')
@@ -193,10 +197,10 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
 
         try {
             // Book slot with garage_id, vehicle_id, start_time, end_time, date, and service_type
-            // vehicle_id is from the search response (registration number search result)
+            // vehicle_id can be from Redux state (from search) or from prop (from URL params)
             const bookingBody = {
                 garage_id: garageId,
-                vehicle_id: vehicleId,
+                vehicle_id: finalVehicleId,
                 start_time: selectedSlotData.start_time,
                 end_time: selectedSlotData.end_time,
                 date: selectedSlotData.date,
