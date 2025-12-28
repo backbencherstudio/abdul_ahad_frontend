@@ -127,11 +127,19 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
     }
 
     // Handle slot selection (just select, don't book yet)
-    const handleSlotSelect = (slot: { id: string; start_time: string; end_time: string; date: string }, e?: React.MouseEvent) => {
+    const handleSlotSelect = (slot: { id: string; start_time: string; end_time: string; date: string; status?: string[] }, e?: React.MouseEvent) => {
         // Prevent any form submission
         if (e) {
             e.preventDefault()
             e.stopPropagation()
+        }
+        
+        // Check if slot is booked or break - don't allow selection
+        const isBooked = Array.isArray(slot.status) && slot.status.includes("BOOKED")
+        const isBreak = Array.isArray(slot.status) && slot.status.includes("BREAK")
+        
+        if (isBooked || isBreak) {
+            return // Don't allow selection of booked or break slots
         }
         
         // Just select the slot, validation will happen on submit
@@ -184,12 +192,11 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
         }
 
         try {
-            // Book slot with garage_id, vehicle_id, slot_id, and service_type
+            // Book slot with garage_id, vehicle_id, start_time, end_time, date, and service_type
             // vehicle_id is from the search response (registration number search result)
             const bookingBody = {
                 garage_id: garageId,
                 vehicle_id: vehicleId,
-                slot_id: selectedSlotId,
                 start_time: selectedSlotData.start_time,
                 end_time: selectedSlotData.end_time,
                 date: selectedSlotData.date,
