@@ -201,8 +201,8 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
             if (result.success) {
                 const successMessage = typeof result.message === 'string' 
                     ? result.message 
-                    : (typeof result.message === 'object' && result.message?.message && typeof result.message.message === 'string')
-                        ? result.message.message
+                    : (typeof result.message === 'object' && result.message !== null && 'message' in result.message && typeof (result.message as any).message === 'string')
+                        ? (result.message as any).message
                         : 'Slot booked successfully!'
                 toast.success(successMessage)
                 setSubmittedBooking(bookingForm)
@@ -223,8 +223,8 @@ export default function BookingModal({ isOpen, onClose, garage }: BookingModalPr
             } else {
                 const errorMessage = typeof result.message === 'string' 
                     ? result.message 
-                    : (typeof result.message === 'object' && result.message?.message && typeof result.message.message === 'string')
-                        ? result.message.message
+                    : (typeof result.message === 'object' && result.message !== null && 'message' in result.message && typeof (result.message as any).message === 'string')
+                        ? (result.message as any).message
                         : 'Failed to book slot'
                 toast.error(errorMessage)
             }
