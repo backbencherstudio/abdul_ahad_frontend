@@ -44,6 +44,7 @@ const nextConfig: NextConfig = {
         hostname: "abdulahad.signalsmind.com",
         pathname: "/**",
       },
+      
       {
         protocol: "http",
         hostname: "abdulahad.signalsmind.com",
