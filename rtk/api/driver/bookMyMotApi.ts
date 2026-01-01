@@ -164,6 +164,11 @@ export const bookMyMotApi = createApi({
                     return { slots: response.map(toSlot) };
                 }
 
+                // { success: true, message: "...", data: [...] } format
+                if (response?.success && response?.data && Array.isArray(response.data)) {
+                    return { slots: response.data.map(toSlot) };
+                }
+
                 // { slots: [...] }
                 if (response?.slots && Array.isArray(response.slots)) {
                     return { slots: response.slots.map(toSlot) };

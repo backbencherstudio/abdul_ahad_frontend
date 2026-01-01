@@ -233,8 +233,7 @@ export default function AvailabilityPage() {
           isOpen={showManageHolidaysModal}
           onClose={() => setShowManageHolidaysModal(false)}
           onSuccess={() => {
-            setShowManageHolidaysModal(false)
-            // Refresh calendar data if needed
+            // Refresh calendar data but keep modal open
             refetchCalendar()
           }}
         />

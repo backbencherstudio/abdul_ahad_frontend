@@ -41,9 +41,14 @@ interface SlotData {
   garage_id: string
   date: string
   working_hours: {
-    start: string
-    end: string
+    start: string | null
+    end: string | null
   }
+  working_intervals?: Array<{
+    start_time: string
+    end_time: string
+  }>
+  effective_slot_duration?: number
   slots: Slot[]
   summary: {
     total_slots: number
@@ -62,6 +67,7 @@ interface SlotData {
     }
     modifications: number
   }
+  is_holiday?: boolean
 }
 
 interface ManageSlotsModalProps {
@@ -192,6 +198,7 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
   }
 
   const slotData = slotResponse?.success ? (slotResponse.data as SlotData) : null
+  const apiMessage = slotResponse?.message || ""
   const responseError =
     slotResponse && !slotResponse.success
       ? normalizeApiMessage(slotResponse.message, "Failed to load slots")
@@ -453,7 +460,10 @@ export default function ManageSlotsModal({ isOpen, onClose, date, onSuccess }: M
 
                 {slotData.slots.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                    <p className="text-gray-500 font-medium">No slots found for this date</p>
+                    <p className="text-gray-500 font-medium">
+                      {apiMessage || "No slots found for this date"}
+                    </p>
+                 
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

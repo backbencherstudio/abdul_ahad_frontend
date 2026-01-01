@@ -85,53 +85,65 @@ export default function ManageHolidaysModal({
     }
   }, [isOpen])
 
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr)
-    return format(date, 'dd/MM/yy')
+  const formatDate = (month: number, day: number): string => {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ]
+    return `${monthNames[month - 1]} ${day}`
   }
 
-  const handleAddHoliday = () => {
-    if (selectedDate && description.trim()) {
-      const month = selectedDate.getMonth() + 1
-      const day = selectedDate.getDate()
-      const dateStr = format(selectedDate, 'yyyy-MM-dd')
-      
-      // Check if date already exists in local holidays (check by month and day for recurring holidays)
-      if (!localHolidays.some((h) => h.month === month && h.day === day)) {
-        const newHoliday: Holiday = {
-          id: `temp-${Date.now()}`,
-          type: 'HOLIDAY',
-          month,
-          day,
-          description: description.trim(),
-          is_recurring: true, // Always true by default
-          date: dateStr,
-        }
-        setLocalHolidays([...localHolidays, newHoliday].sort((a, b) => 
-          new Date(a.date || '').getTime() - new Date(b.date || '').getTime()
-        ))
-        setSelectedDate(undefined)
-        setDescription('')
-      } else {
-        toast({
-          title: "Error",
-          description: "This date is already added as a holiday",
-          variant: "destructive",
-        })
-      }
+  const handleAddHoliday = async () => {
+    if (!selectedDate || !description.trim()) return
+
+    const month = selectedDate.getMonth() + 1
+    const day = selectedDate.getDate()
+    
+    // Check if date already exists
+    if (localHolidays.some((h) => h.month === month && h.day === day)) {
+      toast({
+        title: "Error",
+        description: "This date is already added as a holiday",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      // Save immediately to API
+      await addHoliday({
+        type: 'HOLIDAY',
+        month,
+        day,
+        description: description.trim(),
+        is_recurring: true,
+      }).unwrap()
+
+      toast({
+        title: "Success",
+        description: "Holiday added successfully",
+      })
+
+      // Reset form
+      setSelectedDate(undefined)
+      setDescription('')
+
+      // Refetch holidays to update the list
+      await refetchHolidays()
+      // Don't call onSuccess to prevent modal from closing
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.data?.message || "Failed to add holiday",
+        variant: "destructive",
+      })
     }
   }
 
   const handleDeleteHoliday = (holiday: Holiday) => {
     if (!holiday) return
     
-    // If it's a temporary holiday (starts with 'temp-'), just remove from local state without confirmation
-    if (holiday.id?.startsWith('temp-')) {
-      setLocalHolidays(localHolidays.filter((h) => h.id !== holiday.id))
-      return
-    }
-
-    // Show confirmation modal for existing holidays
+    // Show confirmation modal for all holidays
     setHolidayToDelete(holiday)
     setShowDeleteConfirm(true)
   }
@@ -151,8 +163,8 @@ export default function ManageHolidaysModal({
       setShowDeleteConfirm(false)
       setHolidayToDelete(null)
       setDeletingHolidayId(null)
-      refetchHolidays()
-      if (onSuccess) onSuccess()
+      await refetchHolidays()
+      // Don't call onSuccess to keep modal open
     } catch (error: any) {
       toast({
         title: "Error",
@@ -169,50 +181,14 @@ export default function ManageHolidaysModal({
     setDeletingHolidayId(null)
   }
 
-  const handleSave = async () => {
-    // Get only new holidays (those with temp IDs)
-    const newHolidays = localHolidays.filter((h) => h.id?.startsWith('temp-'))
-    
-    if (newHolidays.length === 0) {
-      toast({
-        title: "Info",
-        description: "No new holidays to save",
-      })
-      return
-    }
-
-    try {
-      // Add all new holidays
-      const promises = newHolidays.map((holiday) =>
-        addHoliday({
-          type: holiday.type,
-          month: holiday.month,
-          day: holiday.day,
-          description: holiday.description,
-          is_recurring: holiday.is_recurring,
-        }).unwrap()
-      )
-
-      await Promise.all(promises)
-      
-      toast({
-        title: "Success",
-        description: "Holidays saved successfully",
-      })
-      
-      refetchHolidays()
-      if (onSuccess) onSuccess()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error?.data?.message || "Failed to save holidays",
-        variant: "destructive",
-      })
-    }
-  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Only close when explicitly closing, not on outside click during operations
+      if (!open && !isAdding && !isDeleting) {
+        onClose()
+      }
+    }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-gray-900">
@@ -238,7 +214,7 @@ export default function ManageHolidaysModal({
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {selectedDate ? (
-                        format(selectedDate, 'dd/MM/yy')
+                        formatDate(selectedDate.getMonth() + 1, selectedDate.getDate())
                       ) : (
                         'None Selected'
                       )}
@@ -265,6 +241,12 @@ export default function ManageHolidaysModal({
                 placeholder="Enter holiday description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && selectedDate && description.trim()) {
+                    e.preventDefault()
+                    handleAddHoliday()
+                  }
+                }}
                 className="w-full"
               />
             </div>
@@ -272,11 +254,20 @@ export default function ManageHolidaysModal({
             <Button
               type="button"
               onClick={handleAddHoliday}
-              disabled={!selectedDate || !description.trim()}
+              disabled={!selectedDate || !description.trim() || isAdding}
               className="bg-green-600 hover:bg-green-700 text-white cursor-pointer whitespace-nowrap w-full"
             >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Holiday
+              {isAdding ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Add Holiday
+                </>
+              )}
             </Button>
           </div>
 
@@ -301,17 +292,12 @@ export default function ManageHolidaysModal({
                       <div className="flex items-center gap-3 flex-1">
                         <Wrench className="w-4 h-4 text-gray-600 flex-shrink-0" />
                         <span className="text-sm font-medium text-gray-900">
-                          {holiday.date ? formatDate(holiday.date) : `${holiday.month}/${holiday.day}`}
+                          {formatDate(holiday.month, holiday.day)}
                         </span>
                         <span className="text-sm text-gray-600">-</span>
                         <span className="text-sm text-gray-600 flex-1">
                           {holiday.description}
                         </span>
-                        {holiday.id?.startsWith('temp-') && (
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
-                            New
-                          </span>
-                        )}
                       </div>
                       <Button
                         type="button"
@@ -349,21 +335,6 @@ export default function ManageHolidaysModal({
           >
             Close
           </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={isAdding || localHolidays.filter((h) => h.id?.startsWith('temp-')).length === 0}
-            className="bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-          >
-            {isAdding ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save Holidays'
-            )}
-          </Button>
         </div>
       </DialogContent>
 
@@ -373,7 +344,7 @@ export default function ManageHolidaysModal({
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
         title="Delete Holiday"
-        description={`Are you sure you want to delete the holiday on ${holidayToDelete?.date ? formatDate(holidayToDelete.date) : `${holidayToDelete?.month}/${holidayToDelete?.day}`} (${holidayToDelete?.description})? This action cannot be undone.`}
+        description={`Are you sure you want to delete the holiday on ${holidayToDelete ? formatDate(holidayToDelete.month, holidayToDelete.day) : ''} (${holidayToDelete?.description})? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"

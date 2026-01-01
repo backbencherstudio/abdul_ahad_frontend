@@ -29,6 +29,72 @@ const formatTime = (time: string): string => {
     return `${displayHours}:${displayMinutes} ${period}`
 }
 
+// Helper function to split intervals by restrictions (breaks)
+const splitIntervalsByRestrictions = (
+    intervals: Array<{ start_time: string; end_time: string }>,
+    restrictions: Array<{ start_time: string; end_time: string; day_of_week: number[]; description?: string }>,
+    dayNum: number
+): Array<{ start_time: string; end_time: string; hasBreak?: boolean; breakInfo?: string }> => {
+    // Get restrictions for this specific day
+    const dayRestrictions = restrictions.filter(r => r.day_of_week.includes(dayNum))
+    
+    if (dayRestrictions.length === 0) {
+        return intervals.map(interval => ({ ...interval }))
+    }
+
+    const result: Array<{ start_time: string; end_time: string; hasBreak?: boolean; breakInfo?: string }> = []
+
+    intervals.forEach(interval => {
+        const intervalStart = interval.start_time
+        const intervalEnd = interval.end_time
+
+        // Find breaks that overlap with this interval
+        const overlappingBreaks = dayRestrictions.filter(breakItem => {
+            return breakItem.start_time < intervalEnd && breakItem.end_time > intervalStart
+        })
+
+        if (overlappingBreaks.length === 0) {
+            // No breaks, add interval as is
+            result.push({ ...interval })
+        } else {
+            // Sort breaks by start time
+            overlappingBreaks.sort((a, b) => a.start_time.localeCompare(b.start_time))
+
+            let currentStart = intervalStart
+
+            overlappingBreaks.forEach((breakItem, idx) => {
+                // Add interval before break
+                if (currentStart < breakItem.start_time) {
+                    result.push({
+                        start_time: currentStart,
+                        end_time: breakItem.start_time
+                    })
+                }
+
+                // Add break info
+                result.push({
+                    start_time: breakItem.start_time,
+                    end_time: breakItem.end_time,
+                    hasBreak: true,
+                    breakInfo: breakItem.description || 'Break'
+                })
+
+                currentStart = breakItem.end_time
+            })
+
+            // Add remaining interval after last break
+            if (currentStart < intervalEnd) {
+                result.push({
+                    start_time: currentStart,
+                    end_time: intervalEnd
+                })
+            }
+        }
+    })
+
+    return result
+}
+
 function DetailsContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
@@ -215,26 +281,63 @@ function DetailsContent() {
                                                 }
 
                                                 if (dayHours?.intervals && dayHours.intervals.length > 0) {
-                                                    return dayHours.intervals.map((interval, idx) => (
-                                                        <tr key={`${dayNum}-${idx}`} className="border-t border-gray-200">
-                                                            {idx === 0 && (
-                                                                <td rowSpan={dayHours.intervals.length} className="py-2 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap align-top">
-                                                                    {dayName}
-                                                                </td>
-                                                            )}
-                                                            <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
-                                                                {formatTime(interval.start_time)}
-                                                            </td>
-                                                            <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
-                                                                {formatTime(interval.end_time)}
-                                                            </td>
-                                                            {idx === 0 && (
-                                                                <td rowSpan={dayHours.intervals.length} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap align-top">
-                                                                    {dayHours.slot_duration || schedule.slot_duration} min
-                                                                </td>
-                                                            )}
-                                                        </tr>
-                                                    ))
+                                                    // Split intervals by restrictions
+                                                    const processedIntervals = splitIntervalsByRestrictions(
+                                                        dayHours.intervals,
+                                                        schedule.restrictions || [],
+                                                        dayNum
+                                                    )
+
+                                                    // Find first non-break interval to determine where to place slot_duration
+                                                    // If all are breaks, use first row (idx 0)
+                                                    const firstNonBreakIdx = processedIntervals.findIndex(interval => !interval.hasBreak)
+                                                    const slotDurationRowIdx = firstNonBreakIdx >= 0 ? firstNonBreakIdx : 0
+                                                    
+                                                    return processedIntervals.map((interval, idx) => {
+                                                        const isBreak = interval.hasBreak
+                                                        const totalRows = processedIntervals.length
+                                                        const showSlotDuration = idx === slotDurationRowIdx
+
+                                                        return (
+                                                            <tr 
+                                                                key={`${dayNum}-${idx}`} 
+                                                                className="border-t border-gray-200"
+                                                            >
+                                                                {idx === 0 && (
+                                                                    <td 
+                                                                        rowSpan={totalRows} 
+                                                                        className="py-2 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap align-top"
+                                                                    >
+                                                                        {dayName}
+                                                                    </td>
+                                                                )}
+                                                                {isBreak ? (
+                                                                    <td colSpan={2} className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base italic bg-amber-50 text-center">
+                                                                        <span className="text-amber-700 font-medium">
+                                                                            {interval.breakInfo}: {formatTime(interval.start_time)} - {formatTime(interval.end_time)}
+                                                                        </span>
+                                                                    </td>
+                                                                ) : (
+                                                                    <>
+                                                                        <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                                                                            {formatTime(interval.start_time)}
+                                                                        </td>
+                                                                        <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                                                                            {formatTime(interval.end_time)}
+                                                                        </td>
+                                                                    </>
+                                                                )}
+                                                                {showSlotDuration && (
+                                                                    <td 
+                                                                        rowSpan={totalRows} 
+                                                                        className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap align-top"
+                                                                    >
+                                                                        {dayHours.slot_duration || schedule.slot_duration} min
+                                                                    </td>
+                                                                )}
+                                                            </tr>
+                                                        )
+                                                    })
                                                 }
 
                                                 return (
@@ -248,24 +351,6 @@ function DetailsContent() {
                                     </table>
                                 </div>
                             </div>
-
-                            {/* Restrictions */}
-                            {schedule.restrictions && schedule.restrictions.length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-gray-200">
-                                    <h4 className="text-sm sm:text-base font-semibold text-gray-900 mb-2">Restrictions</h4>
-                                    <div className="space-y-2">
-                                        {schedule.restrictions.map((restriction, index) => (
-                                            <div key={index} className="text-xs sm:text-sm text-gray-600 bg-white p-2 rounded">
-                                                <div className="font-medium">{restriction.type}: {restriction.description}</div>
-                                                <div className="text-gray-500">
-                                                    {getDayName(restriction.day_of_week[0])} - {getDayName(restriction.day_of_week[restriction.day_of_week.length - 1])}:
-                                                    {formatTime(restriction.start_time)} - {formatTime(restriction.end_time)}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>
@@ -324,6 +409,7 @@ function DetailsContent() {
                 isOpen={isBookingModalOpen}
                 onClose={() => setIsBookingModalOpen(false)}
                 garage={transformedGarage}
+                vehicleId={vehicleId || undefined}
             />
         </div>
     )
