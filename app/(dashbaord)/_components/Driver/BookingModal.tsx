@@ -358,8 +358,6 @@ export default function BookingModal({ isOpen, onClose, garage, vehicleId: propV
                     </form>
                 </div>
             </CustomReusableModal>
-
-            {/* Success Modal */}
             <BookingSuccessModal
                 isOpen={isSuccessModalOpen}
                 onClose={handleSuccessClose}
