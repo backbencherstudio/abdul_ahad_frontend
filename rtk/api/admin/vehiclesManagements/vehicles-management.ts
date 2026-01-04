@@ -137,7 +137,7 @@ export const vehiclesApi = createApi({
     // auto reminder api patch /api/admin/vehicle/reminder-settings
     patchAutoReminderSettings: builder.mutation<
       any,
-      { reminderPeriods: number[]; autoReminder: boolean; message: string }
+      { reminderPeriods: number[]; autoReminder: boolean; reminderMessage: string }
     >({
       query: (body) => ({
         url: `/api/admin/vehicle/reminder-settings`,

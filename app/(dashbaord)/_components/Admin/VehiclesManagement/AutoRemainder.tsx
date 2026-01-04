@@ -47,7 +47,7 @@ export default function AutoReminder({ vehiclesNeedingReminder }: AutoReminderPr
       return JSON.stringify({
         autoReminder: settingsData.data.autoReminder,
         reminderPeriods: settingsData.data.reminderPeriods,
-        message: settingsData.data.message,
+        reminderMessage: settingsData.data.reminderMessage,
       });
     }
     return null;
@@ -58,7 +58,7 @@ export default function AutoReminder({ vehiclesNeedingReminder }: AutoReminderPr
       return {
         autoReminder: settingsData.data.autoReminder ?? false,
         reminderDaysInAdvance: settingsData.data.reminderPeriods?.[0] ?? 14,
-        message: settingsData.data.message || "",
+        reminderMessage: settingsData.data.reminderMessage || "",
       };
     }
     return null;
@@ -78,7 +78,7 @@ export default function AutoReminder({ vehiclesNeedingReminder }: AutoReminderPr
     if (isOpen && settings) {
       setAutoReminderEnabled(settings.autoReminder);
       setReminderDaysInAdvance(settings.reminderDaysInAdvance);
-      setPredefinedMessage(settings.message);
+      setPredefinedMessage(settings.reminderMessage);
     }
   }, [isOpen, settingsKey, settings]);
 
@@ -94,7 +94,7 @@ export default function AutoReminder({ vehiclesNeedingReminder }: AutoReminderPr
       await patchAutoReminderSettings({
         reminderPeriods: [reminderDaysInAdvance],
         autoReminder: autoReminderEnabled,
-        message: predefinedMessage || "",
+        reminderMessage: predefinedMessage || "",
       }).unwrap();
 
       toast.success("Auto reminder settings saved successfully");
@@ -105,7 +105,7 @@ export default function AutoReminder({ vehiclesNeedingReminder }: AutoReminderPr
         if (updatedSettings.reminderPeriods?.length > 0) {
           setReminderDaysInAdvance(updatedSettings.reminderPeriods[0]);
         }
-        setPredefinedMessage(updatedSettings.message || "");
+        setPredefinedMessage(updatedSettings.reminderMessage || "");
       }
     } catch (error: any) {
       toast.error(error?.data?.message || "Failed to save auto reminder settings");
