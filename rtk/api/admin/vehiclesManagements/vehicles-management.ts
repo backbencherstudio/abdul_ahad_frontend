@@ -58,7 +58,7 @@ export type TVehicleDetailsAPIResponse = {
 export const vehiclesApi = createApi({
   reducerPath: "vehiclesApi",
   baseQuery,
-  tagTypes: ["Vehicles"],
+  tagTypes: ["Vehicles", "AutoReminderSettings"],
   endpoints: (builder) => ({
     // GET ALL VEHICLES
     getAllVehicles: builder.query<
@@ -70,6 +70,8 @@ export const vehiclesApi = createApi({
         status?: string;
         startdate?: string;
         enddate?: string;
+        sort_by_expiry?: "asc" | "desc";
+        expiry_status?: "all" | "expired" | "expired_soon" | "not_expired";
       }
     >({
       query: (params) => {
@@ -82,6 +84,10 @@ export const vehiclesApi = createApi({
         // date filters
         if (params.startdate) queryParams.append("startdate", params.startdate);
         if (params.enddate) queryParams.append("enddate", params.enddate);
+
+        // sort and expiry status filters
+        if (params.sort_by_expiry) queryParams.append("sort_by_expiry", params.sort_by_expiry);
+        if (params.expiry_status) queryParams.append("expiry_status", params.expiry_status);
 
         // pagination
         queryParams.append(
@@ -127,6 +133,29 @@ export const vehiclesApi = createApi({
       }),
       invalidatesTags: ["Vehicles"],
     }),
+ 
+    // auto reminder api patch /api/admin/vehicle/reminder-settings
+    patchAutoReminderSettings: builder.mutation<
+      any,
+      { reminderPeriods: number[]; autoReminder: boolean; message: string }
+    >({
+      query: (body) => ({
+        url: `/api/admin/vehicle/reminder-settings`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["AutoReminderSettings"],
+    }),
+
+    // get auto reminder settings api /api/admin/vehicle/reminder-settings
+    getAutoReminderSettings: builder.query<any, void>({
+      query: () => ({
+        url: `/api/admin/vehicle/reminder-settings`,
+        method: "GET",
+      }),
+      providesTags: ["AutoReminderSettings"],
+      keepUnusedDataFor: 0,
+    }), 
 
   }),
 });
@@ -135,4 +164,6 @@ export const {
   useGetAllVehiclesQuery,
   useGetAVehicleDetailsQuery,
   useDeleteVehicleMutation,
+  usePatchAutoReminderSettingsMutation,
+  useGetAutoReminderSettingsQuery,
 } = vehiclesApi;

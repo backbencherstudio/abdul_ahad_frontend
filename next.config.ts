@@ -61,6 +61,11 @@ const nextConfig: NextConfig = {
         port: "4080",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "backend.simplymot.co.uk",
+        pathname: "/**",
+      },
     ],
   },
 };
