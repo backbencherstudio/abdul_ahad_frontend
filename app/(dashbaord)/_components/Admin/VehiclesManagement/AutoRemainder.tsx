@@ -98,8 +98,6 @@ export default function AutoReminder({ vehiclesNeedingReminder }: AutoReminderPr
       }).unwrap();
 
       toast.success("Auto reminder settings saved successfully");
-      
-      // Manually refetch to get updated data immediately
       const result = await refetch();
       if (result.data?.data) {
         const updatedSettings = result.data.data;
