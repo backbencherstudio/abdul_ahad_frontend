@@ -36,7 +36,12 @@ const splitIntervalsByRestrictions = (
     dayNum: number
 ): Array<{ start_time: string; end_time: string; hasBreak?: boolean; breakInfo?: string }> => {
     // Get restrictions for this specific day
-    const dayRestrictions = restrictions.filter(r => r.day_of_week.includes(dayNum))
+    // Filter out restrictions that don't have day_of_week or where day_of_week is not an array
+    const dayRestrictions = (restrictions || []).filter(r => 
+        r && 
+        Array.isArray(r.day_of_week) && 
+        r.day_of_week.includes(dayNum)
+    )
     
     if (dayRestrictions.length === 0) {
         return intervals.map(interval => ({ ...interval }))
