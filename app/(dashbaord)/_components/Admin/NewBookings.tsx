@@ -17,8 +17,6 @@ export default function NewBookings() {
         page: 1,
         limit: 5,
     });
-
-    // Ensure only 5 bookings are displayed
     const allBookings = bookingsData?.data?.bookings || [];
     const bookings = allBookings.slice(0, 5);
 
