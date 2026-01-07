@@ -267,6 +267,20 @@ export default function DefultCalanderView({
 
   return (
     <>
+      {/* Save Button - Only show when there are changes */}
+      {hasChanges() && (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="cursor-pointer"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      )}
       <Card className="w-full">
         <CardContent className="p-4 sm:p-5">
           <div className="space-y-2">
@@ -429,21 +443,6 @@ export default function DefultCalanderView({
               </div>
             ))}
           </div>
-
-          {/* Save Button - Only show when there are changes */}
-          {hasChanges() && (
-            <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="cursor-pointer"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 

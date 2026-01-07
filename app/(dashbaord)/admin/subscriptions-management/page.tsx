@@ -1,7 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Package, ShoppingCart, FileText, TrendingUp } from "lucide-react";
+import {
+  Plus,
+  Package,
+  ShoppingCart,
+  FileText,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import {
@@ -23,7 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { Skeleton } from "@/components/ui/skeleton";
-
 
 export default function SubscriptionsManagement() {
   const router = useRouter();
@@ -257,7 +262,7 @@ export default function SubscriptionsManagement() {
                 >
                   {/* Title */}
                   <h2 className="text-2xl font-bold text-black mb-2">
-                    {subscription.name}
+                    {subscription.name}sss
                   </h2>
 
                   {/* Description */}
@@ -274,12 +279,14 @@ export default function SubscriptionsManagement() {
                     </div>
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="text-4xl font-bold text-black">
-                        {subscription.price_formatted || price.split('.')[0]}
+                        {subscription.price_formatted || price.split(".")[0]}
                       </span>
                       <span className="text-lg text-black">/month</span>
                     </div>
                     <p className="text-xs text-gray-600">
-                      {subscription.price_formatted || price} billed automatically every month on the sign-up date (unless cancelled)
+                      {subscription.price_formatted || price} billed
+                      automatically every month on the sign-up date (unless
+                      cancelled)
                     </p>
                   </div>
 
@@ -314,10 +321,11 @@ export default function SubscriptionsManagement() {
                   {/* Status Badge */}
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <span
-                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium ${subscription.is_active
+                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-medium ${
+                        subscription.is_active
                           ? "bg-green-100 text-green-800 border border-green-300"
                           : "bg-red-100 text-red-800 border border-red-300"
-                        }`}
+                      }`}
                     >
                       {subscription.is_active ? "Active" : "Inactive"}
                     </span>
@@ -328,7 +336,6 @@ export default function SubscriptionsManagement() {
           </div>
         )}
       </div>
-
     </>
   );
 }
