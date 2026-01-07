@@ -1,34 +1,38 @@
-"use client"
+"use client";
 
-import { useState, useCallback, useEffect } from "react"
-import ManageSlotsModal from "./_components/modals/manage-slots-modal"
-import CalendarView from "./_components/calendar-view"
+import { useState, useCallback, useEffect } from "react";
+import ManageSlotsModal from "./_components/modals/manage-slots-modal";
+import CalendarView from "./_components/calendar-view";
 import {
   useGetCalendarViewQuery,
   useGetScheduleQuery,
   scheduleApi,
-} from "../../../../rtk/api/garage/scheduleApis"
-import { useAppDispatch } from "@/rtk/hooks"
-import DefultCalanderView from "./_components/DefultCalanderView"
-import ManageHolidaysModal from "./_components/ManageHolidaysModal"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "lucide-react"
+} from "../../../../rtk/api/garage/scheduleApis";
+import { useAppDispatch } from "@/rtk/hooks";
+import DefultCalanderView from "./_components/DefultCalanderView";
+import ManageHolidaysModal from "./_components/ManageHolidaysModal";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
 
 export default function AvailabilityPage() {
   // Schedule configuration state
-  const [hasDefaultSchedule, setHasDefaultSchedule] = useState<boolean | null>(null)
+  const [hasDefaultSchedule, setHasDefaultSchedule] = useState<boolean | null>(
+    null
+  );
 
   // Slot management state
-  const [showManageSlotsModal, setShowManageSlotsModal] = useState(false)
-  const [selectedSlotDate, setSelectedSlotDate] = useState<string>("")
+  const [showManageSlotsModal, setShowManageSlotsModal] = useState(false);
+  const [selectedSlotDate, setSelectedSlotDate] = useState<string>("");
 
   // Calendar state
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
-  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(null)
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+  const [currentWeekNumber, setCurrentWeekNumber] = useState<number | null>(
+    null
+  );
 
   // Manage holidays modal state
-  const [showManageHolidaysModal, setShowManageHolidaysModal] = useState(false)
+  const [showManageHolidaysModal, setShowManageHolidaysModal] = useState(false);
 
   /**
    * RTK Query – check if garage has default schedule configured
@@ -38,7 +42,7 @@ export default function AvailabilityPage() {
     isLoading: isScheduleLoading,
     isError: isScheduleError,
     refetch: refetchSchedule,
-  } = useGetScheduleQuery()
+  } = useGetScheduleQuery();
 
   const {
     data: calendarResponse,
@@ -55,67 +59,76 @@ export default function AvailabilityPage() {
       skip: hasDefaultSchedule === false || hasDefaultSchedule === null,
       // Keep previous data visible while fetching new data
       refetchOnMountOrArgChange: true,
-    },
-  )
+    }
+  );
 
-  const calendarData = calendarResponse?.data
+  const calendarData = calendarResponse?.data;
 
   /**
    * Derive hasDefaultSchedule
    */
   useEffect(() => {
-    if (isScheduleLoading) return
+    if (isScheduleLoading) return;
 
     if (scheduleResponse?.success && scheduleResponse.data) {
-      setHasDefaultSchedule(true)
-      return
+      setHasDefaultSchedule(true);
+      return;
     }
 
-    if ((isScheduleError || !scheduleResponse?.success || !scheduleResponse?.data) && hasDefaultSchedule === null) {
-      setHasDefaultSchedule(false)
+    if (
+      (isScheduleError ||
+        !scheduleResponse?.success ||
+        !scheduleResponse?.data) &&
+      hasDefaultSchedule === null
+    ) {
+      setHasDefaultSchedule(false);
     }
-  }, [scheduleResponse, isScheduleLoading, isScheduleError, hasDefaultSchedule])
+  }, [
+    scheduleResponse,
+    isScheduleLoading,
+    isScheduleError,
+    hasDefaultSchedule,
+  ]);
 
   /**
    * When calendar data arrives, set current week number from API if not already set
    */
   useEffect(() => {
     if (calendarData?.current_week && !currentWeekNumber) {
-      setCurrentWeekNumber(calendarData.current_week.week_number)
+      setCurrentWeekNumber(calendarData.current_week.week_number);
     }
-  }, [calendarData, currentWeekNumber])
+  }, [calendarData, currentWeekNumber]);
 
-
-  const dispatch = useAppDispatch()
+  const dispatch = useAppDispatch();
 
   /**
    * Prefetch next/previous month data for faster loading
    */
   useEffect(() => {
-    if (hasDefaultSchedule === false || hasDefaultSchedule === null) return
+    if (hasDefaultSchedule === false || hasDefaultSchedule === null) return;
 
     // Prefetch next month
-    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1
-    const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+    const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
     dispatch(
       scheduleApi.util.prefetch(
         "getCalendarView",
         { year: nextYear, month: nextMonth },
         { force: false }
       )
-    )
+    );
 
     // Prefetch previous month
-    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1
-    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
     dispatch(
       scheduleApi.util.prefetch(
         "getCalendarView",
         { year: prevYear, month: prevMonth },
         { force: false }
       )
-    )
-  }, [currentYear, currentMonth, hasDefaultSchedule, dispatch])
+    );
+  }, [currentYear, currentMonth, hasDefaultSchedule, dispatch]);
 
   /**
    * Handle month navigation
@@ -123,33 +136,33 @@ export default function AvailabilityPage() {
    */
   const handleMonthChange = useCallback(
     async (newYear: number, newMonth: number) => {
-      setCurrentYear(newYear)
-      setCurrentMonth(newMonth)
+      setCurrentYear(newYear);
+      setCurrentMonth(newMonth);
       // Reset week number so that API can determine the appropriate current week
-      setCurrentWeekNumber(null)
+      setCurrentWeekNumber(null);
     },
-    [],
-  )
+    []
+  );
 
   /**
    * Handle manage slots button click
    * Opens slot management modal for specific date
    */
   const handleManageSlots = (date: string) => {
-    setSelectedSlotDate(date)
-    setShowManageSlotsModal(true)
-  }
+    setSelectedSlotDate(date);
+    setShowManageSlotsModal(true);
+  };
 
   /**
    * Handle slot management success
    * Refreshes calendar data after slot operations
    */
   const handleSlotManagementSuccess = async () => {
-    setShowManageSlotsModal(false)
-    setSelectedSlotDate("")
+    setShowManageSlotsModal(false);
+    setSelectedSlotDate("");
     // Force refresh of calendar after any slot operation
-    await refetchCalendar()
-  }
+    await refetchCalendar();
+  };
 
   return (
     <>
@@ -157,13 +170,17 @@ export default function AvailabilityPage() {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div className="mb-4">
-            <h1 className="text-xl font-bold text-gray-900">Garage Availability Manager</h1>
-            <p className="text-gray-600 text-sm">Update your garage's opening hours, breaks and holidays</p>
+            <h1 className="text-xl font-bold text-gray-900">
+              Garage Availability Manager
+            </h1>
+            <p className="text-gray-600 text-sm">
+              Update your garage's opening hours, breaks and holidays
+            </p>
           </div>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className="cursor-pointer flex items-center gap-2"
             onClick={() => setShowManageHolidaysModal(true)}
           >
@@ -176,15 +193,18 @@ export default function AvailabilityPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel */}
           <div className="space-y-4">
-            <DefultCalanderView 
-              isLoading={isScheduleLoading} 
+            <DefultCalanderView
+              isLoading={isScheduleLoading}
               onScheduleUpdate={async () => {
                 // Ensure hasDefaultSchedule is true so calendar query is enabled
-                if (hasDefaultSchedule === false || hasDefaultSchedule === null) {
-                  setHasDefaultSchedule(true)
+                if (
+                  hasDefaultSchedule === false ||
+                  hasDefaultSchedule === null
+                ) {
+                  setHasDefaultSchedule(true);
                 }
                 // Refetch calendar to show updated data immediately
-                await refetchCalendar()
+                await refetchCalendar();
               }}
             />
           </div>
@@ -200,14 +220,14 @@ export default function AvailabilityPage() {
               isLoading={isCalendarFetching && !calendarData}
               onMonthChange={handleMonthChange}
               onDateSelect={(date: string) => {
-                console.log("[v0] Date selected:", date)
+                console.log("[v0] Date selected:", date);
                 if (date) {
-                  handleManageSlots(date)
+                  handleManageSlots(date);
                 }
               }}
               onModalClose={() => {
-                setShowManageSlotsModal(false)
-                setSelectedSlotDate("")
+                setShowManageSlotsModal(false);
+                setSelectedSlotDate("");
               }}
             />
           </div>
@@ -219,8 +239,8 @@ export default function AvailabilityPage() {
         <ManageSlotsModal
           isOpen={showManageSlotsModal}
           onClose={() => {
-            setShowManageSlotsModal(false)
-            setSelectedSlotDate("")
+            setShowManageSlotsModal(false);
+            setSelectedSlotDate("");
           }}
           date={selectedSlotDate}
           onSuccess={handleSlotManagementSuccess}
@@ -234,10 +254,10 @@ export default function AvailabilityPage() {
           onClose={() => setShowManageHolidaysModal(false)}
           onSuccess={() => {
             // Refresh calendar data but keep modal open
-            refetchCalendar()
+            refetchCalendar();
           }}
         />
       )}
     </>
-  )
+  );
 }
