@@ -41,17 +41,15 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
   // Fetch current subscription for garage users
-  const {
-    data: subscriptionData,
-    isLoading: isLoadingSubscription,
-  } = useGetCurrentSubscriptionQuery(undefined, {
-    skip: !user?.type || user.type.toLowerCase() !== "garage",
-  });
+  const { data: subscriptionData, isLoading: isLoadingSubscription } =
+    useGetCurrentSubscriptionQuery(undefined, {
+      skip: !user?.type || user.type.toLowerCase() !== "garage",
+    });
 
   const menuItems = [
     // Driver
@@ -199,19 +197,27 @@ export default function Sidebar({ onClose }: SidebarProps) {
     toast.success("Logout successful");
   };
 
+  const handleLogin = () => {
+    router.push("/login/driver");
+  };
+
   const handleActivateAccount = () => {
     router.push("/garage/subscription");
   };
 
   // Check if subscription is active
-  const hasActiveSubscription = subscriptionData?.data?.status === 'ACTIVE'
+  const hasActiveSubscription = subscriptionData?.data?.status === "ACTIVE";
 
   // Protected routes that require active subscription
-  const protectedRoutes = ['/garage/pricing', '/garage/availability', '/garage/bookings']
+  const protectedRoutes = [
+    "/garage/pricing",
+    "/garage/availability",
+    "/garage/bookings",
+  ];
 
   const isRouteProtected = (href: string) => {
-    return protectedRoutes.includes(href)
-  }
+    return protectedRoutes.includes(href);
+  };
 
   return (
     <div className="w-72 h-screen bg-white flex flex-col">
@@ -244,36 +250,51 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     : pathname === item.href;
 
                 // Check if route is protected and subscription is not active
-                const isLocked = user?.type?.toLowerCase() === 'garage' &&
+                const isGarageLocked =
+                  user?.type?.toLowerCase() === "garage" &&
                   isRouteProtected(item.href) &&
-                  !hasActiveSubscription
+                  !hasActiveSubscription;
+
+                // Check if route is protected for guest users
+                const isGuestLocked =
+                  !isAuthenticated && item.href !== "/driver/book-my-mot";
+
+                const isLocked = isGarageLocked || isGuestLocked;
 
                 return (
                   <li key={item.href}>
                     {isLocked ? (
-                      <div
-                        className="flex items-center justify-between px-4 py-2 text-gray-400 cursor-not-allowed rounded-[8px] bg-gray-50"
-                      >
+                      <div className="flex items-center justify-between px-4 py-2 text-gray-400 cursor-not-allowed rounded-[8px] bg-gray-50">
                         <div className="flex items-center">
                           <item.icon className="h-5 w-5 mr-3" />
                           {item.label}
                         </div>
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </div>
                     ) : (
                       <Link href={item.href}>
                         <span
                           className={`flex items-center px-4 py-2 transition-colors duration-200
-                                              ${isActive
-                              ? "bg-[#DDF7E0] text-[#19CA32] font-[400] rounded-[8px]"
-                              : "text-gray-800 hover:bg-gray-100 hover:text-gray-700 rounded-[8px]"
-                            }`}
+                                              ${
+                                                isActive
+                                                  ? "bg-[#DDF7E0] text-[#19CA32] font-[400] rounded-[8px]"
+                                                  : "text-gray-800 hover:bg-gray-100 hover:text-gray-700 rounded-[8px]"
+                                              }`}
                         >
                           <item.icon
-                            className={`h-5 w-5 mr-3 ${isActive ? "text-white]" : ""
-                              }`}
+                            className={`h-5 w-5 mr-3 ${
+                              isActive ? "text-white]" : ""
+                            }`}
                           />
                           {item.label}
                         </span>
@@ -308,22 +329,35 @@ export default function Sidebar({ onClose }: SidebarProps) {
                   bookings, please proceed to the payment page.
                 </p>
 
-                <button onClick={handleActivateAccount} className="bg-white text-red-500 px-2 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors duration-200 w-full cursor-pointer font-Inter text-sm">
+                <button
+                  onClick={handleActivateAccount}
+                  className="bg-white text-red-500 px-2 py-2 rounded-md font-medium hover:bg-gray-50 transition-colors duration-200 w-full cursor-pointer font-Inter text-sm"
+                >
                   Activate Account
                 </button>
               </div>
             </div>
           )}
 
-        {/* Logout button */}
+        {/* Logout/Login button */}
         <div className="p-4">
-          <button
-            onClick={handleLogout}
-            className="flex items-center cursor-pointer w-full px-4 py-2 text-[#19CA32] hover:bg-[#19CA32] hover:text-white rounded-md transition-colors duration-300 group"
-          >
-            <HiArrowRightOnRectangle className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:translate-x-1" />
-            Logout
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="flex items-center cursor-pointer w-full px-4 py-2 text-[#19CA32] hover:bg-[#19CA32] hover:text-white rounded-md transition-colors duration-300 group"
+            >
+              <HiArrowRightOnRectangle className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:translate-x-1" />
+              Logout
+            </button>
+          ) : (
+            <button
+              onClick={handleLogin}
+              className="flex items-center cursor-pointer w-full px-4 py-2 text-[#19CA32] hover:bg-[#19CA32] hover:text-white rounded-md transition-colors duration-300 group"
+            >
+              <HiArrowRightOnRectangle className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:translate-x-1" />
+              Login
+            </button>
+          )}
         </div>
       </div>
     </div>

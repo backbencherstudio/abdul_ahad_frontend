@@ -244,8 +244,6 @@ export const bookMyMotApi = createApi({
         return response;
       },
       providesTags: ["BookMyMot"],
-      // casg
-      keepUnusedDataFor: 0,
     }),
   }),
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { CalendarIcon } from "lucide-react";
@@ -18,7 +18,11 @@ import BookingDetailsSection from "./BookingModal/BookingDetailsSection";
 import AdditionalServicesSection from "./BookingModal/AdditionalServicesSection";
 import BookingSuccessModal from "./BookingModal/BookingSuccessModal";
 
-import { GarageData } from "@/rtk/slices/driver/bookMyMotSlice";
+import {
+  GarageData,
+  setPendingBooking,
+} from "@/rtk/slices/driver/bookMyMotSlice";
+import { useDispatch } from "react-redux";
 
 interface BookingFormData {
   name: string;
@@ -33,6 +37,7 @@ interface BookingModalProps {
   onClose: () => void;
   garage: GarageData | null;
   vehicleId?: string; // Optional vehicle_id prop for cases where vehicle is not in Redux
+  vehicleRegistrationNumber?: string;
 }
 
 export default function BookingModal({
@@ -40,8 +45,11 @@ export default function BookingModal({
   onClose,
   garage,
   vehicleId: propVehicleId,
+  vehicleRegistrationNumber,
 }: BookingModalProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { profile } = useProfile();
 
@@ -67,6 +75,8 @@ export default function BookingModal({
   const [submittedBooking, setSubmittedBooking] =
     useState<BookingFormData | null>(null);
 
+  const dispatch = useDispatch();
+
   // Fetch slots when date is selected
   const { data: slotsData, isLoading: slotsLoading } = useGetGarageSlotsQuery(
     { id: garage?.id || "", date: bookingForm.date },
@@ -84,6 +94,13 @@ export default function BookingModal({
         name: user?.name || profile?.name || prev.name || "",
         email: user?.email || profile?.email || prev.email || "",
         phone: profile?.phone_number || prev.phone || "",
+      }));
+    } else {
+      setBookingForm((prev) => ({
+        ...prev,
+        name: "guest",
+        email: "guest@example.com",
+        phone: "**********",
       }));
     }
   }, [isOpen, user, profile]);
@@ -183,7 +200,33 @@ export default function BookingModal({
     const garageId = garage?.id;
     const finalVehicleId = vehicleId;
 
-    if (!selectedSlotId || !garageId || !finalVehicleId || !selectedSlotData) {
+    if ((!user || !finalVehicleId) && vehicleRegistrationNumber) {
+      dispatch(
+        setPendingBooking({
+          slot_id: selectedSlotData.id,
+          garage_id: garageId,
+          vehicle_registration_number: vehicleRegistrationNumber,
+          start_time: selectedSlotData.start_time,
+          end_time: selectedSlotData.end_time,
+          date: selectedSlotData.date,
+          service_type: "MOT",
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        })
+      );
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("is_logged_in", "true");
+      const currentUrl = `${pathname}${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
+      router.replace(
+        `/login/driver?redirect=${encodeURIComponent(currentUrl)}`
+      );
+    } else if (
+      !selectedSlotId ||
+      !garageId ||
+      !finalVehicleId ||
+      !selectedSlotData
+    ) {
       if (!garageId) {
         toast.error("Garage information is missing. Please search again.");
       } else if (!finalVehicleId) {

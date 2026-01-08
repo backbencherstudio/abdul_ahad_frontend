@@ -37,8 +37,7 @@ const appReducer = combineReducers({
   [usersManagementApi.reducerPath]: usersManagementApi.reducer,
   [roleManagementApi.reducerPath]: roleManagementApi.reducer,
   [garagesApi.reducerPath]: garagesApi.reducer,
-  [subscriptionsManagementApi.reducerPath]:
-    subscriptionsManagementApi.reducer,
+  [subscriptionsManagementApi.reducerPath]: subscriptionsManagementApi.reducer,
   [dashboardApi.reducerPath]: dashboardApi.reducer,
   [vehiclesApi.reducerPath]: vehiclesApi.reducer,
   [driversApi.reducerPath]: driversApi.reducer,
@@ -66,7 +65,10 @@ const appReducer = combineReducers({
 });
 
 // Root reducer that resets entire store on logout
-const rootReducer = (state: ReturnType<typeof appReducer> | undefined, action: any) => {
+const rootReducer = (
+  state: ReturnType<typeof appReducer> | undefined,
+  action: any
+) => {
   // Reset entire store when logout action is dispatched
   if (action.type === "auth/logout") {
     state = undefined;

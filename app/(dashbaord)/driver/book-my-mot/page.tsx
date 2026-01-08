@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,20 @@ import { toast } from "react-toastify";
 import imgMot from "@/public/Image/admin/cardMot.png";
 import VehicleCard from "../../_components/Driver/VehicleCard";
 import GarageCard from "../../_components/Driver/GarageCard";
-import { useSearchVehiclesAndGaragesQuery } from "@/rtk/api/driver/bookMyMotApi";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  useBookSlotMutation,
+  useSearchVehiclesAndGaragesQuery,
+} from "@/rtk/api/driver/bookMyMotApi";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/rtk/store";
+import { setPendingBooking } from "@/rtk/slices/driver/bookMyMotSlice";
+import {
+  useAddVehicleMutation,
+  useGetVehiclesQuery,
+} from "@/rtk/api/driver/vehiclesApis";
+import BookingSuccessModal from "../../_components/Driver/BookingModal/BookingSuccessModal";
+import { useAuth } from "@/context/AuthContext";
 
 interface FormData {
   registrationNumber: string;
@@ -22,28 +34,39 @@ interface FormData {
 
 export default function BookMyMOT() {
   const router = useRouter();
+  const pathname = usePathname();
+  const dispatch = useDispatch();
   const searchParamsFromURL = useSearchParams();
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    reset,
+    // reset,
   } = useForm<FormData>();
+
+  const { user } = useAuth();
 
   // Get registration number and postcode from URL query parameters
   const registrationFromURL = searchParamsFromURL?.get("registration");
   const postcodeFromURL = searchParamsFromURL?.get("postcode");
+  const isLoggedIn = searchParamsFromURL?.get("is_logged_in");
+
+  const pendingBooking = useSelector(
+    (rootState: RootState) => rootState.bookMyMot.pendingBooking
+  );
 
   // State for pagination
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   // Local state for results (requested by user)
   const [vehicle, setVehicle] = useState(null);
   const [garages, setGarages] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const isBookingInitiated = useRef(false);
 
   // Derived state for auto-search flag
   const isSearchActive = !!(registrationFromURL && postcodeFromURL);
@@ -59,9 +82,9 @@ export default function BookMyMOT() {
   }, [registrationFromURL, postcodeFromURL, setValue]);
 
   // Function to clear URL parameters
-  const clearURLParams = () => {
-    router.replace("/driver/book-my-mot", { scroll: false });
-  };
+  // const clearURLParams = () => {
+  //   router.replace("/driver/book-my-mot", { scroll: false });
+  // };
 
   // Query will execute when URL params are present
   const { data, isLoading, error, refetch, isFetching } =
@@ -118,6 +141,155 @@ export default function BookMyMOT() {
   };
 
   const showResults = vehicle !== null || garages.length > 0;
+  const { data: vehicles, isFetching: isFetchingVehicles } =
+    useGetVehiclesQuery(null, { skip: !user?.id });
+  const [addVehicle, { isLoading: isAddingVehicle }] = useAddVehicleMutation();
+  const [bookSlot, { isLoading: isBooking }] = useBookSlotMutation();
+
+  useEffect(() => {
+    const performAutoBooking = async () => {
+      // Guard: Ensure everything is ready and we haven't already tried
+      if (
+        isLoggedIn !== "true" ||
+        !user?.id ||
+        !pendingBooking.vehicle_registration_number ||
+        isFetchingVehicles ||
+        isAddingVehicle ||
+        isBooking ||
+        isBookingInitiated.current
+      ) {
+        return;
+      }
+
+      // Check for expiration
+      if (
+        !pendingBooking.expires_at ||
+        Date.now() > new Date(pendingBooking.expires_at).getTime()
+      ) {
+        // Expired, clear state and params
+        cleanupBookingState();
+        return;
+      }
+
+      // Mark as initiated to prevent double-runs
+      isBookingInitiated.current = true;
+
+      try {
+        let vehicleId = "";
+        const existVehicle = vehicles?.data?.find(
+          (vehicle) =>
+            vehicle.registration_number ===
+            pendingBooking.vehicle_registration_number
+        );
+
+        if (existVehicle) {
+          vehicleId = existVehicle.id;
+        } else {
+          const response = await addVehicle({
+            registration_number: pendingBooking.vehicle_registration_number,
+          }).unwrap();
+          if (!response.success || !response?.data?.id)
+            throw new Error(response.message || "Failed to add vehicle");
+          vehicleId = response.data.id;
+        }
+
+        const result = await bookSlot({
+          vehicle_id: vehicleId,
+          ...(pendingBooking.slot_id
+            ? { slot_id: pendingBooking.slot_id }
+            : {
+                date: pendingBooking.date,
+                start_time: pendingBooking.start_time,
+                end_time: pendingBooking.end_time,
+              }),
+          garage_id: pendingBooking.garage_id,
+          service_type: pendingBooking.service_type,
+        }).unwrap();
+
+        if (result.success) {
+          let successMessage = "Slot booked successfully!";
+          if (typeof result.message === "string") {
+            successMessage = result.message;
+          } else if (
+            result.message &&
+            typeof result.message === "object" &&
+            "message" in result.message
+          ) {
+            const msgObj = result.message as { message?: string };
+            if (typeof msgObj.message === "string") {
+              successMessage = msgObj.message;
+            }
+          }
+          toast.success(successMessage);
+          setIsSuccessModalOpen(true);
+        } else {
+          let errorMessage = "Failed to book slot";
+          if (typeof result.message === "string") {
+            errorMessage = result.message;
+          } else if (
+            result.message &&
+            typeof result.message === "object" &&
+            "message" in result.message
+          ) {
+            const msgObj = result.message as { message?: string };
+            if (typeof msgObj.message === "string") {
+              errorMessage = msgObj.message;
+            }
+          }
+          toast.error(errorMessage);
+        }
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message ||
+          error?.message ||
+          "Failed to book slot. Please try again.";
+        toast.error(errorMessage);
+      } finally {
+        // ALWAYS cleanup after an attempt
+        cleanupBookingState();
+      }
+    };
+
+    const cleanupBookingState = () => {
+      // Clear Redux state
+      dispatch(
+        setPendingBooking({
+          slot_id: "",
+          garage_id: "",
+          vehicle_registration_number: "",
+          start_time: "",
+          end_time: "",
+          date: "",
+          service_type: "MOT",
+          expires_at: "",
+        })
+      );
+
+      // Clear URL params
+      const params = new URLSearchParams(searchParamsFromURL?.toString());
+      params.delete("is_logged_in");
+      router.replace(
+        `${pathname}${params.toString() ? `?${params.toString()}` : ""}`,
+        {
+          scroll: false,
+        }
+      );
+    };
+
+    performAutoBooking();
+  }, [
+    isLoggedIn,
+    pendingBooking,
+    user,
+    vehicles,
+    isFetchingVehicles,
+    isAddingVehicle,
+    isBooking,
+    dispatch,
+    router,
+    pathname,
+    searchParamsFromURL,
+  ]);
 
   return (
     <div className="w-full mx-auto">
@@ -361,6 +533,16 @@ export default function BookMyMOT() {
           </div>
         </div>
       )}
+
+      <BookingSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        submittedBooking={null}
+        selectedSlot={null}
+        selectedDate={null}
+        garage={null}
+        formatTime={null}
+      />
     </div>
   );
 }
