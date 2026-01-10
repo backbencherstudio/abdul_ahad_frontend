@@ -431,7 +431,7 @@ export default function BookingModal({
             const currentUrl = `${pathname}${
               params.toString() ? `?${params.toString()}` : ""
             }`;
-            router.replace(
+            router.push(
               `/login/driver?redirect=${encodeURIComponent(currentUrl)}`
             );
           }}
