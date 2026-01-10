@@ -118,6 +118,7 @@ export interface Slot {
   end_time: string;
   date: string;
   status?: string[];
+  has_id: boolean;
 }
 
 // search vehicles and garages pass in body registrationNumber and postcode
@@ -170,6 +171,7 @@ export const bookMyMotApi = createApi({
           end_time: slot?.end_time || "",
           date: slot?.date || arg.date,
           status: slot?.status,
+          has_id: !!slot?.id,
         });
 
         // Array response

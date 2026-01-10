@@ -26,6 +26,7 @@ import {
 } from "@/rtk/api/driver/vehiclesApis";
 import BookingSuccessModal from "../../_components/Driver/BookingModal/BookingSuccessModal";
 import { useAuth } from "@/context/AuthContext";
+import LoadingSpinner from "@/components/reusable/LoadingSpinner";
 
 interface FormData {
   registrationNumber: string;
@@ -543,6 +544,20 @@ export default function BookMyMOT() {
         garage={null}
         formatTime={null}
       />
+
+      {/* Auto-booking Loading Overlay */}
+      {isLoggedIn === "true" &&
+        (isAddingVehicle || isBooking || isFetchingVehicles) && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex flex-col items-center justify-center">
+            <div className="bg-white p-10 rounded-3xl shadow-2xl scale-110">
+              <LoadingSpinner
+                size="lg"
+                text="Finalizing Your Booking..."
+                fullScreen={false}
+              />
+            </div>
+          </div>
+        )}
     </div>
   );
 }

@@ -17,6 +17,7 @@ import PersonalInformationSection from "./BookingModal/PersonalInformationSectio
 import BookingDetailsSection from "./BookingModal/BookingDetailsSection";
 import AdditionalServicesSection from "./BookingModal/AdditionalServicesSection";
 import BookingSuccessModal from "./BookingModal/BookingSuccessModal";
+import ConfirmationModal from "@/components/reusable/ConfirmationModal";
 
 import {
   GarageData,
@@ -71,9 +72,11 @@ export default function BookingModal({
     end_time: string;
     date: string;
     id: string;
+    has_id: boolean;
   } | null>(null);
   const [submittedBooking, setSubmittedBooking] =
     useState<BookingFormData | null>(null);
+  const [isLoginConfirmOpen, setIsLoginConfirmOpen] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -158,6 +161,7 @@ export default function BookingModal({
       end_time: string;
       date: string;
       status?: string[];
+      has_id: boolean;
     },
     e?: React.MouseEvent
   ) => {
@@ -183,6 +187,7 @@ export default function BookingModal({
       start_time: slot.start_time,
       end_time: slot.end_time,
       date: slot.date,
+      has_id: slot.has_id,
     });
   };
 
@@ -201,26 +206,8 @@ export default function BookingModal({
     const finalVehicleId = vehicleId;
 
     if ((!user || !finalVehicleId) && vehicleRegistrationNumber) {
-      dispatch(
-        setPendingBooking({
-          slot_id: selectedSlotData.id,
-          garage_id: garageId,
-          vehicle_registration_number: vehicleRegistrationNumber,
-          start_time: selectedSlotData.start_time,
-          end_time: selectedSlotData.end_time,
-          date: selectedSlotData.date,
-          service_type: "MOT",
-          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-        })
-      );
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("is_logged_in", "true");
-      const currentUrl = `${pathname}${
-        params.toString() ? `?${params.toString()}` : ""
-      }`;
-      router.replace(
-        `/login/driver?redirect=${encodeURIComponent(currentUrl)}`
-      );
+      setIsLoginConfirmOpen(true);
+      return;
     } else if (
       !selectedSlotId ||
       !garageId ||
@@ -245,10 +232,14 @@ export default function BookingModal({
       const bookingBody = {
         garage_id: garageId,
         vehicle_id: finalVehicleId,
-        start_time: selectedSlotData.start_time,
-        end_time: selectedSlotData.end_time,
-        date: selectedSlotData.date,
         service_type: "MOT",
+        ...(selectedSlotData.has_id
+          ? { slot_id: selectedSlotData.id }
+          : {
+              start_time: selectedSlotData.start_time,
+              end_time: selectedSlotData.end_time,
+              date: selectedSlotData.date,
+            }),
       };
 
       const result = await bookSlot(bookingBody).unwrap();
@@ -414,6 +405,41 @@ export default function BookingModal({
             </div>
           </form>
         </div>
+        <ConfirmationModal
+          open={isLoginConfirmOpen}
+          onClose={() => setIsLoginConfirmOpen(false)}
+          onConfirm={() => {
+            if (!selectedSlotData) return;
+            dispatch(
+              setPendingBooking({
+                slot_id: selectedSlotData.has_id ? selectedSlotData.id : "",
+                garage_id: garage?.id || "",
+                vehicle_registration_number: vehicleRegistrationNumber || "",
+                start_time: selectedSlotData.has_id
+                  ? ""
+                  : selectedSlotData.start_time,
+                end_time: selectedSlotData.has_id
+                  ? ""
+                  : selectedSlotData.end_time,
+                date: selectedSlotData.has_id ? "" : selectedSlotData.date,
+                service_type: "MOT",
+                expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+              })
+            );
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("is_logged_in", "true");
+            const currentUrl = `${pathname}${
+              params.toString() ? `?${params.toString()}` : ""
+            }`;
+            router.replace(
+              `/login/driver?redirect=${encodeURIComponent(currentUrl)}`
+            );
+          }}
+          title="Sign In Required"
+          description="To complete your MOT booking, you need to sign in to your account. Would you like to sign in now?"
+          confirmText="Sign In"
+          cancelText="Cancel"
+        />
       </CustomReusableModal>
       <BookingSuccessModal
         isOpen={isSuccessModalOpen}

@@ -135,22 +135,30 @@ export const driversApi = createApi({
     }),
 
     // Get a driver details
-    getADriverDetails: builder.query<
-      TDriversDetailsAPIResponse,
-      string
-    >({
+    getADriverDetails: builder.query<TDriversDetailsAPIResponse, string>({
       query: (id) => ({
         url: `/api/admin/driver/${id}`,
         method: "GET",
       }),
       providesTags: ["Drivers"],
-      keepUnusedDataFor: 0,
     }),
 
+    // Delete a driver
+    deleteDriver: builder.mutation<
+      { success: boolean; message: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/api/admin/user/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Drivers"],
+    }),
   }),
 });
 
 export const {
   useGetAllDriversQuery,
   useGetADriverDetailsQuery,
+  useDeleteDriverMutation,
 } = driversApi;

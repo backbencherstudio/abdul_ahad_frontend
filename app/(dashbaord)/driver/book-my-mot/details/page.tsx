@@ -5,8 +5,23 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import BookingModal from "../../../_components/Driver/BookingModal";
-import { useGetGarageServicesQuery } from "@/rtk/api/driver/bookMyMotApi";
-import { GarageData } from "@/rtk/slices/driver/bookMyMotSlice";
+import {
+  useBookSlotMutation,
+  useGetGarageServicesQuery,
+} from "@/rtk/api/driver/bookMyMotApi";
+import {
+  GarageData,
+  setPendingBooking,
+} from "@/rtk/slices/driver/bookMyMotSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/rtk/store";
+import { useAuth } from "@/context/AuthContext";
+import {
+  useAddVehicleMutation,
+  useGetVehiclesQuery,
+} from "@/rtk/api/driver/vehiclesApis";
+import LoadingSpinner from "@/components/reusable/LoadingSpinner";
+import BookingSuccessModal from "@/app/(dashbaord)/_components/Driver/BookingModal/BookingSuccessModal";
 
 // Helper function to get day name from number
 const getDayName = (dayNum: number): string => {
@@ -128,7 +143,24 @@ function DetailsContent() {
   const router = useRouter();
   const garageId = searchParams.get("id");
   const vehicleId = searchParams.get("vehicle_id");
+  const registrationFromURL = searchParams.get("registration");
+  const isLoggedIn = searchParams.get("is_logged_in");
+  const pathname = "/driver/book-my-mot/details"; // Fixed pathname for this page
+
+  const dispatch = useDispatch();
+  const { user } = useAuth();
+  const pendingBooking = useSelector(
+    (rootState: RootState) => rootState.bookMyMot.pendingBooking
+  );
+
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const isBookingInitiated = React.useRef(false);
+
+  const { data: vehicles, isFetching: isFetchingVehicles } =
+    useGetVehiclesQuery(null, { skip: !user?.id });
+  const [addVehicle, { isLoading: isAddingVehicle }] = useAddVehicleMutation();
+  const [bookSlot, { isLoading: isBooking }] = useBookSlotMutation();
 
   // Fetch garage services using RTK Query
   const {
@@ -177,6 +209,150 @@ function DetailsContent() {
       router.push("/driver/book-my-mot");
     }
   }, [error, router]);
+
+  useEffect(() => {
+    const performAutoBooking = async () => {
+      // Guard: Ensure everything is ready and we haven't already tried
+      if (
+        isLoggedIn !== "true" ||
+        !user?.id ||
+        !pendingBooking.vehicle_registration_number ||
+        isFetchingVehicles ||
+        isAddingVehicle ||
+        isBooking ||
+        isBookingInitiated.current
+      ) {
+        return;
+      }
+
+      // Check for expiration
+      if (
+        !pendingBooking.expires_at ||
+        Date.now() > new Date(pendingBooking.expires_at).getTime()
+      ) {
+        // Expired, clear state and params
+        cleanupBookingState();
+        return;
+      }
+
+      // Mark as initiated to prevent double-runs
+      isBookingInitiated.current = true;
+
+      try {
+        let finalVehicleId = "";
+        const existVehicle = vehicles?.data?.find(
+          (v) =>
+            v.registration_number === pendingBooking.vehicle_registration_number
+        );
+
+        if (existVehicle) {
+          finalVehicleId = existVehicle.id;
+        } else {
+          const response = await addVehicle({
+            registration_number: pendingBooking.vehicle_registration_number,
+          }).unwrap();
+          if (!response.success || !response?.data?.id)
+            throw new Error(response.message || "Failed to add vehicle");
+          finalVehicleId = response.data.id;
+        }
+
+        const result = await bookSlot({
+          vehicle_id: finalVehicleId,
+          ...(pendingBooking.slot_id
+            ? { slot_id: pendingBooking.slot_id }
+            : {
+                date: pendingBooking.date,
+                start_time: pendingBooking.start_time,
+                end_time: pendingBooking.end_time,
+              }),
+          garage_id: pendingBooking.garage_id,
+          service_type: pendingBooking.service_type,
+        }).unwrap();
+
+        if (result.success) {
+          let successMessage = "Slot booked successfully!";
+          if (typeof result.message === "string") {
+            successMessage = result.message;
+          } else if (
+            result.message &&
+            typeof result.message === "object" &&
+            "message" in result.message
+          ) {
+            const msgObj = result.message as { message?: string };
+            if (typeof msgObj.message === "string") {
+              successMessage = msgObj.message;
+            }
+          }
+          toast.success(successMessage);
+          setIsSuccessModalOpen(true);
+        } else {
+          let errorMessage = "Failed to book slot";
+          if (typeof result.message === "string") {
+            errorMessage = result.message;
+          } else if (
+            result.message &&
+            typeof result.message === "object" &&
+            "message" in result.message
+          ) {
+            const msgObj = result.message as { message?: string };
+            if (typeof msgObj.message === "string") {
+              errorMessage = msgObj.message;
+            }
+          }
+          toast.error(errorMessage);
+        }
+      } catch (err: any) {
+        const errorMessage =
+          err?.data?.message ||
+          err?.message ||
+          "Failed to book slot. Please try again.";
+        toast.error(errorMessage);
+      } finally {
+        // ALWAYS cleanup after an attempt
+        cleanupBookingState();
+      }
+    };
+
+    const cleanupBookingState = () => {
+      // Clear Redux state
+      dispatch(
+        setPendingBooking({
+          slot_id: "",
+          garage_id: "",
+          vehicle_registration_number: "",
+          start_time: "",
+          end_time: "",
+          date: "",
+          service_type: "MOT",
+          expires_at: "",
+        })
+      );
+
+      // Clear URL params
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("is_logged_in");
+      router.replace(
+        `${pathname}${params.toString() ? `?${params.toString()}` : ""}`,
+        {
+          scroll: false,
+        }
+      );
+    };
+
+    performAutoBooking();
+  }, [
+    isLoggedIn,
+    pendingBooking,
+    user,
+    vehicles,
+    isFetchingVehicles,
+    isAddingVehicle,
+    isBooking,
+    dispatch,
+    router,
+    searchParams,
+    pathname,
+  ]);
 
   if (isLoading) {
     return (
@@ -514,7 +690,32 @@ function DetailsContent() {
         onClose={() => setIsBookingModalOpen(false)}
         garage={transformedGarage}
         vehicleId={vehicleId || undefined}
+        vehicleRegistrationNumber={registrationFromURL || undefined}
       />
+
+      <BookingSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        submittedBooking={null}
+        selectedSlot={null}
+        selectedDate={null}
+        garage={null}
+        formatTime={null}
+      />
+
+      {/* Auto-booking Loading Overlay */}
+      {isLoggedIn === "true" &&
+        (isAddingVehicle || isBooking || isFetchingVehicles) && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999] flex flex-col items-center justify-center">
+            <div className="bg-white p-10 rounded-3xl shadow-2xl scale-110">
+              <LoadingSpinner
+                size="lg"
+                text="Finalizing Your Booking..."
+                fullScreen={false}
+              />
+            </div>
+          </div>
+        )}
     </div>
   );
 }

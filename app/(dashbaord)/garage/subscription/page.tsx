@@ -144,14 +144,14 @@ export default function SubscriptionPage() {
     return (
       <div className="flex-1 lg:flex-1 flex items-center justify-center p-4 lg:p-8">
         <div className="w-full">
-          <div className="text-center mb-8">
+          {/* <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Choose Your Plan
             </h1>
             <p className="text-gray-600 text-lg">
               Select the perfect plan for your garage business
             </p>
-          </div>
+          </div> */}
 
           {/* Shimmer Skeleton Card */}
           <div className="flex justify-center items-center">
@@ -282,16 +282,16 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <div className="flex-1 lg:flex-1 flex items-center justify-center p-4 lg:p-8">
+    <div className="flex-1 h-full lg:flex-1 flex items-center justify-center p-4 lg:p-8">
       <div className="w-full">
-        <div className="text-center mb-8">
+        {/* <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
             Choose Your Plan
           </h1>
           <p className="text-gray-600 text-lg">
             Select the perfect plan for your garage business
           </p>
-        </div>
+        </div> */}
 
         <div className="flex justify-center items-center gap-4">
           {plans.map((plan) => {
@@ -318,7 +318,7 @@ export default function SubscriptionPage() {
             return (
               <div
                 key={plan.id}
-                className={`relative w-fit min-w-[400px] max-w-[500px] border rounded-2xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${
+                className={`relative w-fit min-w-[400px] max-w-[500px] border rounded-xl p-8 bg-white transition-all duration-200 hover:shadow-lg ${
                   isCurrentPlan && isActiveSubscription
                     ? "border-green-500 ring-2 ring-blue-100 bg-blue-50"
                     : isCurrentPlan && isSuspended
@@ -403,8 +403,8 @@ export default function SubscriptionPage() {
                     </div>
                   )}
 
-                <div className=" mb-6">
-                  <h3 className="sm:text-2xl text-xl pb-2 font-bold text-gray-900 ">
+                <div className="mb-6">
+                  <h3 className="sm:text-2xl text-xl pb-2 font-bold text-gray-900">
                     One simple plan
                   </h3>
                   <p className="text-gray-600 text-sm">

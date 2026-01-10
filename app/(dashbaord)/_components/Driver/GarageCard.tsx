@@ -17,12 +17,23 @@ export default function GarageCard({ foundGarages, vehicle }: GarageCardProps) {
   const [selectedGarage, setSelectedGarage] = useState<GarageData | null>(null);
 
   const handleMoreDetails = (garageId: string) => {
-    // Pass both garage_id and vehicle_id to details page
+    // Pass garage_id, vehicle_id, registration, and postcode to details page
     const params = new URLSearchParams();
     params.set("id", garageId);
     if (vehicle?.vehicle_id) {
       params.set("vehicle_id", vehicle.vehicle_id);
     }
+    if (vehicle?.registration_number) {
+      params.set("registration", vehicle.registration_number);
+    }
+    // Also pass current postcode from main page if available
+    const mainPostcode = new URLSearchParams(window.location.search).get(
+      "postcode"
+    );
+    if (mainPostcode) {
+      params.set("postcode", mainPostcode);
+    }
+
     router.push(`/driver/book-my-mot/details?${params.toString()}`);
   };
 
@@ -32,6 +43,9 @@ export default function GarageCard({ foundGarages, vehicle }: GarageCardProps) {
     params.set("garage_id", garage.id);
     if (vehicle?.vehicle_id) {
       params.set("vehicle_id", vehicle.vehicle_id);
+    }
+    if (vehicle?.registration_number) {
+      params.set("registration", vehicle.registration_number);
     }
     // Update URL without page reload
     window.history.pushState(
