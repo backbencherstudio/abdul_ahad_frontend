@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
@@ -33,7 +33,7 @@ interface FormData {
   postcode: string;
 }
 
-export default function BookMyMOT() {
+function BookMyMOTContent() {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useDispatch();
@@ -559,5 +559,19 @@ export default function BookMyMOT() {
           </div>
         )}
     </div>
+  );
+}
+
+export default function BookMyMOT() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-screen flex items-center justify-center">
+          <LoadingSpinner size="lg" text="Loading..." fullScreen={false} />
+        </div>
+      }
+    >
+      <BookMyMOTContent />
+    </Suspense>
   );
 }
