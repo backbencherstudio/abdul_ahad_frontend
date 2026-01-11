@@ -16,7 +16,7 @@ export interface GarageProfile {
   last_name: string | null;
   created_at: string;
   updated_at: string;
-  total_amount: number;
+  mot_price: number;
   avatar_url: string | null;
 }
 

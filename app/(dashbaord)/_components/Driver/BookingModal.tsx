@@ -5,7 +5,6 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "react-toastify";
 import {
   useGetGarageSlotsQuery,
@@ -76,7 +75,6 @@ export default function BookingModal({
   } | null>(null);
   const [submittedBooking, setSubmittedBooking] =
     useState<BookingFormData | null>(null);
-  const [isLoginConfirmOpen, setIsLoginConfirmOpen] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -206,7 +204,30 @@ export default function BookingModal({
     const finalVehicleId = vehicleId;
 
     if ((!user || !finalVehicleId) && vehicleRegistrationNumber) {
-      setIsLoginConfirmOpen(true);
+      if (!selectedSlotData) return;
+      dispatch(
+        setPendingBooking({
+          slot_id: selectedSlotData.has_id ? selectedSlotData.id : "",
+          garage_id: garage?.id || "",
+          vehicle_registration_number: vehicleRegistrationNumber || "",
+          start_time: selectedSlotData.has_id
+            ? ""
+            : selectedSlotData.start_time,
+          end_time: selectedSlotData.has_id ? "" : selectedSlotData.end_time,
+          date: selectedSlotData.has_id ? "" : selectedSlotData.date,
+          service_type: "MOT",
+          expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        })
+      );
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("is_logged_in", "true");
+      const currentUrl = `${pathname}${
+        params.toString() ? `?${params.toString()}` : ""
+      }`;
+      router.push(
+        `/create-account/driver?redirect=${encodeURIComponent(currentUrl)}`
+      );
+
       return;
     } else if (
       !selectedSlotId ||
@@ -405,41 +426,6 @@ export default function BookingModal({
             </div>
           </form>
         </div>
-        <ConfirmationModal
-          open={isLoginConfirmOpen}
-          onClose={() => setIsLoginConfirmOpen(false)}
-          onConfirm={() => {
-            if (!selectedSlotData) return;
-            dispatch(
-              setPendingBooking({
-                slot_id: selectedSlotData.has_id ? selectedSlotData.id : "",
-                garage_id: garage?.id || "",
-                vehicle_registration_number: vehicleRegistrationNumber || "",
-                start_time: selectedSlotData.has_id
-                  ? ""
-                  : selectedSlotData.start_time,
-                end_time: selectedSlotData.has_id
-                  ? ""
-                  : selectedSlotData.end_time,
-                date: selectedSlotData.has_id ? "" : selectedSlotData.date,
-                service_type: "MOT",
-                expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-              })
-            );
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("is_logged_in", "true");
-            const currentUrl = `${pathname}${
-              params.toString() ? `?${params.toString()}` : ""
-            }`;
-            router.push(
-              `/login/driver?redirect=${encodeURIComponent(currentUrl)}`
-            );
-          }}
-          title="Sign In Required"
-          description="To complete your MOT booking, you need to sign in to your account. Would you like to sign in now?"
-          confirmText="Sign In"
-          cancelText="Cancel"
-        />
       </CustomReusableModal>
       <BookingSuccessModal
         isOpen={isSuccessModalOpen}

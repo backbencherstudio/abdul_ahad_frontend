@@ -23,6 +23,7 @@ export interface GarageData {
   vts_number: string;
   primary_contact: string;
   phone_number: string;
+  mot_price?: number;
 }
 
 // Search request interface

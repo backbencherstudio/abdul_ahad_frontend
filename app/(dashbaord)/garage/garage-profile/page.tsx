@@ -108,7 +108,7 @@ export default function GarageProfile() {
         vtsNumber={profile.vts_number}
         phoneNumber={profile.phone_number}
         avatarUrl={profile.avatar_url}
-        price={profile.total_amount.toString()}
+        price={profile.mot_price.toString()}
       />
       <GarageProfileAdd profile={profile} />
     </div>

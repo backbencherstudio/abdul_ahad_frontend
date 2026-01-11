@@ -123,22 +123,36 @@ function BookMyMOTContent() {
     if (error) {
       let errorMessage = "Failed to search data. Please try again.";
       if ("data" in error && (error.data as any)?.message) {
-        errorMessage = (error.data as any).message;
+        const msg = (error.data as any).message;
+        if (Array.isArray(msg)) {
+          errorMessage = msg.join(", ");
+        } else {
+          errorMessage =
+            typeof msg === "string" ? msg : msg.message || errorMessage;
+        }
       }
-      toast.error(errorMessage);
+      toast.error(errorMessage, { toastId: "search-api-error" });
     }
   }, [error]);
 
-  const onSubmit = async (data: FormData) => {
-    const params = new URLSearchParams(searchParamsFromURL?.toString());
-    params.set("registration", data.registrationNumber);
-    params.set("postcode", data.postcode);
+  const onSubmit = async (formData: FormData) => {
+    // If the values are the same as current ones, force a refetch
+    if (
+      formData.registrationNumber === registrationFromURL &&
+      formData.postcode === postcodeFromURL
+    ) {
+      refetch();
+    } else {
+      const params = new URLSearchParams(searchParamsFromURL?.toString());
+      params.set("registration", formData.registrationNumber);
+      params.set("postcode", formData.postcode);
 
-    // Reset page to 1 on new search
-    setPage(1);
+      // Reset page to 1 on new search
+      setPage(1);
 
-    // Using push to update the URL and trigger search
-    router.push(`/driver/book-my-mot?${params.toString()}`);
+      // Using push to update the URL and trigger search reactively
+      router.push(`/driver/book-my-mot?${params.toString()}`);
+    }
   };
 
   const showResults = vehicle !== null || garages.length > 0;

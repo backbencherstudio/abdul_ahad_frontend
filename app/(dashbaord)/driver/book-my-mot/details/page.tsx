@@ -184,7 +184,7 @@ function DetailsContent() {
 
   useEffect(() => {
     if (!garageId) {
-      toast.error("No garage ID provided");
+      toast.error("No garage ID provided", { toastId: "no-garage-id" });
       router.push("/driver/book-my-mot");
       return;
     }
@@ -196,17 +196,19 @@ function DetailsContent() {
 
       if ("data" in error && error.data) {
         const errorData = error.data as any;
-        if (errorData?.message?.message) {
+        const msg = errorData?.message;
+        if (Array.isArray(msg)) {
+          errorMessage = msg.join(", ");
+        } else if (errorData?.message?.message) {
           errorMessage = errorData.message.message;
-        } else if (errorData?.message) {
-          errorMessage =
-            typeof errorData.message === "string"
-              ? errorData.message
-              : errorData.message.message || errorMessage;
+        } else if (typeof msg === "string") {
+          errorMessage = msg;
+        } else if (msg?.message) {
+          errorMessage = msg.message;
         }
       }
 
-      toast.error(errorMessage);
+      toast.error(errorMessage, { toastId: "details-api-error" });
       router.push("/driver/book-my-mot");
     }
   }, [error, router]);

@@ -98,10 +98,14 @@ export default function GarageCard({ foundGarages, vehicle }: GarageCardProps) {
             </div>
           </div>
 
-          {/* Action Buttons and Price */}
+          {/* Action Buttons */}
           <div className="flex flex-col items-end gap-3 w-full lg:w-48">
-            {/* Price can be added later if available in API response */}
-
+            <div className="flex items-center w-full gap-2 mt-2">
+              <span className="font-medium text-gray-700">MOT Fee:</span>
+              <span className="text-xl font-bold text-[#19CA32]">
+                £{garage.mot_price || "0.00"}
+              </span>
+            </div>
             <div className="w-full space-y-2">
               <Button
                 className="w-full cursor-pointer bg-[#19CA32] hover:bg-[#16b82e] text-white font-medium py-3 text-sm rounded-lg"

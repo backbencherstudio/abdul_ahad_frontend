@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppConfig } from "@/config/app.config";
@@ -37,16 +37,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const queryClient = new QueryClient()
+  const queryClient = new QueryClient();
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${inder.variable} ${nunitoSans.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${inder.variable} ${nunitoSans.variable}`}
+    >
       <body className={inter.className}>
         <ReduxProvider>
-         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ToastContainer position="top-center" />
-            <>{children}</>
-          </AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ToastContainer position="top-center" />
+              <>{children}</>
+            </AuthProvider>
           </QueryClientProvider>
         </ReduxProvider>
       </body>

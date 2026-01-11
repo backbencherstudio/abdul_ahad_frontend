@@ -24,6 +24,7 @@ export interface GarageData {
   phone_number: string;
   avatar?: string;
   email: string;
+  mot_price?: number;
 }
 
 // Search response interface
