@@ -1,6 +1,11 @@
+import carLogos from "@/public/data/car-logos.json";
+
 /**
- * Vehicle Helper - Utility functions for vehicle-related operations
+ * Normalizes a string by converting to lowercase and removing all non-alphanumeric characters.
  */
+const normalize = (str: string): string => {
+  return str?.toLowerCase().replace(/[^a-z0-9]/g, "") || "";
+};
 
 /**
  * Get brand logo URL based on vehicle make
@@ -8,22 +13,28 @@
  * @returns Logo URL or default placeholder
  */
 export const getBrandLogo = (make: string): string => {
-  const makeUpper = make?.toUpperCase() || '';
-  
-  // Brand logo mapping - you can add more brands as needed
-  const brandLogos: Record<string, string> = {
-    'FORD': 'https://i.ibb.co/PGwBJx13/pngegg-2-1.png',
-    'MERCEDES-BENZ': 'https://i.ibb.co/example/mercedes-logo.png',
-    'BMW': 'https://i.ibb.co/example/bmw-logo.png',
-    'TOYOTA': 'https://i.ibb.co/Rp0BJdNZ/pngegg-1.png',
-    'AUDI': 'https://i.ibb.co/example/audi-logo.png',
-    'VOLKSWAGEN': 'https://i.ibb.co/example/vw-logo.png',
-    'HONDA': 'https://i.ibb.co/example/honda-logo.png',
-    'NISSAN': 'https://i.ibb.co/example/nissan-logo.png',
-    'HYUNDAI': 'https://i.ibb.co/example/hyundai-logo.png',
-    'KIA': 'https://i.ibb.co/example/kia-logo.png',
-  };
+  if (!make) return "/Image/car-logos/ford.png";
 
-  // Return logo if found, otherwise return a default placeholder
-  return brandLogos[makeUpper] || 'https://i.ibb.co/PGwBJx13/pngegg-2-1.png';
+  const lowerMake = make.toLowerCase().trim();
+  const normalizedMake = normalize(make);
+
+  // 1. Try exact match (lowercase/trimmed)
+  let logoEntry = carLogos.find((logo) => logo.name === lowerMake);
+  if (logoEntry) return logoEntry.path;
+
+  // 2. Try normalized match (remove all special characters/spaces)
+  logoEntry = carLogos.find((logo) => normalize(logo.name) === normalizedMake);
+  if (logoEntry) return logoEntry.path;
+
+  // 3. Try partial match - if the normalized input contains a known brand name (or vice versa)
+  logoEntry = carLogos.find((logo) => {
+    const logoNorm = normalize(logo.name);
+    return (
+      logoNorm.length > 2 &&
+      (normalizedMake.includes(logoNorm) || logoNorm.includes(normalizedMake))
+    );
+  });
+
+  // Return path if found, otherwise return a default placeholder (Ford as fallback)
+  return logoEntry ? logoEntry.path : "/Image/car-logos/ford.png";
 };
