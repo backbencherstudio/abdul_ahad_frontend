@@ -45,6 +45,8 @@ interface BookMyMotState {
     date?: string;
     service_type: "MOT";
     expires_at: string;
+    garage_name?: string;
+    garage_address?: string;
   };
   // vehicle: VehicleData | null;
   // garages: GarageData[];
@@ -87,6 +89,8 @@ const initialState: BookMyMotState = {
     date: "",
     service_type: "MOT",
     expires_at: "",
+    garage_name: "",
+    garage_address: "",
   },
   // vehicle: null,
   // garages: [],

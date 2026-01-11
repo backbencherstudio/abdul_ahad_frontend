@@ -217,6 +217,8 @@ export default function BookingModal({
           date: selectedSlotData.has_id ? "" : selectedSlotData.date,
           service_type: "MOT",
           expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          garage_name: garage?.garage_name || "",
+          garage_address: garage?.address || "",
         })
       );
       const params = new URLSearchParams(searchParams.toString());

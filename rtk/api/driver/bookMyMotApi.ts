@@ -26,12 +26,19 @@ export interface GarageData {
   mot_price?: number;
 }
 
+export enum GarageSortBy {
+  DISTANCE = "DISTANCE",
+  PRICE_LOW_TO_HIGH = "PRICE_LOW_TO_HIGH",
+  PRICE_HIGH_TO_LOW = "PRICE_HIGH_TO_LOW",
+}
+
 // Search request interface
 export interface SearchRequest {
   registration_number: string;
   postcode: string;
   page?: number;
   limit?: number;
+  sort_by?: GarageSortBy;
 }
 
 // Search response interface
@@ -139,6 +146,7 @@ export const bookMyMotApi = createApi({
           postcode: params.postcode,
           page: params.page,
           limit: params.limit,
+          sort_by: params.sort_by,
         },
       }),
       providesTags: ["BookMyMot"],

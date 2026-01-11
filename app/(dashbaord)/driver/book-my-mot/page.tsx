@@ -15,6 +15,7 @@ import GarageCard from "../../_components/Driver/GarageCard";
 import {
   useBookSlotMutation,
   useSearchVehiclesAndGaragesQuery,
+  GarageSortBy,
 } from "@/rtk/api/driver/bookMyMotApi";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
@@ -69,6 +70,14 @@ function BookMyMOTContent() {
   const resultsRef = useRef<HTMLDivElement>(null);
   const isBookingInitiated = useRef(false);
 
+  const [successDetails, setSuccessDetails] = useState<{
+    garage_name: string;
+    garage_address: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+  } | null>(null);
+
   // Derived state for auto-search flag
   const isSearchActive = !!(registrationFromURL && postcodeFromURL);
 
@@ -87,6 +96,11 @@ function BookMyMOTContent() {
   //   router.replace("/driver/book-my-mot", { scroll: false });
   // };
 
+  // Get sort order from URL (default to DISTANCE)
+  const sortBy =
+    (searchParamsFromURL?.get("sort_by") as GarageSortBy) ||
+    GarageSortBy.DISTANCE;
+
   // Query will execute when URL params are present
   const { data, isLoading, error, refetch, isFetching } =
     useSearchVehiclesAndGaragesQuery(
@@ -95,6 +109,7 @@ function BookMyMOTContent() {
         postcode: postcodeFromURL || "",
         page,
         limit,
+        sort_by: sortBy,
       },
       {
         skip: !isSearchActive,
@@ -141,7 +156,11 @@ function BookMyMOTContent() {
       formData.registrationNumber === registrationFromURL &&
       formData.postcode === postcodeFromURL
     ) {
-      refetch();
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        refetch();
+      }
     } else {
       const params = new URLSearchParams(searchParamsFromURL?.toString());
       params.set("registration", formData.registrationNumber);
@@ -236,6 +255,16 @@ function BookMyMOTContent() {
             }
           }
           toast.success(successMessage);
+
+          // Capture details into local state BEFORE cleanup
+          setSuccessDetails({
+            garage_name: pendingBooking.garage_name || "",
+            garage_address: pendingBooking.garage_address || "",
+            date: pendingBooking.date || "",
+            start_time: pendingBooking.start_time || "",
+            end_time: pendingBooking.end_time || "",
+          });
+
           setIsSuccessModalOpen(true);
         } else {
           let errorMessage = "Failed to book slot";
@@ -277,6 +306,8 @@ function BookMyMOTContent() {
           date: "",
           service_type: "MOT",
           expires_at: "",
+          garage_name: "",
+          garage_address: "",
         })
       );
 
@@ -406,10 +437,47 @@ function BookMyMOTContent() {
           {garages.length > 0 ? (
             <div className="bg-white rounded-md shadow-sm p-4 sm:p-6 mt-8">
               {/* Payment Message */}
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <p className="text-gray-700 text-base xl:text-xl font-medium">
                   No upfront payment required - simply pay at your appointment.
                 </p>
+
+                {/* Sorting Dropdown */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                    Sort by:
+                  </span>
+                  <select
+                    value={
+                      searchParamsFromURL?.get("sort_by") ||
+                      GarageSortBy.DISTANCE
+                    }
+                    onChange={(e) => {
+                      const newSortBy = e.target.value;
+                      const params = new URLSearchParams(
+                        searchParamsFromURL?.toString()
+                      );
+
+                      // Update sort param
+                      params.set("sort_by", newSortBy);
+
+                      // Reset pagination to page 1
+                      setPage(1);
+                      params.delete("page"); // or set to '1' if you track it in URL too
+
+                      router.push(`${pathname}?${params.toString()}`);
+                    }}
+                    className="border border-gray-300 rounded-md text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-[#19CA32] focus:border-transparent bg-white cursor-pointer"
+                  >
+                    <option value={GarageSortBy.DISTANCE}>Distance</option>
+                    <option value={GarageSortBy.PRICE_LOW_TO_HIGH}>
+                      Price: Low to High
+                    </option>
+                    <option value={GarageSortBy.PRICE_HIGH_TO_LOW}>
+                      Price: High to Low
+                    </option>
+                  </select>
+                </div>
               </div>
 
               {/* Garage List */}
@@ -554,9 +622,25 @@ function BookMyMOTContent() {
         onClose={() => setIsSuccessModalOpen(false)}
         submittedBooking={null}
         selectedSlot={null}
-        selectedDate={null}
-        garage={null}
-        formatTime={null}
+        selectedDate={
+          successDetails?.date ? new Date(successDetails.date) : undefined
+        }
+        garage={
+          successDetails?.garage_name
+            ? ({
+                garage_name: successDetails.garage_name,
+                address: successDetails.garage_address,
+              } as any)
+            : null
+        }
+        formatTime={(time: string) => {
+          if (!time) return "";
+          const [hours, minutes] = time.split(":");
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const hour12 = hour % 12 || 12;
+          return `${hour12}:${minutes} ${ampm}`;
+        }}
       />
 
       {/* Auto-booking Loading Overlay */}

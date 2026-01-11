@@ -267,7 +267,7 @@ export default function MyBookings() {
       {/* Tabs and Search */}
       <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
         {/* Tabs on the left */}
-        <nav className="flex flex-wrap gap-2 sm:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
+        {/* <nav className="flex flex-wrap gap-2 sm:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -286,7 +286,7 @@ export default function MyBookings() {
               )}
             </button>
           ))}
-        </nav>
+        </nav> */}
 
         {/* Search on the right */}
         <div className="relative w-full xl:w-auto xl:max-w-md">
