@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
+import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
@@ -381,6 +382,7 @@ function DetailsContent() {
     vts_number: garage.vts_number,
     primary_contact: garage.primary_contact,
     phone_number: garage.phone_number,
+    email: garage.email,
   };
 
   // Find MOT Test and Retest services
@@ -394,29 +396,63 @@ function DetailsContent() {
         {/* Left Column - Garage Details */}
         <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="space-y-4 bg-[#F8FAFB] p-3 sm:p-4 rounded-lg border border-[#D2D2D5]">
-            {/* Garage Title */}
-            <div className="border-b border-gray-200 pb-3 sm:pb-4">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
-                Garage: {garage.garage_name}
-              </h1>
-              <div className="mt-2 sm:mt-3 space-y-1 text-gray-600">
-                <div className="text-sm sm:text-base">
-                  <strong>Address :</strong> {garage.address || "N/A"}
+            {/* Garage Title and Avatar */}
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+              <div className="w-full sm:w-32 h-32 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                {garage.avatar ? (
+                  <Image
+                    src={garage.avatar}
+                    alt={garage.garage_name}
+                    width={128}
+                    height={128}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <svg
+                      className="w-12 h-12"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+                  Garage: {garage.garage_name}
+                </h1>
+                <div className="mt-2 sm:mt-3 space-y-1 text-gray-600">
+                  <div className="text-sm sm:text-base">
+                    <strong>Address :</strong> {garage.address || "N/A"}
+                  </div>
+                  <div className="text-sm sm:text-base">
+                    <strong>Email :</strong> {garage.email || "N/A"}
+                  </div>
+                  <div className="text-sm sm:text-base">
+                    <strong>Contact :</strong> {garage.phone_number || "N/A"}
+                  </div>
+                  <div>
+                    <strong>Postcode :</strong> {garage.zip_code}
+                  </div>
+                  {/* <div><strong>Contact :</strong> {garage.primary_contact}</div> */}
+                  {/* <div><strong>Phone :</strong> {garage.phone_number}</div> */}
+                  <div>
+                    <strong>VTS Number :</strong> {garage.vts_number}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Contact Information */}
-            <div className="space-y-2 text-gray-600 text-sm sm:text-base">
-              <div>
-                <strong>Postcode :</strong> {garage.zip_code}
-              </div>
-              {/* <div><strong>Contact :</strong> {garage.primary_contact}</div> */}
-              {/* <div><strong>Phone :</strong> {garage.phone_number}</div> */}
-              <div>
-                <strong>VTS Number :</strong> {garage.vts_number}
-              </div>
-            </div>
+            {/* <div className="space-y-2 text-gray-600 text-sm sm:text-base"></div> */}
           </div>
 
           {/* MOT Fee and Retest Fee */}
@@ -499,13 +535,10 @@ function DetailsContent() {
                         <th className="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">
                           Closing
                         </th>
-                        <th className="text-left py-2 sm:py-3 px-3 sm:px-4 font-semibold text-gray-700 text-sm sm:text-base">
-                          Slot Duration
-                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {[0, 1, 2, 3, 4, 5, 6].map((dayNum) => {
+                      {[1, 2, 3, 4, 5, 6, 0].map((dayNum) => {
                         const dayName = getDayName(dayNum);
                         const dayHours =
                           schedule.daily_hours[dayNum.toString()];
@@ -520,7 +553,7 @@ function DetailsContent() {
                                 {dayName}
                               </td>
                               <td
-                                colSpan={3}
+                                colSpan={2}
                                 className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base"
                               >
                                 Closed
@@ -533,74 +566,27 @@ function DetailsContent() {
                           dayHours?.intervals &&
                           dayHours.intervals.length > 0
                         ) {
-                          // Split intervals by restrictions
-                          const processedIntervals =
-                            splitIntervalsByRestrictions(
-                              dayHours.intervals,
-                              schedule.restrictions || [],
-                              dayNum
-                            );
-
-                          // Find first non-break interval to determine where to place slot_duration
-                          // If all are breaks, use first row (idx 0)
-                          const firstNonBreakIdx = processedIntervals.findIndex(
-                            (interval) => !interval.hasBreak
-                          );
-                          const slotDurationRowIdx =
-                            firstNonBreakIdx >= 0 ? firstNonBreakIdx : 0;
-
-                          return processedIntervals.map((interval, idx) => {
-                            const isBreak = interval.hasBreak;
-                            const totalRows = processedIntervals.length;
-                            const showSlotDuration = idx === slotDurationRowIdx;
-
-                            return (
-                              <tr
-                                key={`${dayNum}-${idx}`}
-                                className="border-t border-gray-200"
-                              >
-                                {idx === 0 && (
-                                  <td
-                                    rowSpan={totalRows}
-                                    className="py-2 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap align-top"
-                                  >
-                                    {dayName}
-                                  </td>
-                                )}
-                                {isBreak ? (
-                                  <td
-                                    colSpan={2}
-                                    className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base italic bg-amber-50 text-center"
-                                  >
-                                    <span className="text-amber-700 font-medium">
-                                      {interval.breakInfo}:{" "}
-                                      {formatTime(interval.start_time)} -{" "}
-                                      {formatTime(interval.end_time)}
-                                    </span>
-                                  </td>
-                                ) : (
-                                  <>
-                                    <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
-                                      {formatTime(interval.start_time)}
-                                    </td>
-                                    <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
-                                      {formatTime(interval.end_time)}
-                                    </td>
-                                  </>
-                                )}
-                                {showSlotDuration && (
-                                  <td
-                                    rowSpan={totalRows}
-                                    className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap align-top"
-                                  >
-                                    {dayHours.slot_duration ||
-                                      schedule.slot_duration}{" "}
-                                    min
-                                  </td>
-                                )}
-                              </tr>
-                            );
-                          });
+                          return dayHours.intervals.map((interval, idx) => (
+                            <tr
+                              key={`${dayNum}-${idx}`}
+                              className="border-t border-gray-200"
+                            >
+                              {idx === 0 && (
+                                <td
+                                  rowSpan={dayHours.intervals.length}
+                                  className="py-2 sm:py-3 px-3 sm:px-4 font-medium text-gray-900 text-sm sm:text-base whitespace-nowrap align-top"
+                                >
+                                  {dayName}
+                                </td>
+                              )}
+                              <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                                {formatTime(interval.start_time)}
+                              </td>
+                              <td className="py-2 sm:py-3 px-3 sm:px-4 text-gray-600 text-sm sm:text-base whitespace-nowrap">
+                                {formatTime(interval.end_time)}
+                              </td>
+                            </tr>
+                          ));
                         }
 
                         return (
@@ -631,25 +617,6 @@ function DetailsContent() {
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="relative">
               <div className="h-64 sm:h-80 lg:h-96 relative">
-                <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      window.open(
-                        `https://maps.google.com/maps?q=${encodeURIComponent(
-                          (garage.address || "") + ", " + garage.zip_code
-                        )}`,
-                        "_blank"
-                      )
-                    }
-                    className="bg-white text-blue-600 border-blue-600 hover:bg-blue-50 text-xs shadow-md px-2 sm:px-3 py-1 sm:py-2"
-                  >
-                    <span className="hidden sm:inline">View larger map</span>
-                    <span className="sm:hidden">View map</span>
-                  </Button>
-                </div>
-
                 <iframe
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(
                     (garage.address || "") + ", " + garage.zip_code

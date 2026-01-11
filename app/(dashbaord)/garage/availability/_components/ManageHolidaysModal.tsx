@@ -262,7 +262,7 @@ export default function ManageHolidaysModal({
 
             <div className="flex-1">
               <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                Description
+                Description (optional)
               </Label>
               <Input
                 type="text"

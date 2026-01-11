@@ -40,10 +40,10 @@ const DAYS = [
   "Sunday",
 ];
 
-// Map component day index to API day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
 const getApiDayOfWeek = (componentIndex: number): number => {
-  // componentIndex directly maps to API day (0=Sunday, 1=Monday, etc.)
-  return componentIndex;
+  // componentIndex: 0=Monday, 1=Tuesday, ..., 5=Saturday, 6=Sunday
+  // API: 0=Sunday, 1=Monday, ..., 6=Saturday
+  return (componentIndex + 1) % 7;
 };
 
 interface DefultCalanderViewProps {
@@ -452,7 +452,7 @@ export default function DefultCalanderView({
           isOpen={openBreaksModalIndex !== null}
           onClose={handleCloseBreaksModal}
           dayName={schedules[openBreaksModalIndex]?.day || ""}
-          dayIndex={openBreaksModalIndex}
+          dayIndex={getApiDayOfWeek(openBreaksModalIndex)}
           breaks={schedules[openBreaksModalIndex]?.breaks || []}
           onBreaksChange={(breaks) =>
             handleBreaksChange(openBreaksModalIndex, breaks)

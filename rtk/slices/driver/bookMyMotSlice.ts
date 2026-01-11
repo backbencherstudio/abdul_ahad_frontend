@@ -23,6 +23,7 @@ export interface GarageData {
   primary_contact: string;
   phone_number: string;
   avatar?: string;
+  email: string;
 }
 
 // Search response interface

@@ -55,6 +55,8 @@ export interface GarageServiceGarage {
   vts_number: string;
   primary_contact: string;
   phone_number: string;
+  email: string;
+  avatar?: string;
 }
 
 export interface ScheduleRestriction {
