@@ -159,27 +159,27 @@ export default function MyBookings() {
       label: "Total",
       render: (value: number) => `£${value?.toFixed(2) || "0.00"}`,
     },
-    {
-      key: "status",
-      label: "Status",
-      render: (value: string) => {
-        const status = value?.toLowerCase() || "pending";
-        const statusColors: Record<string, string> = {
-          pending: "bg-yellow-100 text-yellow-800",
-          accepted: "bg-green-100 text-green-800",
-          rejected: "bg-red-100 text-red-800",
-        };
-        return (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
-              statusColors[status] || "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
-        );
-      },
-    },
+    // {
+    //   key: "status",
+    //   label: "Status",
+    //   render: (value: string) => {
+    //     const status = value?.toLowerCase() || "pending";
+    //     const statusColors: Record<string, string> = {
+    //       pending: "bg-yellow-100 text-yellow-800",
+    //       accepted: "bg-green-100 text-green-800",
+    //       rejected: "bg-red-100 text-red-800",
+    //     };
+    //     return (
+    //       <span
+    //         className={`px-2 py-1 rounded-full text-xs font-medium ${
+    //           statusColors[status] || "bg-gray-100 text-gray-800"
+    //         }`}
+    //       >
+    //         {status.charAt(0).toUpperCase() + status.slice(1)}
+    //       </span>
+    //     );
+    //   },
+    // },
   ];
 
   // Define tabs with counts
@@ -237,10 +237,10 @@ export default function MyBookings() {
     setCurrentPage(1);
   };
 
-  const handleTabChange = (tabKey: string) => {
-    setActiveTab(tabKey);
-    setCurrentPage(1);
-  };
+  // const handleTabChange = (tabKey: string) => {
+  //   setActiveTab(tabKey);
+  //   setCurrentPage(1);
+  // };
 
   const handleRowClick = (row: any) => {
     // Add your row click logic here

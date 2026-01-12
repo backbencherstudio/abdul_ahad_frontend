@@ -131,8 +131,8 @@ const ActionsDropdown = React.memo(
             <Eye className="mr-2 h-4 w-4" /> View Details
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
-          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">
+          {/* <DropdownMenuSeparator /> */}
+          {/* <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">
             Update Status
           </div>
           {STATUS_OPTIONS.map((status) => {
@@ -155,8 +155,8 @@ const ActionsDropdown = React.memo(
               </DropdownMenuItem>
             );
           })}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
+          <DropdownMenuSeparator /> */}
+          {/* <DropdownMenuItem
             onClick={() => {
               setDropdownOpen(false);
               onDeleteClick(row.id);
@@ -165,7 +165,7 @@ const ActionsDropdown = React.memo(
             disabled={isDeleting}
           >
             <Trash2 className="mr-2 h-4 w-4" /> Delete Booking
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -648,27 +648,27 @@ export default function ManageBookings() {
         return `£${numValue.toFixed(2)}`;
       },
     },
-    {
-      key: "status",
-      label: "Status",
-      width: "12%",
-      render: (value: string, row: any) => {
-        const statusValue = row?.status || value;
-        const statusUpper = statusValue?.toUpperCase() || "PENDING";
-        const statusLabel =
-          STATUS_OPTIONS.find((s) => s.value === statusUpper)?.label ||
-          statusUpper;
-        return (
-          <span
-            className={`inline-flex capitalize items-center justify-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-              statusValue
-            )}`}
-          >
-            {statusLabel}
-          </span>
-        );
-      },
-    },
+    // {
+    //   key: "status",
+    //   label: "Status",
+    //   width: "12%",
+    //   render: (value: string, row: any) => {
+    //     const statusValue = row?.status || value;
+    //     const statusUpper = statusValue?.toUpperCase() || "PENDING";
+    //     const statusLabel =
+    //       STATUS_OPTIONS.find((s) => s.value === statusUpper)?.label ||
+    //       statusUpper;
+    //     return (
+    //       <span
+    //         className={`inline-flex capitalize items-center justify-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+    //           statusValue
+    //         )}`}
+    //       >
+    //         {statusLabel}
+    //       </span>
+    //     );
+    //   },
+    // },
     {
       key: "actions",
       label: "Actions",
@@ -739,9 +739,9 @@ export default function ManageBookings() {
       </div>
 
       {/* Tabs and Search */}
-      <div className="flex flex-col w-full xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
+      <div className="flex flex-col w-full xl:flex-row xl:items-center xl:justify-end gap-4 mb-4">
         {/* Tabs on the left */}
-        <nav className="flex flex-wrap gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
+        {/* <nav className="flex flex-wrap gap-2 lg:gap-6 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -760,7 +760,7 @@ export default function ManageBookings() {
               )}
             </button>
           ))}
-        </nav>
+        </nav> */}
 
         {/* Search on the right */}
         <div className="relative w-full xl:w-auto xl:max-w-md">

@@ -76,7 +76,19 @@ export const bookingsApi = createApi({
             }),
             invalidatesTags: ["Bookings"],
         }),
+        // reschedule booking
+        rescheduleBooking: builder.mutation<
+            UpdateStatusResponse,
+            { booking_id: string; slot_id?: string; date?: string; start_time?: string; end_time?: string; reason?: string }
+        >({
+            query: (body) => ({
+                url: `/api/garage-dashboard/bookings/reschedule`,
+                method: "PATCH",
+                body,
+            }),
+            invalidatesTags: ["Bookings"],
+        }),
     }),
 });
 
-export const { useGetBookingsQuery, useGetBookingByIdQuery, useUpdateBookingStatusMutation } = bookingsApi;
+export const { useGetBookingsQuery, useGetBookingByIdQuery, useUpdateBookingStatusMutation, useRescheduleBookingMutation } = bookingsApi;

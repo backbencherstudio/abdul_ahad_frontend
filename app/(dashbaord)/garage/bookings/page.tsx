@@ -2,7 +2,13 @@
 import React, { useState, useEffect } from "react";
 import ReusableTable from "@/components/reusable/Dashboard/Table/ReuseableTable";
 import ReusablePagination from "@/components/reusable/Dashboard/Table/ReusablePagination";
-import { MoreVertical, AlertTriangle, CheckCircle2 } from "lucide-react";
+import {
+  MoreVertical,
+  AlertTriangle,
+  CheckCircle2,
+  Calendar,
+  Clock,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,14 +16,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   useGetBookingsQuery,
   useUpdateBookingStatusMutation,
+  useRescheduleBookingMutation,
 } from "@/rtk/api/garage/bookingsApis";
 import { Booking } from "@/rtk/api/garage/bookingsApis";
 import { toast } from "react-toastify";
 import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReusableModal";
 import { useDebounce } from "@/hooks/useDebounce";
+import { FaCalendar } from "react-icons/fa";
+import { useGetSlotDetailsQuery } from "@/rtk/api/garage/scheduleApis";
 
 export default function Bookings() {
   const [activeTab, setActiveTab] = useState("all");
@@ -60,6 +71,109 @@ export default function Bookings() {
   // Update status mutation
   const [updateBookingStatus, { isLoading: isUpdating }] =
     useUpdateBookingStatusMutation();
+
+  // Reschedule booking mutation
+  const [rescheduleBooking, { isLoading: isRescheduling }] =
+    useRescheduleBookingMutation();
+
+  // Reschedule modal state
+  const [rescheduleModal, setRescheduleModal] = useState<{
+    isOpen: boolean;
+    booking: Booking | null;
+  }>({ isOpen: false, booking: null });
+  const [rescheduleDate, setRescheduleDate] = useState<string>("");
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+
+  // Fetch slots for selected date (garage perspective)
+  const {
+    data: slotResponse,
+    isLoading: slotsLoading,
+  } = useGetSlotDetailsQuery(rescheduleDate, {
+    skip: !rescheduleModal.isOpen || !rescheduleDate,
+  });
+
+  const slotData: any = (slotResponse as any)?.success
+    ? (slotResponse as any).data
+    : null;
+  const slots: any[] = slotData?.slots || [];
+
+  const formatTime = (time: string | null | undefined): string => {
+    if (!time) return "--:--";
+    try {
+      const [hours, minutes] = time.split(":").map(Number);
+      if (isNaN(hours) || isNaN(minutes)) return "--:--";
+      const period = hours >= 12 ? "PM" : "AM";
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      return `${displayHours}:${minutes.toString().padStart(2, "0")}${period}`;
+    } catch (error) {
+      return "--:--";
+    }
+  };
+
+  const openReschedule = (booking: Booking) => {
+    setRescheduleModal({ isOpen: true, booking });
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    setRescheduleDate(todayStr);
+    setSelectedSlotId(null);
+    setSelectedSlot(null);
+  };
+
+  const closeReschedule = () => {
+    setRescheduleModal({ isOpen: false, booking: null });
+    setRescheduleDate("");
+    setSelectedSlotId(null);
+    setSelectedSlot(null);
+  };
+
+  const handleSelectSlot = (slot: any) => {
+    // Determine if slot is selectable
+    const statuses: string[] = Array.isArray(slot.status) ? slot.status : [];
+    const isBooked = statuses.includes("BOOKED");
+    const isBlocked = statuses.includes("BLOCKED");
+    const isBreak = statuses.includes("BREAK");
+    const isHoliday = statuses.includes("HOLIDAY");
+
+    // Past check
+    const [start] = (slot.time || "").split("-");
+    let isPast = false;
+    if (rescheduleDate && start) {
+      const [h, m] = start.split(":").map(Number);
+      const dt = new Date(rescheduleDate);
+      dt.setHours(h || 0, m || 0, 0, 0);
+      isPast = dt < new Date();
+    }
+
+    const isAvailable = !isBooked && !isBlocked && !isBreak && !isHoliday && !isPast;
+    if (!isAvailable) return;
+    setSelectedSlotId(slot.id || slot.time);
+    setSelectedSlot(slot);
+  };
+
+  const handleSubmitReschedule = async () => {
+    if (!rescheduleModal.booking || !rescheduleDate || !selectedSlot) {
+      toast.warn("Please select date and time slot");
+      return;
+    }
+
+    const [startTime, endTime] = (selectedSlot.time || "-").split("-");
+
+    try {
+      await rescheduleBooking({
+        booking_id: rescheduleModal.booking.id,
+        slot_id: selectedSlot.id,
+        date: rescheduleDate,
+        start_time: startTime,
+        end_time: endTime,
+      }).unwrap();
+      toast.success("Booking rescheduled successfully");
+      closeReschedule();
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to reschedule booking");
+    }
+  };
 
   // Define table columns
   const columns = [
@@ -110,72 +224,72 @@ export default function Bookings() {
       label: "Amount",
       render: (value: string) => `$${parseFloat(value || "0").toFixed(2)}`,
     },
-    {
-      key: "status",
-      label: "Status",
-      render: (value: string) => {
-        const statusColors: Record<string, string> = {
-          PENDING: "bg-yellow-100 text-yellow-800",
-          ACCEPTED: "bg-green-100 text-green-800",
-          REJECTED: "bg-red-100 text-red-800",
-          COMPLETED: "bg-blue-100 text-blue-800",
-          CANCELLED: "bg-gray-100 text-gray-800",
-        };
-        const colorClass = statusColors[value] || "bg-gray-100 text-gray-800";
-        return (
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}
-          >
-            {value}
-          </span>
-        );
-      },
-    },
+    // {
+    //   key: "status",
+    //   label: "Status",
+    //   render: (value: string) => {
+    //     const statusColors: Record<string, string> = {
+    //       PENDING: "bg-yellow-100 text-yellow-800",
+    //       ACCEPTED: "bg-green-100 text-green-800",
+    //       REJECTED: "bg-red-100 text-red-800",
+    //       COMPLETED: "bg-blue-100 text-blue-800",
+    //       CANCELLED: "bg-gray-100 text-gray-800",
+    //     };
+    //     const colorClass = statusColors[value] || "bg-gray-100 text-gray-800";
+    //     return (
+    //       <span
+    //         className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}
+    //       >
+    //         {value}
+    //       </span>
+    //     );
+    //   },
+    // },
   ];
 
   // Define tabs with counts
-  const tabs = [
-    {
-      key: "all",
-      label: "All Order",
-      count: bookingsData?.pagination?.total || 0,
-    },
-    {
-      key: "pending",
-      label: "Pending",
-      count:
-        bookingsData?.data?.filter((booking) => booking.status === "PENDING")
-          .length || 0,
-    },
-    {
-      key: "accepted",
-      label: "Accepted",
-      count:
-        bookingsData?.data?.filter((booking) => booking.status === "ACCEPTED")
-          .length || 0,
-    },
-    {
-      key: "completed",
-      label: "Completed",
-      count:
-        bookingsData?.data?.filter((booking) => booking.status === "COMPLETED")
-          .length || 0,
-    },
-    {
-      key: "cancelled",
-      label: "Cancelled",
-      count:
-        bookingsData?.data?.filter((booking) => booking.status === "CANCELLED")
-          .length || 0,
-    },
-    {
-      key: "rejected",
-      label: "Rejected",
-      count:
-        bookingsData?.data?.filter((booking) => booking.status === "REJECTED")
-          .length || 0,
-    },
-  ];
+  // const tabs = [
+  //   {
+  //     key: "all",
+  //     label: "All Order",
+  //     count: bookingsData?.pagination?.total || 0,
+  //   },
+  //   {
+  //     key: "pending",
+  //     label: "Pending",
+  //     count:
+  //       bookingsData?.data?.filter((booking) => booking.status === "PENDING")
+  //         .length || 0,
+  //   },
+  //   {
+  //     key: "accepted",
+  //     label: "Accepted",
+  //     count:
+  //       bookingsData?.data?.filter((booking) => booking.status === "ACCEPTED")
+  //         .length || 0,
+  //   },
+  //   {
+  //     key: "completed",
+  //     label: "Completed",
+  //     count:
+  //       bookingsData?.data?.filter((booking) => booking.status === "COMPLETED")
+  //         .length || 0,
+  //   },
+  //   {
+  //     key: "cancelled",
+  //     label: "Cancelled",
+  //     count:
+  //       bookingsData?.data?.filter((booking) => booking.status === "CANCELLED")
+  //         .length || 0,
+  //   },
+  //   {
+  //     key: "rejected",
+  //     label: "Rejected",
+  //     count:
+  //       bookingsData?.data?.filter((booking) => booking.status === "REJECTED")
+  //         .length || 0,
+  //   },
+  // ];
 
   // Get table data from API response
   const tableData = bookingsData?.data || [];
@@ -208,50 +322,50 @@ export default function Bookings() {
   };
 
   // Handle status update after confirmation
-  const handleStatusUpdate = async () => {
-    if (!confirmModal.bookingId || !confirmModal.status) return;
+  // const handleStatusUpdate = async () => {
+  //   if (!confirmModal.bookingId || !confirmModal.status) return;
 
-    try {
-      await updateBookingStatus({
-        id: confirmModal.bookingId,
-        status: confirmModal.status,
-      }).unwrap();
-      toast.success(
-        `Booking ${confirmModal.status.toLowerCase()} successfully`
-      );
-      setConfirmModal({
-        isOpen: false,
-        bookingId: null,
-        status: null,
-        bookingName: null,
-      });
-      refetch();
-    } catch (error: any) {
-      toast.error(
-        error?.data?.message ||
-          `Failed to ${confirmModal.status.toLowerCase()} booking`
-      );
-      setConfirmModal({
-        isOpen: false,
-        bookingId: null,
-        status: null,
-        bookingName: null,
-      });
-    }
-  };
+  //   try {
+  //     await updateBookingStatus({
+  //       id: confirmModal.bookingId,
+  //       status: confirmModal.status,
+  //     }).unwrap();
+  //     toast.success(
+  //       `Booking ${confirmModal.status.toLowerCase()} successfully`
+  //     );
+  //     setConfirmModal({
+  //       isOpen: false,
+  //       bookingId: null,
+  //       status: null,
+  //       bookingName: null,
+  //     });
+  //     refetch();
+  //   } catch (error: any) {
+  //     toast.error(
+  //       error?.data?.message ||
+  //         `Failed to ${confirmModal.status.toLowerCase()} booking`
+  //     );
+  //     setConfirmModal({
+  //       isOpen: false,
+  //       bookingId: null,
+  //       status: null,
+  //       bookingName: null,
+  //     });
+  //   }
+  // };
 
   // Close confirmation modal
-  const handleCloseModal = () => {
-    setConfirmModal({
-      isOpen: false,
-      bookingId: null,
-      status: null,
-      bookingName: null,
-    });
-  };
+  // const handleCloseModal = () => {
+  //   setConfirmModal({
+  //     isOpen: false,
+  //     bookingId: null,
+  //     status: null,
+  //     bookingName: null,
+  //   });
+  // };
 
   // Action dropdown component
-  const ActionDropdown = ({ row }: { row: Booking }) => {
+  const ActionDropdown = ({ row, onReschedule }: { row: Booking; onReschedule: (row: Booking) => void }) => {
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
     const handleActionClick = (
@@ -302,6 +416,17 @@ export default function Bookings() {
             e.preventDefault();
           }}
         >
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              setDropdownOpen(false);
+              onReschedule(row);
+            }}
+            className="cursor-pointer"
+          >
+            <Calendar />
+            Reschedule
+          </DropdownMenuItem>
           {/* {isPending && (
             <>
               <DropdownMenuItem
@@ -343,7 +468,9 @@ export default function Bookings() {
   const actions = [
     {
       label: "Actions",
-      render: (row: Booking) => <ActionDropdown row={row} />,
+      render: (row: Booking) => (
+        <ActionDropdown row={row} onReschedule={openReschedule} />
+      ),
     },
   ];
 
@@ -467,6 +594,202 @@ export default function Bookings() {
           )}
         </>
       )}
+
+      {/* Reschedule Modal */}
+      <CustomReusableModal
+        isOpen={rescheduleModal.isOpen}
+        onClose={closeReschedule}
+        title="Reschedule Booking"
+        className="max-w-3xl"
+      >
+        <div className="space-y-5">
+          <div>
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">
+              Select Date <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="date"
+              value={rescheduleDate}
+              min={new Date().toISOString().split("T")[0]}
+              onChange={(e) => {
+                setRescheduleDate(e.target.value);
+                setSelectedSlotId(null);
+                setSelectedSlot(null);
+              }}
+              className="w-full h-11 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
+            />
+          </div>
+
+          {rescheduleDate && (
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                Available Time Slots <span className="text-red-500">*</span>
+              </Label>
+              {slotsLoading ? (
+                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                  Loading available slots...
+                </div>
+              ) : slots && Array.isArray(slots) && slots.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
+                  {slots.map((slot: any, idx: number) => {
+                    const statuses: string[] = Array.isArray(slot.status)
+                      ? slot.status
+                      : [];
+                    const isBooked = statuses.includes("BOOKED");
+                    const isBlocked = statuses.includes("BLOCKED");
+                    const isBreak = statuses.includes("BREAK");
+                    const isHoliday = statuses.includes("HOLIDAY");
+
+                    const [start, end] = (slot.time || "-").split("-");
+
+                    // Past check
+                    let isPast = false;
+                    if (rescheduleDate && start) {
+                      const [h, m] = start.split(":").map(Number);
+                      const dt = new Date(rescheduleDate);
+                      dt.setHours(h || 0, m || 0, 0, 0);
+                      isPast = dt < new Date();
+                    }
+
+                    const isAvailable =
+                      !isBooked && !isBlocked && !isBreak && !isHoliday && !isPast;
+
+                    return (
+                      <button
+                        key={slot.id || `${slot.time}-${idx}`}
+                        type="button"
+                        onClick={() => handleSelectSlot(slot)}
+                        disabled={!isAvailable || isRescheduling}
+                        className={`group relative px-4 py-4 rounded-lg border-2 transition-all duration-200 text-sm font-medium flex flex-col items-center justify-center gap-2.5 min-h-[100px] ${
+                          !isAvailable
+                            ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
+                            : selectedSlotId === (slot.id || slot.time)
+                            ? "border-gray-900 bg-gray-900 text-white shadow-lg ring-2 ring-gray-900/30 scale-105"
+                            : "cursor-pointer hover:border-gray-900 hover:bg-gray-50 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+                        }`}
+                      >
+                        <div
+                          className={`p-2 rounded-lg ${
+                            !isAvailable
+                              ? "bg-gray-200"
+                              : selectedSlotId === (slot.id || slot.time)
+                              ? "bg-white/25"
+                              : "bg-gray-100 group-hover:bg-gray-200"
+                          }`}
+                        >
+                          <Clock
+                            className={`h-5 w-5 ${
+                              !isAvailable
+                                ? "text-gray-400"
+                                : selectedSlotId === (slot.id || slot.time)
+                                ? "text-white"
+                                : "text-gray-900"
+                            }`}
+                          />
+                        </div>
+                        <div className="text-center">
+                          {!isAvailable ? (
+                            <span className="font-semibold text-sm text-gray-600">
+                              {isBooked
+                                ? "BOOKED"
+                                : isBlocked
+                                ? "BLOCKED"
+                                : isBreak
+                                ? "BREAK"
+                                : isHoliday
+                                ? "HOLIDAY"
+                                : "PAST"}
+                            </span>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span
+                                className={
+                                  selectedSlotId === (slot.id || slot.time)
+                                    ? "font-semibold text-white"
+                                    : "font-semibold text-gray-800"
+                                }
+                              >
+                                {formatTime(start)}
+                              </span>
+                              <span
+                                className={
+                                  selectedSlotId === (slot.id || slot.time)
+                                    ? "text-white/70 text-xs"
+                                    : "text-gray-400 text-xs"
+                                }
+                              >
+                                -
+                              </span>
+                              <span
+                                className={
+                                  selectedSlotId === (slot.id || slot.time)
+                                    ? "font-semibold text-white"
+                                    : "font-semibold text-gray-800"
+                                }
+                              >
+                                {formatTime(end)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {selectedSlotId === (slot.id || slot.time) && isAvailable && (
+                          <div className="absolute top-2 right-2">
+                            <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                              <svg
+                                className="w-3 h-3 text-gray-900"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-10 text-gray-500 bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-dashed border-gray-200">
+                  <Clock className="h-14 w-14 text-gray-300 mx-auto mb-3" />
+                  <p className="font-medium text-base">
+                    {slots
+                      ? "No slots available for this date"
+                      : "Select a date to view available slots"}
+                  </p>
+                  {slots && (
+                    <p className="text-sm text-gray-400 mt-1">
+                      Please try selecting another date
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={closeReschedule}
+              disabled={isRescheduling}
+              className="cursor-pointer"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReschedule}
+              disabled={isRescheduling || !selectedSlot}
+              className="cursor-pointer"
+            >
+              {isRescheduling ? "Rescheduling..." : "Submit"}
+            </Button>
+          </div>
+        </div>
+      </CustomReusableModal>
 
       {/* Confirmation Modal */}
       {/* <CustomReusableModal
