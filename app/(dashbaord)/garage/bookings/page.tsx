@@ -302,7 +302,7 @@ export default function Bookings() {
             e.preventDefault();
           }}
         >
-          {isPending && (
+          {/* {isPending && (
             <>
               <DropdownMenuItem
                 onClick={() => handleActionClick("ACCEPTED")}
@@ -333,7 +333,7 @@ export default function Bookings() {
                 Cancel
               </DropdownMenuItem>
             </>
-          )}
+          )} */}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -356,10 +356,10 @@ export default function Bookings() {
       </div>
 
       {/* Tabs and Search */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-end gap-4 mb-4">
         {/* Tabs on the left */}
-        <div className="flex flex-wrap gap-2 sm:gap-4 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm overflow-x-auto">
-          {tabs.map((tab) => (
+        {/* <div className="flex flex-wrap gap-2 sm:gap-4 bg-[#F5F5F6] rounded-[10px] p-2 shadow-sm overflow-x-auto"> */}
+        {/* {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => handleTabChange(tab.key)}
@@ -372,7 +372,7 @@ export default function Bookings() {
               {tab.label} {tab.count > 0 && `(${tab.count})`}
             </button>
           ))}
-        </div>
+        </div> */}
 
         {/* Search on the right */}
         <div className="flex justify-end">
@@ -469,7 +469,7 @@ export default function Bookings() {
       )}
 
       {/* Confirmation Modal */}
-      <CustomReusableModal
+      {/* <CustomReusableModal
         isOpen={confirmModal.isOpen}
         onClose={handleCloseModal}
         title={
@@ -550,7 +550,7 @@ export default function Bookings() {
             </Button>
           </div>
         </div>
-      </CustomReusableModal>
+      </CustomReusableModal> */}
     </div>
   );
 }

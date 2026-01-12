@@ -13,6 +13,7 @@ import carImage from "@/public/Image/register/registerLargeImg.png";
 import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { EmailVerificationModal } from "@/components/reusable/EmailVerificationModal";
 
 interface FormData {
   email: string;
@@ -54,6 +55,20 @@ function DriverSignInForm() {
   const searchParams = useSearchParams();
   const { loginWithType } = useAuth();
 
+  // Verification modal state
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
+
+  const handleVerificationSuccess = () => {
+    setShowVerifyModal(false);
+    setVerifyEmail("");
+  };
+
+  const openVerificationModal = (email: string) => {
+    setVerifyEmail(email);
+    setShowVerifyModal(true);
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     try {
@@ -82,9 +97,22 @@ function DriverSignInForm() {
           router.replace("/driver/book-my-mot");
         }
       } else {
+        // Check if error is related to verification
+        if (
+          result.message.toLowerCase().includes("verify") ||
+          result.message.toLowerCase().includes("verification")
+        ) {
+          openVerificationModal(data.email);
+        }
         toast.error(result.message);
       }
     } catch (error: any) {
+      if (
+        error.message?.toLowerCase().includes("verify") ||
+        error.message?.toLowerCase().includes("verification")
+      ) {
+        openVerificationModal(data.email);
+      }
       toast.error(error.message || "Login failed");
     } finally {
       setIsLoading(false);
@@ -209,8 +237,8 @@ function DriverSignInForm() {
                     {...register("password", {
                       required: "Password is required",
                       minLength: {
-                        value: 6,
-                        message: "Password must be at least 6 characters",
+                        value: 8,
+                        message: "Password must be at least 8 characters",
                       },
                     })}
                   />
@@ -274,10 +302,38 @@ function DriverSignInForm() {
                   </Link>
                 </span>
               </div>
+
+              {/* Resend Verification Link */}
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const email = (
+                      document.getElementById("email") as HTMLInputElement
+                    )?.value;
+                    if (email) {
+                      openVerificationModal(email);
+                    } else {
+                      toast.error("Please enter your email first to verify");
+                    }
+                  }}
+                  className="text-sm text-gray-500 hover:text-[#19CA32] hover:underline transition-all duration-200"
+                >
+                  Need to verify your email? Click here
+                </button>
+              </div>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+        email={verifyEmail}
+        onVerificationSuccess={handleVerificationSuccess}
+      />
     </div>
   );
 }
