@@ -19,6 +19,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   useGetBookingsQuery,
   useUpdateBookingStatusMutation,
   useRescheduleBookingMutation,
@@ -31,11 +38,20 @@ import { FaCalendar } from "react-icons/fa";
 import { useGetSlotDetailsQuery } from "@/rtk/api/garage/scheduleApis";
 import { cn } from "@/lib/utils";
 
+export enum DateFilter {
+  ALL = "ALL",
+  TODAY = "TODAY",
+  TOMORROW = "TOMORROW",
+  THIS_WEEK = "THIS_WEEK",
+  NEXT_WEEK = "NEXT_WEEK",
+}
+
 export default function Bookings() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [dateFilter, setDateFilter] = useState<DateFilter>(DateFilter.ALL);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     bookingId: string | null;
@@ -51,10 +67,10 @@ export default function Bookings() {
   // Debounce search term
   const debouncedSearch = useDebounce(searchTerm, 500);
 
-  // Reset to first page when search or tab changes
+  // Reset to first page when search, tab, or date filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, activeTab]);
+  }, [debouncedSearch, activeTab, dateFilter]);
 
   // Get bookings from API with debounced search
   const {
@@ -65,6 +81,7 @@ export default function Bookings() {
   } = useGetBookingsQuery({
     search: debouncedSearch,
     status: activeTab === "all" ? "" : activeTab.toUpperCase(),
+    date_filter: dateFilter,
     page: currentPage,
     limit: itemsPerPage,
   });
@@ -202,11 +219,11 @@ export default function Bookings() {
       key: "order_date",
       label: "Booking Date",
       render: (value: string) => {
-        return new Date(value).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        });
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear().toString().slice(-2);
+        return `${day}/${month}/${year}`;
       },
     },
     {
@@ -508,8 +525,25 @@ export default function Bookings() {
           ))}
         </div> */}
 
-        {/* Search on the right */}
-        <div className="flex justify-end">
+        {/* Date Filter and Search on the right */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="w-full sm:w-auto">
+            <Select
+              value={dateFilter}
+              onValueChange={(value: DateFilter) => setDateFilter(value)}
+            >
+              <SelectTrigger className="w-full sm:w-48 h-11 border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32]">
+                <SelectValue placeholder="Filter by date" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DateFilter.ALL}>All Dates</SelectItem>
+                <SelectItem value={DateFilter.TODAY}>Today</SelectItem>
+                <SelectItem value={DateFilter.TOMORROW}>Tomorrow</SelectItem>
+                <SelectItem value={DateFilter.THIS_WEEK}>This Week</SelectItem>
+                <SelectItem value={DateFilter.NEXT_WEEK}>Next Week</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="relative w-full sm:w-auto sm:max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg

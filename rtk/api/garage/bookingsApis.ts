@@ -50,15 +50,28 @@ export const bookingsApi = createApi({
   baseQuery,
   tagTypes: ["Bookings"],
   endpoints: (builder) => ({
-    // query params search, status, page, limit
+    // query params search, status, page, limit, date_filter
     getBookings: builder.query<
       BookingsResponse,
-      { search?: string; status?: string; page?: number; limit?: number }
+      {
+        search?: string;
+        status?: string;
+        page?: number;
+        limit?: number;
+        date_filter?: string;
+      }
     >({
-      query: ({ search = "", status = "", page = 1, limit = 10 }) => {
+      query: ({
+        search = "",
+        status = "",
+        page = 1,
+        limit = 10,
+        date_filter,
+      }) => {
         const params = new URLSearchParams();
         if (search) params.append("search", search);
         if (status) params.append("status", status);
+        if (date_filter) params.append("date_filter", date_filter);
         params.append("page", page.toString());
         params.append("limit", limit.toString());
         return `/api/garage-dashboard/bookings?${params.toString()}`;
