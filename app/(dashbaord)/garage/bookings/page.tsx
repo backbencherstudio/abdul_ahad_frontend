@@ -38,13 +38,7 @@ import { FaCalendar } from "react-icons/fa";
 import { useGetSlotDetailsQuery } from "@/rtk/api/garage/scheduleApis";
 import { cn } from "@/lib/utils";
 
-export enum DateFilter {
-  ALL = "ALL",
-  TODAY = "TODAY",
-  TOMORROW = "TOMORROW",
-  THIS_WEEK = "THIS_WEEK",
-  NEXT_WEEK = "NEXT_WEEK",
-}
+import { DateFilter } from "@/types/dateFilter";
 
 export default function Bookings() {
   const [activeTab, setActiveTab] = useState("all");
