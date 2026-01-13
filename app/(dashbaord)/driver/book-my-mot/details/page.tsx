@@ -158,6 +158,14 @@ function DetailsContent() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const isBookingInitiated = React.useRef(false);
 
+  const [successDetails, setSuccessDetails] = useState<{
+    garage_name: string;
+    garage_address: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+  } | null>(null);
+
   const { data: vehicles, isFetching: isFetchingVehicles } =
     useGetVehiclesQuery(null, { skip: !user?.id });
   const [addVehicle, { isLoading: isAddingVehicle }] = useAddVehicleMutation();
@@ -287,6 +295,16 @@ function DetailsContent() {
             }
           }
           toast.success(successMessage);
+
+          // Capture details into local state BEFORE cleanup
+          setSuccessDetails({
+            garage_name: pendingBooking.garage_name || "",
+            garage_address: pendingBooking.garage_address || "",
+            date: pendingBooking.date || "",
+            start_time: pendingBooking.start_time || "",
+            end_time: pendingBooking.end_time || "",
+          });
+
           setIsSuccessModalOpen(true);
         } else {
           let errorMessage = "Failed to book slot";
@@ -667,9 +685,25 @@ function DetailsContent() {
         onClose={() => setIsSuccessModalOpen(false)}
         submittedBooking={null}
         selectedSlot={null}
-        selectedDate={null}
-        garage={null}
-        formatTime={null}
+        selectedDate={
+          successDetails?.date ? new Date(successDetails.date) : undefined
+        }
+        garage={
+          successDetails?.garage_name
+            ? ({
+                garage_name: successDetails.garage_name,
+                address: successDetails.garage_address,
+              } as any)
+            : null
+        }
+        formatTime={(time: string) => {
+          if (!time) return "";
+          const [hours, minutes] = time.split(":");
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const hour12 = hour % 12 || 12;
+          return `${hour12}:${minutes} ${ampm}`;
+        }}
       />
 
       {/* Auto-booking Loading Overlay */}
