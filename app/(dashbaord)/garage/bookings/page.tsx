@@ -29,6 +29,7 @@ import CustomReusableModal from "@/components/reusable/Dashboard/Modal/CustomReu
 import { useDebounce } from "@/hooks/useDebounce";
 import { FaCalendar } from "react-icons/fa";
 import { useGetSlotDetailsQuery } from "@/rtk/api/garage/scheduleApis";
+import { cn } from "@/lib/utils";
 
 export default function Bookings() {
   const [activeTab, setActiveTab] = useState("all");
@@ -86,12 +87,10 @@ export default function Bookings() {
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
 
   // Fetch slots for selected date (garage perspective)
-  const {
-    data: slotResponse,
-    isLoading: slotsLoading,
-  } = useGetSlotDetailsQuery(rescheduleDate, {
-    skip: !rescheduleModal.isOpen || !rescheduleDate,
-  });
+  const { data: slotResponse, isLoading: slotsLoading } =
+    useGetSlotDetailsQuery(rescheduleDate, {
+      skip: !rescheduleModal.isOpen || !rescheduleDate,
+    });
 
   const slotData: any = (slotResponse as any)?.success
     ? (slotResponse as any).data
@@ -113,9 +112,10 @@ export default function Bookings() {
 
   const openReschedule = (booking: Booking) => {
     setRescheduleModal({ isOpen: true, booking });
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
-    setRescheduleDate(todayStr);
+    // Set default date to the original booking date instead of today
+    const bookingDate = new Date(booking.order_date);
+    const bookingDateStr = bookingDate.toISOString().split("T")[0];
+    setRescheduleDate(bookingDateStr);
     setSelectedSlotId(null);
     setSelectedSlot(null);
   };
@@ -145,7 +145,8 @@ export default function Bookings() {
       isPast = dt < new Date();
     }
 
-    const isAvailable = !isBooked && !isBlocked && !isBreak && !isHoliday && !isPast;
+    const isAvailable =
+      !isBooked && !isBlocked && !isBreak && !isHoliday && !isPast;
     if (!isAvailable) return;
     setSelectedSlotId(slot.id || slot.time);
     setSelectedSlot(slot);
@@ -365,7 +366,13 @@ export default function Bookings() {
   // };
 
   // Action dropdown component
-  const ActionDropdown = ({ row, onReschedule }: { row: Booking; onReschedule: (row: Booking) => void }) => {
+  const ActionDropdown = ({
+    row,
+    onReschedule,
+  }: {
+    row: Booking;
+    onReschedule: (row: Booking) => void;
+  }) => {
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
     const handleActionClick = (
@@ -600,194 +607,239 @@ export default function Bookings() {
         isOpen={rescheduleModal.isOpen}
         onClose={closeReschedule}
         title="Reschedule Booking"
-        className="max-w-3xl"
+        showHeader={false}
+        className="max-w-3xl w-full mx-4"
       >
-        <div className="space-y-5">
-          <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">
-              Select Date <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              type="date"
-              value={rescheduleDate}
-              min={new Date().toISOString().split("T")[0]}
-              onChange={(e) => {
-                setRescheduleDate(e.target.value);
-                setSelectedSlotId(null);
-                setSelectedSlot(null);
-              }}
-              className="w-full h-11 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
-            />
+        <div className="bg-white rounded-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-[#19CA32] to-[#16b82e] text-white p-4 shadow-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Reschedule Booking</h2>
+              </div>
+              <div className="hidden sm:block">
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <Calendar className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {rescheduleDate && (
-            <div>
-              <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                Available Time Slots <span className="text-red-500">*</span>
-              </Label>
-              {slotsLoading ? (
-                <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                  Loading available slots...
-                </div>
-              ) : slots && Array.isArray(slots) && slots.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
-                  {slots.map((slot: any, idx: number) => {
-                    const statuses: string[] = Array.isArray(slot.status)
-                      ? slot.status
-                      : [];
-                    const isBooked = statuses.includes("BOOKED");
-                    const isBlocked = statuses.includes("BLOCKED");
-                    const isBreak = statuses.includes("BREAK");
-                    const isHoliday = statuses.includes("HOLIDAY");
+          {/* Form Content */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmitReschedule();
+            }}
+            className="p-6 sm:p-8 overflow-y-auto max-h-[80vh]"
+          >
+            <div className="space-y-6">
+              <div>
+                <Label className="text-sm font-medium text-foreground mb-2 block">
+                  Select Date <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  type="date"
+                  value={rescheduleDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => {
+                    setRescheduleDate(e.target.value);
+                    setSelectedSlotId(null);
+                    setSelectedSlot(null);
+                  }}
+                  className="w-full h-11 border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                />
+              </div>
 
-                    const [start, end] = (slot.time || "-").split("-");
+              {rescheduleDate && (
+                <div>
+                  <Label className="text-sm font-medium text-foreground mb-3 block">
+                    Available Time Slots{" "}
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  {slotsLoading ? (
+                    <div className="text-center py-6 text-muted-foreground bg-muted rounded-xl border-2 border-dashed border-border">
+                      Loading available slots...
+                    </div>
+                  ) : slots && Array.isArray(slots) && slots.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200">
+                      {slots.map((slot: any, idx: number) => {
+                        const statuses: string[] = Array.isArray(slot.status)
+                          ? slot.status
+                          : [];
+                        const isBooked = statuses.includes("BOOKED");
+                        const isBlocked = statuses.includes("BLOCKED");
+                        const isBreak = statuses.includes("BREAK");
+                        const isHoliday = statuses.includes("HOLIDAY");
 
-                    // Past check
-                    let isPast = false;
-                    if (rescheduleDate && start) {
-                      const [h, m] = start.split(":").map(Number);
-                      const dt = new Date(rescheduleDate);
-                      dt.setHours(h || 0, m || 0, 0, 0);
-                      isPast = dt < new Date();
-                    }
+                        const [start, end] = (slot.time || "-").split("-");
 
-                    const isAvailable =
-                      !isBooked && !isBlocked && !isBreak && !isHoliday && !isPast;
+                        // Past check
+                        let isPast = false;
+                        if (rescheduleDate && start) {
+                          const [h, m] = start.split(":").map(Number);
+                          const dt = new Date(rescheduleDate);
+                          dt.setHours(h || 0, m || 0, 0, 0);
+                          isPast = dt < new Date();
+                        }
 
-                    return (
-                      <button
-                        key={slot.id || `${slot.time}-${idx}`}
-                        type="button"
-                        onClick={() => handleSelectSlot(slot)}
-                        disabled={!isAvailable || isRescheduling}
-                        className={`group relative px-4 py-4 rounded-lg border-2 transition-all duration-200 text-sm font-medium flex flex-col items-center justify-center gap-2.5 min-h-[100px] ${
-                          !isAvailable
-                            ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
-                            : selectedSlotId === (slot.id || slot.time)
-                            ? "border-gray-900 bg-gray-900 text-white shadow-lg ring-2 ring-gray-900/30 scale-105"
-                            : "cursor-pointer hover:border-gray-900 hover:bg-gray-50 hover:shadow-md hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
-                        }`}
-                      >
-                        <div
-                          className={`p-2 rounded-lg ${
-                            !isAvailable
-                              ? "bg-gray-200"
-                              : selectedSlotId === (slot.id || slot.time)
-                              ? "bg-white/25"
-                              : "bg-gray-100 group-hover:bg-gray-200"
-                          }`}
-                        >
-                          <Clock
-                            className={`h-5 w-5 ${
-                              !isAvailable
-                                ? "text-gray-400"
-                                : selectedSlotId === (slot.id || slot.time)
-                                ? "text-white"
-                                : "text-gray-900"
-                            }`}
-                          />
-                        </div>
-                        <div className="text-center">
-                          {!isAvailable ? (
-                            <span className="font-semibold text-sm text-gray-600">
-                              {isBooked
-                                ? "BOOKED"
-                                : isBlocked
-                                ? "BLOCKED"
+                        const isAvailable =
+                          !isBooked &&
+                          !isBlocked &&
+                          !isBreak &&
+                          !isHoliday &&
+                          !isPast;
+
+                        return (
+                          <button
+                            key={slot.id || `${slot.time}-${idx}`}
+                            type="button"
+                            onClick={() => handleSelectSlot(slot)}
+                            disabled={!isAvailable || isRescheduling}
+                            className={cn(
+                              "group relative px-4 py-4 rounded-lg border-2 transition-all duration-200 text-sm font-medium flex flex-col items-center justify-center gap-2.5 min-h-[100px]",
+                              isBooked
+                                ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
                                 : isBreak
-                                ? "BREAK"
-                                : isHoliday
-                                ? "HOLIDAY"
-                                : "PAST"}
-                            </span>
-                          ) : (
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span
-                                className={
-                                  selectedSlotId === (slot.id || slot.time)
-                                    ? "font-semibold text-white"
-                                    : "font-semibold text-gray-800"
-                                }
-                              >
-                                {formatTime(start)}
-                              </span>
-                              <span
-                                className={
-                                  selectedSlotId === (slot.id || slot.time)
-                                    ? "text-white/70 text-xs"
-                                    : "text-gray-400 text-xs"
-                                }
-                              >
-                                -
-                              </span>
-                              <span
-                                className={
-                                  selectedSlotId === (slot.id || slot.time)
-                                    ? "font-semibold text-white"
-                                    : "font-semibold text-gray-800"
-                                }
-                              >
-                                {formatTime(end)}
-                              </span>
+                                ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
+                                : isPast
+                                ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
+                                : "cursor-pointer hover:border-[#19CA32] hover:bg-[#19CA32]/10 hover:shadow-md hover:scale-105 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#19CA32] focus:ring-offset-2",
+                              selectedSlotId === (slot.id || slot.time) &&
+                                isAvailable
+                                ? "border-[#19CA32] bg-[#19CA32] text-white shadow-lg ring-2 ring-[#19CA32]/30 scale-105"
+                                : isAvailable &&
+                                    "border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-[#19CA32]/5",
+                              (isRescheduling || isBooked || isBreak) &&
+                                "hover:scale-100"
+                            )}
+                          >
+                            <div
+                              className={`p-2 rounded-lg ${
+                                !isAvailable
+                                  ? "bg-muted"
+                                  : selectedSlotId === (slot.id || slot.time)
+                                  ? "bg-white/25"
+                                  : "bg-muted group-hover:bg-accent"
+                              }`}
+                            >
+                              <Clock
+                                className={`h-5 w-5 ${
+                                  !isAvailable
+                                    ? "text-muted-foreground"
+                                    : selectedSlotId === (slot.id || slot.time)
+                                    ? "text-primary-foreground"
+                                    : "text-foreground"
+                                }`}
+                              />
                             </div>
-                          )}
-                        </div>
-                        {selectedSlotId === (slot.id || slot.time) && isAvailable && (
-                          <div className="absolute top-2 right-2">
-                            <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
-                              <svg
-                                className="w-3 h-3 text-gray-900"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
+                            <div className="text-center">
+                              {!isAvailable ? (
+                                <span className="font-semibold text-sm text-muted-foreground">
+                                  {isBooked
+                                    ? "BOOKED"
+                                    : isBlocked
+                                    ? "BLOCKED"
+                                    : isBreak
+                                    ? "BREAK"
+                                    : isHoliday
+                                    ? "HOLIDAY"
+                                    : "PAST"}
+                                </span>
+                              ) : (
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span
+                                    className={
+                                      selectedSlotId === (slot.id || slot.time)
+                                        ? "font-semibold text-primary-foreground"
+                                        : "font-semibold text-foreground"
+                                    }
+                                  >
+                                    {formatTime(start)}
+                                  </span>
+                                  <span
+                                    className={
+                                      selectedSlotId === (slot.id || slot.time)
+                                        ? "text-primary-foreground/70 text-xs"
+                                        : "text-muted-foreground text-xs"
+                                    }
+                                  >
+                                    -
+                                  </span>
+                                  <span
+                                    className={
+                                      selectedSlotId === (slot.id || slot.time)
+                                        ? "font-semibold text-primary-foreground"
+                                        : "font-semibold text-foreground"
+                                    }
+                                  >
+                                    {formatTime(end)}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-10 text-gray-500 bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-dashed border-gray-200">
-                  <Clock className="h-14 w-14 text-gray-300 mx-auto mb-3" />
-                  <p className="font-medium text-base">
-                    {slots
-                      ? "No slots available for this date"
-                      : "Select a date to view available slots"}
-                  </p>
-                  {slots && (
-                    <p className="text-sm text-gray-400 mt-1">
-                      Please try selecting another date
-                    </p>
+                            {selectedSlotId === (slot.id || slot.time) &&
+                              isAvailable && (
+                                <div className="absolute top-2 right-2">
+                                  <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                    <svg
+                                      className="w-3 h-3 text-primary"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </div>
+                                </div>
+                              )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500 bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-dashed border-gray-200">
+                      <Clock className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                      <p className="font-medium text-base">
+                        {slots
+                          ? "No slots available for this date"
+                          : "Select a date to view available slots"}
+                      </p>
+                      {slots && (
+                        <p className="text-sm text-gray-400 mt-1">
+                          Please try selecting another date
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
-            </div>
-          )}
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={closeReschedule}
-              disabled={isRescheduling}
-              className="cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitReschedule}
-              disabled={isRescheduling || !selectedSlot}
-              className="cursor-pointer"
-            >
-              {isRescheduling ? "Rescheduling..." : "Submit"}
-            </Button>
-          </div>
+              {/* Submit Button */}
+              <div className="pt-4 border-t border-gray-200">
+                <Button
+                  type="submit"
+                  disabled={!selectedSlotId || isRescheduling}
+                  className="w-full cursor-pointer bg-gradient-to-r from-[#19CA32] to-[#16b82e] hover:from-[#16b82e] hover:to-[#14a828] text-white font-semibold py-4 text-base rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {isRescheduling ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Rescheduling...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Reschedule Booking
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </form>
         </div>
       </CustomReusableModal>
 

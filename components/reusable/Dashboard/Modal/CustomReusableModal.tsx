@@ -27,10 +27,10 @@ export default function CustomReusableModal({
     variant = 'default'
 }: CustomReusableModalProps) {
     const accentClasses = variant === 'danger'
-        ? 'bg-rose-100 text-rose-700 ring-rose-200'
+        ? 'bg-destructive/10 text-destructive ring-destructive/20'
         : variant === 'success'
             ? 'bg-emerald-100 text-emerald-700 ring-emerald-200'
-            : 'bg-slate-100 text-slate-700 ring-slate-200'
+            : 'bg-accent text-accent-foreground ring-accent'
 
     // Ensure proper cleanup when modal closes
     useEffect(() => {
@@ -91,7 +91,7 @@ export default function CustomReusableModal({
                                     {title}
                                 </DialogTitle>
                                 {description ? (
-                                    <p className="text-sm text-gray-600 mt-1">{description}</p>
+                                    <p className="text-sm text-muted-foreground mt-1">{description}</p>
                                 ) : null}
                             </div>
                         </div>
