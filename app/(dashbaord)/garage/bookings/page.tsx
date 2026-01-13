@@ -641,15 +641,8 @@ export default function Bookings() {
         <div className="bg-white rounded-lg overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#19CA32] to-[#16b82e] text-white p-4 shadow-md">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Reschedule Booking</h2>
-              </div>
-              <div className="hidden sm:block">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <Calendar className="h-5 w-5" />
-                </div>
-              </div>
+            <div className="text-center">
+              <h2 className="text-xl font-semibold">Reschedule Booking</h2>
             </div>
           </div>
 
@@ -675,8 +668,22 @@ export default function Bookings() {
                     setSelectedSlotId(null);
                     setSelectedSlot(null);
                   }}
-                  className="w-full h-11 border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] pr-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-10 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                  className="w-full h-11 border-gray-300 focus:border-[#19CA32] focus:ring-[#19CA32] cursor-pointer"
                 />
+                {rescheduleDate && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Selected:{" "}
+                    {(() => {
+                      const date = new Date(rescheduleDate);
+                      const day = date.getDate().toString().padStart(2, "0");
+                      const month = (date.getMonth() + 1)
+                        .toString()
+                        .padStart(2, "0");
+                      const year = date.getFullYear().toString().slice(-2);
+                      return `${day}/${month}/${year}`;
+                    })()}
+                  </p>
+                )}
               </div>
 
               {rescheduleDate && (
