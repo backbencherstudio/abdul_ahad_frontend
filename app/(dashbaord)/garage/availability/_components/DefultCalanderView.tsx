@@ -110,7 +110,7 @@ export default function DefultCalanderView({
             (restriction) =>
               restriction.type === "BREAK" &&
               Array.isArray(restriction.day_of_week) &&
-              restriction.day_of_week.includes(getApiDayOfWeek(componentIndex))
+              restriction.day_of_week.includes(getApiDayOfWeek(componentIndex)),
           )
           .map((restriction, idx) => ({
             id: `break-${componentIndex}-${idx}`,
@@ -146,36 +146,36 @@ export default function DefultCalanderView({
   const handleClosedToggle = (index: number, checked: boolean) => {
     setSchedules((prev) =>
       prev.map((schedule, i) =>
-        i === index ? { ...schedule, isClosed: checked } : schedule
-      )
+        i === index ? { ...schedule, isClosed: checked } : schedule,
+      ),
     );
   };
 
   const handleTimeChange = (
     index: number,
     field: "fromTime" | "toTime",
-    value: string
+    value: string,
   ) => {
     setSchedules((prev) =>
       prev.map((schedule, i) =>
-        i === index ? { ...schedule, [field]: value } : schedule
-      )
+        i === index ? { ...schedule, [field]: value } : schedule,
+      ),
     );
   };
 
   const handleDurationChange = (index: number, value: number) => {
     setSchedules((prev) =>
       prev.map((schedule, i) =>
-        i === index ? { ...schedule, duration: value } : schedule
-      )
+        i === index ? { ...schedule, duration: value } : schedule,
+      ),
     );
   };
 
   const handleBreaksChange = (index: number, breaks: DaySchedule["breaks"]) => {
     setSchedules((prev) =>
       prev.map((schedule, i) =>
-        i === index ? { ...schedule, breaks } : schedule
-      )
+        i === index ? { ...schedule, breaks } : schedule,
+      ),
     );
   };
 
@@ -391,7 +391,7 @@ export default function DefultCalanderView({
                         htmlFor={`duration-${index}`}
                         className="text-xs text-gray-600 mb-1 block"
                       >
-                        Duration (min)
+                        Slot Duration (min)
                       </Label>
                       <Input
                         id={`duration-${index}`}
@@ -403,7 +403,7 @@ export default function DefultCalanderView({
                         onChange={(e) =>
                           handleDurationChange(
                             index,
-                            parseInt(e.target.value) || 60
+                            parseInt(e.target.value) || 60,
                           )
                         }
                         disabled={schedule.isClosed}

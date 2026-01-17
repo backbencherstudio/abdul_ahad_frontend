@@ -60,7 +60,7 @@ const splitIntervalsByRestrictions = (
     day_of_week: number[];
     description?: string;
   }>,
-  dayNum: number
+  dayNum: number,
 ): Array<{
   start_time: string;
   end_time: string;
@@ -70,7 +70,7 @@ const splitIntervalsByRestrictions = (
   // Get restrictions for this specific day
   // Filter out restrictions that don't have day_of_week or where day_of_week is not an array
   const dayRestrictions = (restrictions || []).filter(
-    (r) => r && Array.isArray(r.day_of_week) && r.day_of_week.includes(dayNum)
+    (r) => r && Array.isArray(r.day_of_week) && r.day_of_week.includes(dayNum),
   );
 
   if (dayRestrictions.length === 0) {
@@ -101,7 +101,7 @@ const splitIntervalsByRestrictions = (
     } else {
       // Sort breaks by start time
       overlappingBreaks.sort((a, b) =>
-        a.start_time.localeCompare(b.start_time)
+        a.start_time.localeCompare(b.start_time),
       );
 
       let currentStart = intervalStart;
@@ -151,7 +151,7 @@ function DetailsContent() {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const pendingBooking = useSelector(
-    (rootState: RootState) => rootState.bookMyMot.pendingBooking
+    (rootState: RootState) => rootState.bookMyMot.pendingBooking,
   );
 
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -253,7 +253,8 @@ function DetailsContent() {
         let finalVehicleId = "";
         const existVehicle = vehicles?.data?.find(
           (v) =>
-            v.registration_number === pendingBooking.vehicle_registration_number
+            v.registration_number ===
+            pendingBooking.vehicle_registration_number,
         );
 
         if (existVehicle) {
@@ -346,7 +347,7 @@ function DetailsContent() {
           date: "",
           service_type: "MOT",
           expires_at: "",
-        })
+        }),
       );
 
       // Clear URL params
@@ -356,7 +357,7 @@ function DetailsContent() {
         `${pathname}${params.toString() ? `?${params.toString()}` : ""}`,
         {
           scroll: false,
-        }
+        },
       );
     };
 
@@ -639,7 +640,7 @@ function DetailsContent() {
               <div className="h-64 sm:h-80 lg:h-96 relative">
                 <iframe
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                    (garage.address || "") + ", " + garage.zip_code
+                    (garage.address || "") + ", " + garage.zip_code,
                   )}&output=embed&z=15`}
                   width="100%"
                   height="100%"
@@ -684,7 +685,18 @@ function DetailsContent() {
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
         submittedBooking={null}
-        selectedSlot={null}
+        selectedSlot={
+          successDetails?.start_time && successDetails?.end_time
+            ? ({
+                slot_id: "",
+                garage_id: "",
+                vehicle_id: "",
+                date: successDetails.date,
+                start_time: successDetails.start_time,
+                end_time: successDetails.end_time,
+              } as any)
+            : null
+        }
         selectedDate={
           successDetails?.date ? new Date(successDetails.date) : undefined
         }

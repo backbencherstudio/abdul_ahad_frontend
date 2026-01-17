@@ -91,8 +91,10 @@ export default function BookingSuccessModal({
                 <span className="text-gray-400">Date: </span>
                 <span className="text-gray-600 font-medium ml-2">
                   {selectedDate
-                    ? format(selectedDate, "dd MMMM yyyy")
-                    : submittedBooking?.date}
+                    ? format(selectedDate, "dd/MM/yy")
+                    : submittedBooking?.date
+                      ? format(new Date(submittedBooking.date), "dd/MM/yy")
+                      : ""}
                 </span>
               </div>
             )}

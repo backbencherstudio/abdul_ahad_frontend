@@ -55,7 +55,7 @@ function BookMyMOTContent() {
   const isLoggedIn = searchParamsFromURL?.get("is_logged_in");
 
   const pendingBooking = useSelector(
-    (rootState: RootState) => rootState.bookMyMot.pendingBooking
+    (rootState: RootState) => rootState.bookMyMot.pendingBooking,
   );
 
   // State for pagination
@@ -113,7 +113,7 @@ function BookMyMOTContent() {
       },
       {
         skip: !isSearchActive,
-      }
+      },
     );
 
   // Sync data to local state
@@ -213,7 +213,7 @@ function BookMyMOTContent() {
         const existVehicle = vehicles?.data?.find(
           (vehicle) =>
             vehicle.registration_number ===
-            pendingBooking.vehicle_registration_number
+            pendingBooking.vehicle_registration_number,
         );
 
         if (existVehicle) {
@@ -257,12 +257,14 @@ function BookMyMOTContent() {
           toast.success(successMessage);
 
           // Capture details into local state BEFORE cleanup
+          const bookingData = result.data as any;
           setSuccessDetails({
             garage_name: pendingBooking.garage_name || "",
             garage_address: pendingBooking.garage_address || "",
-            date: pendingBooking.date || "",
-            start_time: pendingBooking.start_time || "",
-            end_time: pendingBooking.end_time || "",
+            date: bookingData?.date || pendingBooking.date || "",
+            start_time:
+              bookingData?.start_time || pendingBooking.start_time || "",
+            end_time: bookingData?.end_time || pendingBooking.end_time || "",
           });
 
           setIsSuccessModalOpen(true);
@@ -308,7 +310,7 @@ function BookMyMOTContent() {
           expires_at: "",
           garage_name: "",
           garage_address: "",
-        })
+        }),
       );
 
       // Clear URL params
@@ -318,7 +320,7 @@ function BookMyMOTContent() {
         `${pathname}${params.toString() ? `?${params.toString()}` : ""}`,
         {
           scroll: false,
-        }
+        },
       );
     };
 
@@ -455,7 +457,7 @@ function BookMyMOTContent() {
                     onChange={(e) => {
                       const newSortBy = e.target.value;
                       const params = new URLSearchParams(
-                        searchParamsFromURL?.toString()
+                        searchParamsFromURL?.toString(),
                       );
 
                       // Update sort param
@@ -562,7 +564,7 @@ function BookMyMOTContent() {
                   variant="outline"
                   onClick={() =>
                     setPage((p) =>
-                      Math.min(Math.ceil(totalCount / limit), p + 1)
+                      Math.min(Math.ceil(totalCount / limit), p + 1),
                     )
                   }
                   disabled={page >= Math.ceil(totalCount / limit)}
@@ -621,7 +623,18 @@ function BookMyMOTContent() {
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
         submittedBooking={null}
-        selectedSlot={null}
+        selectedSlot={
+          successDetails?.start_time && successDetails?.end_time
+            ? ({
+                slot_id: "",
+                garage_id: "",
+                vehicle_id: "",
+                date: successDetails.date,
+                start_time: successDetails.start_time,
+                end_time: successDetails.end_time,
+              } as any)
+            : null
+        }
         selectedDate={
           successDetails?.date ? new Date(successDetails.date) : undefined
         }

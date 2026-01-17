@@ -18,7 +18,10 @@ export interface Booking {
   status: string;
   total_amount: string;
   garage_id: string;
-  vehicle_id: string;
+  vehicle: {
+    id: string;
+    registration_number: string;
+  };
   driver: Driver;
   slot: any | null;
 }

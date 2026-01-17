@@ -75,13 +75,18 @@ export default function BookingModal({
   } | null>(null);
   const [submittedBooking, setSubmittedBooking] =
     useState<BookingFormData | null>(null);
+  const [successDetails, setSuccessDetails] = useState<{
+    date: string;
+    start_time: string;
+    end_time: string;
+  } | null>(null);
 
   const dispatch = useDispatch();
 
   // Fetch slots when date is selected
   const { data: slotsData, isLoading: slotsLoading } = useGetGarageSlotsQuery(
     { id: garage?.id || "", date: bookingForm.date },
-    { skip: !garage?.id || !bookingForm.date }
+    { skip: !garage?.id || !bookingForm.date },
   );
 
   // Book slot mutation
@@ -161,7 +166,7 @@ export default function BookingModal({
       status?: string[];
       has_id: boolean;
     },
-    e?: React.MouseEvent
+    e?: React.MouseEvent,
   ) => {
     // Prevent any form submission
     if (e) {
@@ -219,7 +224,7 @@ export default function BookingModal({
           expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
           garage_name: garage?.garage_name || "",
           garage_address: garage?.address || "",
-        })
+        }),
       );
       const params = new URLSearchParams(searchParams.toString());
       params.set("is_logged_in", "true");
@@ -227,7 +232,7 @@ export default function BookingModal({
         params.toString() ? `?${params.toString()}` : ""
       }`;
       router.push(
-        `/create-account/driver?redirect=${encodeURIComponent(currentUrl)}`
+        `/create-account/driver?redirect=${encodeURIComponent(currentUrl)}`,
       );
 
       return;
@@ -283,6 +288,14 @@ export default function BookingModal({
         }
         toast.success(successMessage);
         setSubmittedBooking(bookingForm);
+
+        // Save success details BEFORE resetting
+        setSuccessDetails({
+          date: selectedSlotData.date,
+          start_time: selectedSlotData.start_time,
+          end_time: selectedSlotData.end_time,
+        });
+
         onClose();
         setIsSuccessModalOpen(true);
 
@@ -296,7 +309,7 @@ export default function BookingModal({
         });
         setSelectedDate(undefined);
         setSelectedSlotId(null);
-        setSelectedSlotId(null);
+        setSelectedSlotData(null);
       } else {
         let errorMessage = "Failed to book slot";
         if (typeof result.message === "string") {
@@ -334,6 +347,7 @@ export default function BookingModal({
   const handleSuccessClose = () => {
     setIsSuccessModalOpen(false);
     setSubmittedBooking(null);
+    setSuccessDetails(null);
   };
 
   return (
@@ -434,14 +448,14 @@ export default function BookingModal({
         onClose={handleSuccessClose}
         submittedBooking={submittedBooking}
         selectedSlot={
-          selectedSlotData && garage && vehicleId
+          successDetails
             ? {
-                slot_id: selectedSlotData.id,
-                garage_id: garage.id,
-                vehicle_id: vehicleId,
-                date: selectedSlotData.date,
-                start_time: selectedSlotData.start_time,
-                end_time: selectedSlotData.end_time,
+                slot_id: "",
+                garage_id: garage?.id || "",
+                vehicle_id: vehicleId || "",
+                date: successDetails.date,
+                start_time: successDetails.start_time,
+                end_time: successDetails.end_time,
               }
             : null
         }

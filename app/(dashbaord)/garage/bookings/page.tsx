@@ -195,9 +195,10 @@ export default function Bookings() {
       render: (value: any, row: Booking) => row.driver?.name || "N/A",
     },
     {
-      key: "vehicle_id",
-      label: "Vehicle ID",
-      render: (value: string) => value || "N/A",
+      key: "vehicle.registration_number",
+      label: "Vehicle Registration",
+      render: (value: any, row: Booking) =>
+        row.vehicle?.registration_number || "N/A",
     },
     {
       key: "driver.email",
@@ -234,7 +235,7 @@ export default function Bookings() {
     {
       key: "total_amount",
       label: "Amount",
-      render: (value: string) => `$${parseFloat(value || "0").toFixed(2)}`,
+      render: (value: string) => `£${parseFloat(value || "0").toFixed(2)}`,
     },
     // {
     //   key: "status",
@@ -323,7 +324,7 @@ export default function Bookings() {
   const handleStatusUpdateClick = (
     id: string,
     status: string,
-    bookingName: string
+    bookingName: string,
   ) => {
     setConfirmModal({
       isOpen: true,
@@ -387,7 +388,7 @@ export default function Bookings() {
     const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
     const handleActionClick = (
-      status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "COMPLETED"
+      status: "ACCEPTED" | "REJECTED" | "CANCELLED" | "COMPLETED",
     ) => {
       setDropdownOpen(false);
       // Small delay to ensure dropdown closes before modal opens
@@ -396,7 +397,7 @@ export default function Bookings() {
           handleStatusUpdateClick(
             row.id,
             status,
-            row.driver?.name || "Booking"
+            row.driver?.name || "Booking",
           );
         }
       }, 150);
@@ -736,17 +737,17 @@ export default function Bookings() {
                               isBooked
                                 ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
                                 : isBreak
-                                ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
-                                : isPast
-                                ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
-                                : "cursor-pointer hover:border-[#19CA32] hover:bg-[#19CA32]/10 hover:shadow-md hover:scale-105 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#19CA32] focus:ring-offset-2",
+                                  ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
+                                  : isPast
+                                    ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed opacity-60"
+                                    : "cursor-pointer hover:border-[#19CA32] hover:bg-[#19CA32]/10 hover:shadow-md hover:scale-105 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#19CA32] focus:ring-offset-2",
                               selectedSlotId === (slot.id || slot.time) &&
                                 isAvailable
                                 ? "border-[#19CA32] bg-[#19CA32] text-white shadow-lg ring-2 ring-[#19CA32]/30 scale-105"
                                 : isAvailable &&
                                     "border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-[#19CA32]/5",
                               (isRescheduling || isBooked || isBreak) &&
-                                "hover:scale-100"
+                                "hover:scale-100",
                             )}
                           >
                             <div
@@ -754,8 +755,8 @@ export default function Bookings() {
                                 !isAvailable
                                   ? "bg-muted"
                                   : selectedSlotId === (slot.id || slot.time)
-                                  ? "bg-white/25"
-                                  : "bg-muted group-hover:bg-accent"
+                                    ? "bg-white/25"
+                                    : "bg-muted group-hover:bg-accent"
                               }`}
                             >
                               <Clock
@@ -763,8 +764,8 @@ export default function Bookings() {
                                   !isAvailable
                                     ? "text-muted-foreground"
                                     : selectedSlotId === (slot.id || slot.time)
-                                    ? "text-primary-foreground"
-                                    : "text-foreground"
+                                      ? "text-primary-foreground"
+                                      : "text-foreground"
                                 }`}
                               />
                             </div>
@@ -774,12 +775,12 @@ export default function Bookings() {
                                   {isBooked
                                     ? "BOOKED"
                                     : isBlocked
-                                    ? "BLOCKED"
-                                    : isBreak
-                                    ? "BREAK"
-                                    : isHoliday
-                                    ? "HOLIDAY"
-                                    : "PAST"}
+                                      ? "BLOCKED"
+                                      : isBreak
+                                        ? "BREAK"
+                                        : isHoliday
+                                          ? "HOLIDAY"
+                                          : "PAST"}
                                 </span>
                               ) : (
                                 <div className="flex items-center justify-center gap-1.5">
