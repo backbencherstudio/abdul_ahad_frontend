@@ -84,11 +84,11 @@ export default function SubscriptionsManagement() {
   const onSubmit = async (data: TCreateSubscription) => {
     try {
       const payload = {
-        name: data.name,
-        description: data.description,
-        price_pence: Number(data.price_pence), // convert pounds to pence (if required)
-        max_bookings_per_month: Number(data.max_bookings_per_month),
-        max_vehicles: Number(data.max_vehicles),
+        name: "One Simple Plan",
+        description: "One Simple Plan",
+        price_pence: Number(data.price_pence),
+        max_bookings_per_month: 1000,
+        max_vehicles: 1000,
       };
 
       const res = await createSubscription(payload).unwrap();
@@ -103,45 +103,46 @@ export default function SubscriptionsManagement() {
 
   return (
     <>
-      <div className="mb-6 flex justify-between">
-        <h1 className="text-2xl font-semibold">List of All Subscriptions</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              className="justify-start bg-white hover:bg-white text-black cursor-pointer"
-            >
-              <Plus className="mr-1" /> Add Subscription
-            </Button>
-          </DialogTrigger>
+      {allSubscriptions?.data?.data?.length === 0 && (
+        <div className="mb-6 flex justify-between">
+          <h1 className="text-2xl font-semibold">List of All Subscriptions</h1>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                className="justify-start bg-white hover:bg-white text-black cursor-pointer"
+              >
+                <Plus className="mr-1" /> Add Subscription
+              </Button>
+            </DialogTrigger>
 
-          <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <DialogHeader>
-                <DialogTitle>Add Subscription</DialogTitle>
-              </DialogHeader>
+            <DialogContent className="sm:max-w-[425px]">
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <DialogHeader>
+                  <DialogTitle>Add Subscription</DialogTitle>
+                </DialogHeader>
 
-              <div className="grid gap-4 mt-6">
-                <div className="grid gap-3">
+                <div className="grid gap-4 mt-6">
+                  {/* <div className="grid gap-3">
                   <Label htmlFor="name">Name</Label>
                   <Input
                     id="name"
                     {...register("name", { required: true })}
                     placeholder="Subscription name"
                   />
-                </div>
+                </div> */}
 
-                <div className="grid gap-3">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price_pence"
-                    type="number"
-                    {...register("price_pence", { required: true, min: 0 })}
-                    placeholder="Subscription price (£)"
-                  />
-                </div>
+                  <div className="grid gap-3">
+                    <Label htmlFor="price">Price</Label>
+                    <Input
+                      id="price_pence"
+                      type="number"
+                      {...register("price_pence", { required: true, min: 0 })}
+                      placeholder="Subscription price (£)"
+                    />
+                  </div>
 
-                <div className="grid gap-3">
+                  {/* <div className="grid gap-3">
                   <Label htmlFor="max_bookings_per_month">
                     Max bookings per month
                   </Label>
@@ -154,9 +155,9 @@ export default function SubscriptionsManagement() {
                     })}
                     placeholder="Max bookings"
                   />
-                </div>
+                </div> */}
 
-                <div className="grid gap-3">
+                  {/* <div className="grid gap-3">
                   <Label htmlFor="max_vehicles">Max Vehicles</Label>
                   <Input
                     id="max_vehicles"
@@ -164,41 +165,42 @@ export default function SubscriptionsManagement() {
                     {...register("max_vehicles", { required: true, min: 1 })}
                     placeholder="Max vehicles"
                   />
-                </div>
+                </div> */}
 
-                <div className="grid gap-3">
+                  {/* <div className="grid gap-3">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     {...register("description")}
                     placeholder="Description"
                   />
+                </div> */}
                 </div>
-              </div>
 
-              <DialogFooter className="mt-4">
-                <DialogClose asChild>
+                <DialogFooter className="mt-4">
+                  <DialogClose asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="bg-red-800 hover:bg-red-700 cursor-pointer text-white hover:text-white"
+                    >
+                      Cancel
+                    </Button>
+                  </DialogClose>
+
                   <Button
-                    type="button"
-                    variant="outline"
-                    className="bg-red-800 hover:bg-red-700 cursor-pointer text-white hover:text-white"
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-green-600 cursor-pointer hover:bg-green-500"
                   >
-                    Cancel
+                    {isLoading ? "Creating..." : "Create"}
                   </Button>
-                </DialogClose>
-
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="bg-green-600 cursor-pointer hover:bg-green-500"
-                >
-                  {isLoading ? "Creating..." : "Create"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
 
       {/* Subscription Cards Grid */}
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-8">
@@ -262,15 +264,21 @@ export default function SubscriptionsManagement() {
                 >
                   {/* Title */}
                   <h2 className="text-2xl font-bold text-black mb-2">
-                    {subscription.name}sss
+                    {/* {subscription.name} */}
+                    One Simple Plan
                   </h2>
 
                   {/* Description */}
-                  {subscription.description && (
+                  {/* {subscription.description && (
                     <p className="text-sm text-gray-700 mb-6">
                       {subscription.description}
                     </p>
-                  )}
+                  )} */}
+                  <p className="text-sm text-gray-700 mb-6">
+                    We believe in fairness and transparency - no hidden fees, no
+                    contracts, no commissions, and no confusing tiers. Just full
+                    access for one simple price.
+                  </p>
 
                   {/* Membership Section */}
                   <div className="mb-6">

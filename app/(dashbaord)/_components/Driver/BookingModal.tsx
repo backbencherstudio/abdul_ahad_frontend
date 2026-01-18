@@ -382,11 +382,13 @@ export default function BookingModal({
           >
             <div className="space-y-6">
               {/* Personal Information Section */}
-              <PersonalInformationSection
-                name={bookingForm.name}
-                email={bookingForm.email}
-                phone={bookingForm.phone}
-              />
+              {user && (
+                <PersonalInformationSection
+                  name={bookingForm.name}
+                  email={bookingForm.email}
+                  phone={bookingForm.phone}
+                />
+              )}
 
               {/* Booking Details Section */}
               <BookingDetailsSection

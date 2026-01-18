@@ -158,7 +158,7 @@ export default function MyVehicles() {
       const existingVehicle = vehicles.find(
         (v) =>
           v.registrationNumber.toLowerCase() ===
-          data.registration_number.toLowerCase()
+          data.registration_number.toLowerCase(),
       );
 
       if (existingVehicle) {
@@ -237,7 +237,7 @@ export default function MyVehicles() {
       refetch(); // Refresh the list
     } catch (error: any) {
       toast.error(
-        error?.data?.message || "Failed to delete vehicle. Please try again."
+        error?.data?.message || "Failed to delete vehicle. Please try again.",
       );
       console.error("Error deleting vehicle:", error);
     }
@@ -251,7 +251,7 @@ export default function MyVehicles() {
     if (selectedVehicle) {
       // Find the API vehicle to get the ID
       const apiVehicle = vehiclesResponse?.data?.find(
-        (v) => v.registration_number === selectedVehicle.registrationNumber
+        (v) => v.registration_number === selectedVehicle.registrationNumber,
       );
 
       if (apiVehicle?.id) {
@@ -271,8 +271,8 @@ export default function MyVehicles() {
       // Pass registration number as query parameter
       router.push(
         `/driver/book-my-mot?registration=${encodeURIComponent(
-          selectedVehicle.registrationNumber
-        )}`
+          selectedVehicle.registrationNumber,
+        )}`,
       );
     } else {
       toast.error("Vehicle not found. Please try again.");
@@ -308,12 +308,6 @@ export default function MyVehicles() {
               </div>
             ))}
           </>
-        ) : vehicles.length === 0 ? (
-          <div className="col-span-full text-center py-8">
-            <p className="text-gray-600">
-              No vehicles found. Add your first vehicle!
-            </p>
-          </div>
         ) : (
           <>
             {vehicles.map((vehicle) => (

@@ -91,7 +91,7 @@ export default function SubscriptionPage() {
           subscriptionApi.util.invalidateTags([
             "Subscription",
             "SubscriptionsMe",
-          ])
+          ]),
         );
 
         const result = await refetchCurrentSubscription();
@@ -322,15 +322,15 @@ export default function SubscriptionPage() {
                   isCurrentPlan && isActiveSubscription
                     ? "border-green-500 ring-2 ring-blue-100 bg-blue-50"
                     : isCurrentPlan && isSuspended
-                    ? "border-yellow-500 ring-2 ring-yellow-100 bg-yellow-50"
-                    : isCurrentPlan && isCancelledButActive
-                    ? "border-orange-500 ring-2 ring-orange-100 bg-orange-50"
-                    : isCurrentPlan &&
-                      !isActiveSubscription &&
-                      !isCancelledButActive &&
-                      !isSuspended
-                    ? "border-red-500 ring-2 ring-red-100 bg-red-50"
-                    : "border-gray-200 hover:border-gray-300"
+                      ? "border-yellow-500 ring-2 ring-yellow-100 bg-yellow-50"
+                      : isCurrentPlan && isCancelledButActive
+                        ? "border-orange-500 ring-2 ring-orange-100 bg-orange-50"
+                        : isCurrentPlan &&
+                            !isActiveSubscription &&
+                            !isCancelledButActive &&
+                            !isSuspended
+                          ? "border-red-500 ring-2 ring-red-100 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 {isCurrentPlan && isSuspended && (
@@ -373,7 +373,7 @@ export default function SubscriptionPage() {
                       {currentSubscription.trial_information?.days_remaining > 0
                         ? `Cancelled (${currentSubscription.trial_information.days_remaining} days trial left)`
                         : `Cancelled (Active Until ${new Date(
-                            currentSubscription.current_period_end
+                            currentSubscription.current_period_end,
                           ).toLocaleDateString()})`}
                     </span>
                   </div>
@@ -463,10 +463,19 @@ export default function SubscriptionPage() {
                     {/* Suspended Status - Show payment required message */}
                     {isSuspended && (
                       <div className="w-full py-3 px-4 rounded-lg bg-yellow-50 border border-yellow-200">
-                        <p className="text-sm text-yellow-800 text-center">
+                        <p className="text-sm text-yellow-800 text-center mb-2">
                           <strong>Payment Required:</strong> Please update your
                           payment method to reactivate your subscription.
                         </p>
+                        <button
+                          onClick={() => handleSelectPlan(plan)}
+                          disabled={loadingPlanId === plan.id}
+                          className="w-full cursor-pointer py-3 px-6 rounded-lg font-semibold transition-colors duration-200 disabled:opacity-50 text-sm disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-700 text-white"
+                        >
+                          {loadingPlanId === plan.id
+                            ? "Processing..."
+                            : "Reactivate Subscription"}
+                        </button>
                       </div>
                     )}
 
@@ -491,15 +500,15 @@ export default function SubscriptionPage() {
                           isActiveSubscription
                             ? "bg-blue-100 text-blue-800"
                             : isSuspended
-                            ? "bg-yellow-100 text-yellow-800"
-                            : isCancelledButActive
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : isCancelledButActive
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-red-100 text-red-800"
                         }`}
                       >
                         {currentSubscription.subscription_type?.replace(
                           /_/g,
-                          " "
+                          " ",
                         )}
                       </span>
 

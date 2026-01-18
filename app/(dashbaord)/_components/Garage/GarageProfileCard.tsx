@@ -82,7 +82,7 @@ const GarageImage: React.FC<GarageImageProps> = ({
           height={100}
           src={imageUrl.trim()}
           alt="Garage avatar"
-          className={`w-full h-full object-cover ${
+          className={`w-full h-full object-contain ${
             imageLoading ? "opacity-0" : "opacity-100"
           } transition-opacity duration-300`}
           onLoad={() => setImageLoading(false)}

@@ -13,6 +13,7 @@ import { useCountUp } from "react-countup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
 
 interface FormData {
   registration: string;
@@ -27,16 +28,16 @@ export default function HomeBanner() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
-  const countUpRef = useRef(null);
-  const { start } = useCountUp({
-    ref: countUpRef,
-    start: 0,
-    end: 100,
-    duration: 3,
-    suffix: "k+",
-    enableScrollSpy: true,
-    scrollSpyDelay: 500,
-  });
+  // const countUpRef = useRef(null);
+  // const { start } = useCountUp({
+  //   ref: countUpRef,
+  //   start: 0,
+  //   end: 100,
+  //   duration: 3,
+  //   suffix: "k+",
+  //   enableScrollSpy: true,
+  //   scrollSpyDelay: 500,
+  // });
 
   // user data with image
   const data = [
@@ -70,8 +71,8 @@ export default function HomeBanner() {
       // Driver is logged in - redirect to book-my-mot page with form data
       router.push(
         `/driver/book-my-mot?registration=${encodeURIComponent(
-          registration
-        )}&postcode=${encodeURIComponent(postcode)}`
+          registration,
+        )}&postcode=${encodeURIComponent(postcode)}`,
       );
     }
     // else {
@@ -118,32 +119,41 @@ export default function HomeBanner() {
             </div>
 
             {/* User Reviews Section */}
-            <div className="flex flex-col gap-4 mt-8 lg:mt-20">
+            <div className="flex flex-raw gap-4 md:gap-8 items-center mt-8 lg:mt-20">
               {/* User Avatars */}
-              <div className="flex items-center">
-                <div className="flex -space-x-5">
-                  {data.map((user, index) => (
-                    <div key={index} className="relative">
-                      <Image
-                        src={user.image}
-                        alt={user.name}
-                        width={100}
-                        height={100}
-                        className="w-10 h-10 md:w-14 md:h-14 rounded-full border-2 border-white object-cover"
-                      />
-                    </div>
-                  ))}
+              <div className="flex order-2 items-center">
+                <div className="flex flex-col justify-center items-center">
+                  <div className="flex -space-x-5">
+                    {data.map((user, index) => (
+                      <div key={index} className="relative">
+                        <Image
+                          src={user.image}
+                          alt={user.name}
+                          width={100}
+                          height={100}
+                          className="w-10 h-10 md:w-14 md:h-14 rounded-full border-2 border-white object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-lg md:text-xl text-white/90 max-w-lg mt-2">
+                    Used by drivers across the UK​
+                  </p>
                 </div>
-                <div className="ml-4">
+                {/* <div className="ml-4">
                   <p className="text-2xl text-yellow-400 font-semibold">
                     <span ref={countUpRef}>100k+</span>
                   </p>
                   <p className="text-xl text-white">happy clients</p>
-                </div>
+                </div> */}
               </div>
 
               {/* Trustpilot Rating */}
-              <div className="flex flex-col items-start gap-2">
+              <Link
+                href="https://www.trustpilot.com/review/simplymot.co.uk"
+                target="_blank"
+                className="flex flex-col items-start gap-2"
+              >
                 <div className="flex items-center gap-1 mb-1">
                   <LogoStart />
                 </div>
@@ -152,7 +162,7 @@ export default function HomeBanner() {
                     <GroupStart key={star} />
                   ))}
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
 
