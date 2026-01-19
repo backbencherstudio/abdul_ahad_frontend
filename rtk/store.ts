@@ -15,8 +15,7 @@ import { profileApi } from "./api/garage/profileApis";
 import { scheduleApi } from "./api/garage/scheduleApis";
 import { pricingApi } from "./api/garage/pricingApis";
 import { bookingsApi } from "./api/garage/bookingsApis";
-import { contactApis } from "./api/garage/contactApis";
-import { driverContactApis } from "./api/driver/contactusApi";
+import { contactApi } from "./api/contact/contactApi";
 import pricingReducer from "./slices/garage/pricingSlice";
 import { vehiclesApis } from "./api/driver/vehiclesApis";
 import vehiclesReducer from "./slices/driver/vehiclesSlice";
@@ -46,8 +45,7 @@ const appReducer = combineReducers({
   [profileApi.reducerPath]: profileApi.reducer,
   [pricingApi.reducerPath]: pricingApi.reducer,
   [bookingsApi.reducerPath]: bookingsApi.reducer,
-  [contactApis.reducerPath]: contactApis.reducer,
-  [driverContactApis.reducerPath]: driverContactApis.reducer,
+  [contactApi.reducerPath]: contactApi.reducer,
   [vehiclesApis.reducerPath]: vehiclesApis.reducer,
   [bookMyMotApi.reducerPath]: bookMyMotApi.reducer,
   [bookingManagementApi.reducerPath]: bookingManagementApi.reducer,
@@ -67,7 +65,7 @@ const appReducer = combineReducers({
 // Root reducer that resets entire store on logout
 const rootReducer = (
   state: ReturnType<typeof appReducer> | undefined,
-  action: any
+  action: any,
 ) => {
   // Reset entire store when logout action is dispatched
   if (action.type === "auth/logout") {
@@ -93,15 +91,14 @@ export const store = configureStore({
       profileApi.middleware,
       pricingApi.middleware,
       bookingsApi.middleware,
-      contactApis.middleware,
-      driverContactApis.middleware,
+      contactApi.middleware,
       vehiclesApis.middleware,
       bookMyMotApi.middleware,
       bookingManagementApi.middleware,
       subscriptionsMeApi.middleware,
       invoicesApi.middleware,
       garageDriverApis.middleware,
-      adminNotificationApis.middleware
+      adminNotificationApis.middleware,
     ),
 });
 

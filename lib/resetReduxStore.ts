@@ -12,8 +12,7 @@ import { scheduleApi } from "@/rtk/api/garage/scheduleApis";
 import { profileApi } from "@/rtk/api/garage/profileApis";
 import { pricingApi } from "@/rtk/api/garage/pricingApis";
 import { bookingsApi } from "@/rtk/api/garage/bookingsApis";
-import { contactApis } from "@/rtk/api/garage/contactApis";
-import { driverContactApis } from "@/rtk/api/driver/contactusApi";
+import { contactApi } from "@/rtk/api/contact/contactApi";
 import { vehiclesApis } from "@/rtk/api/driver/vehiclesApis";
 import { bookMyMotApi } from "@/rtk/api/driver/bookMyMotApi";
 import { bookingManagementApi } from "@/rtk/api/admin/booking-management/bookingManagementApis";
@@ -40,8 +39,7 @@ export const resetReduxStore = (): void => {
   store.dispatch(profileApi.util.resetApiState());
   store.dispatch(pricingApi.util.resetApiState());
   store.dispatch(bookingsApi.util.resetApiState());
-  store.dispatch(contactApis.util.resetApiState());
-  store.dispatch(driverContactApis.util.resetApiState());
+  store.dispatch(contactApi.util.resetApiState());
   store.dispatch(vehiclesApis.util.resetApiState());
   store.dispatch(bookMyMotApi.util.resetApiState());
   store.dispatch(bookingManagementApi.util.resetApiState());
@@ -51,4 +49,3 @@ export const resetReduxStore = (): void => {
   // Dispatch logout action to reset all slices (via rootReducer)
   store.dispatch(logout());
 };
-
